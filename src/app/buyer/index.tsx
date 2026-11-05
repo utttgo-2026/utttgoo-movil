@@ -113,7 +113,7 @@ export default function BuyerHomeScreen() {
   );
 
   return (
-    <Screen backgroundColor={colors.background} padded={false}>
+    <Screen backgroundColor={colors.background} padded={false} scroll>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <AppText variant="title">Hola, {user?.fullName.split(' ')[0]}</AppText>

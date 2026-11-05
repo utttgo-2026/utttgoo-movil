@@ -42,6 +42,7 @@ export function Screen({
           ]}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
         >
           {children}
         </ScrollView>
