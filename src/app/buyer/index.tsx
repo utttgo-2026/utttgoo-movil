@@ -43,7 +43,7 @@ export default function BuyerHomeScreen() {
   };
 
   const handleFoodPress = (food: FoodItem) => {
-    router.push(`/buyer/food?foodId=${food.id}` as any);
+    router.push(`/buyer/food/${food.id}` as any);
   };
 
   const filteredFoods = selectedCategory
@@ -78,7 +78,7 @@ export default function BuyerHomeScreen() {
   );
 
   const renderFood = ({ item }: { item: FoodItem }) => (
-    <Pressable key={item.id} style={[styles.foodCard, { width: FOOD_CARD_WIDTH, height: moderateScale(280) }]} onPress={() => handleFoodPress(item)}>
+    <Pressable key={item.id} style={[styles.foodCard, { width: FOOD_CARD_WIDTH, height: FOOD_CARD_HEIGHT }]} onPress={() => handleFoodPress(item)}>
       <View style={styles.foodImageContainer}>
         <Image
           source={{ uri: foodImages[item.name] || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&q=80' }}
@@ -113,7 +113,7 @@ export default function BuyerHomeScreen() {
   );
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} padded={false}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <AppText variant="title">Hola, {user?.fullName.split(' ')[0]}</AppText>
@@ -140,7 +140,7 @@ export default function BuyerHomeScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoriesList}
-        snapToInterval={moderateScale(156) + spacing.md}
+        snapToInterval={CAT_CARD_WIDTH + spacing.md}
         decelerationRate="fast"
       />
 

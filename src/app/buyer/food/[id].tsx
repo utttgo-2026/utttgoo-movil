@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,9 +13,10 @@ import type { FoodItem } from '@/types/models';
 export default function FoodDetailScreen() {
   const router = useRouter();
   const { addItem, itemCount } = useCart();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
 
-  const food = mockFoods.find((f) => f.id === 'food-1');
+  const food = mockFoods.find((f) => f.id === id);
 
   if (!food) {
     return (

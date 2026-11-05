@@ -57,7 +57,7 @@ export default function CategoryScreen() {
   );
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} padded={false}>
       <AppHeader title="Categorías" showBack />
 
       <View style={styles.content}>

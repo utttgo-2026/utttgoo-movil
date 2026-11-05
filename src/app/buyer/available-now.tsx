@@ -76,7 +76,7 @@ export default function AvailableNowScreen() {
   );
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} padded={false}>
       <AppHeader title="Disponible ahora" showBack />
 
       <View style={styles.content}>
