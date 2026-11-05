@@ -2,15 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { Pressable } from 'react-native';
+import { Pressable, useWindowDimensions } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Badge, Screen, SectionHeader, Surface } from '@/components';
-import { colors, fontSize, layout, radii, spacing } from '@/theme';
+import { colors, fontSize, layout, radii, spacing, moderateScale } from '@/theme';
 import { mockCategories } from '@/data/mock';
 import type { FoodCategory } from '@/types/models';
 
 export default function CategoryScreen() {
   const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
+  
+  const CARD_WIDTH = (screenWidth - layout.screenPadding * 2 - spacing.md) / 2;
 
   const handleCategoryPress = (category: FoodCategory) => {
     router.push(`/buyer/available-now?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}` as any);
@@ -30,9 +33,9 @@ export default function CategoryScreen() {
 
         <View style={styles.categoriesGrid}>
           {mockCategories.map((cat) => (
-            <Pressable key={cat.id} style={styles.categoryCard} onPress={() => handleCategoryPress(cat)}>
+            <Pressable key={cat.id} style={[styles.categoryCard, { width: CARD_WIDTH }]} onPress={() => handleCategoryPress(cat)}>
               <View style={[styles.categoryIcon, { backgroundColor: cat.color }]}>
-                <Ionicons name={cat.icon as any} size={24} color={colors.text} />
+                <Ionicons name={cat.icon as any} size={moderateScale(24)} color={colors.text} />
               </View>
               <AppText variant="subtitle" style={styles.categoryName}>
                 {cat.name}
@@ -48,24 +51,24 @@ export default function CategoryScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: spacing.xl,
-    paddingBottom: spacing.xxl,
+    gap: 24,
+    paddingBottom: 40,
   },
   sectionTitle: {
-    marginTop: spacing.lg,
+    marginTop: 24,
   },
   subtitle: {
-    marginTop: spacing.xs,
+    marginTop: 4,
   },
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: 12,
   },
   categoryCard: {
-    width: (layout.maxContentWidth - spacing.md) / 2,
-    padding: spacing.lg,
-    borderRadius: radii.lg,
+    width: 150,
+    padding: 20,
+    borderRadius: 16,
     backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
     borderColor: colors.border,
@@ -74,17 +77,17 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 52,
     height: 52,
-    borderRadius: radii.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
   categoryName: {
     textAlign: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   badge: {
     alignSelf: 'center',
-    marginTop: spacing.sm,
+    marginTop: 8,
   },
 });

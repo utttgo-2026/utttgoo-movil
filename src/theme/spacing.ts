@@ -1,3 +1,10 @@
+import { Dimensions } from 'react-native';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const guidelineBaseWidth = 375;
+const guidelineBaseHeight = 667;
+
 export const spacing = {
   none: 0,
   xxs: 2,
@@ -29,4 +36,38 @@ export const layout = {
   inputHeight: 52,
   headerHeight: 56,
   tabBarHeight: 64,
+  
+  // Responsive helpers (baseline iPhone 8: 375x667)
+  scale: SCREEN_WIDTH / guidelineBaseWidth,
+  verticalScale: SCREEN_HEIGHT / guidelineBaseHeight,
+  screenWidth: SCREEN_WIDTH,
+  screenHeight: SCREEN_HEIGHT,
+  isSmallScreen: SCREEN_WIDTH < 375,
+  isLargeScreen: SCREEN_WIDTH > 414,
 } as const;
+
+export function moderateScale(size: number, factor = 0.5): number {
+  const newSize = size * layout.scale;
+  return Math.round(size + (newSize - size) * factor);
+}
+
+export function verticalScale(size: number): number {
+  return Math.round(size * layout.verticalScale);
+}
+
+export function horizontalScale(size: number): number {
+  return moderateScale(size);
+}
+
+export function responsiveFontSize(size: number): number {
+  const { fontScale } = Dimensions.get('window');
+  return Math.round(size * fontScale);
+}
+
+export function wp(percentage: number): number {
+  return (percentage / 100) * layout.screenWidth;
+}
+
+export function hp(percentage: number): number {
+  return (percentage / 100) * layout.screenHeight;
+}

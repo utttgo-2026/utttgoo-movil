@@ -25,7 +25,7 @@ export default function LoginScreen() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.replace('/buyer' as any);
+        router.push('/buyer' as any);
       } else {
         setError(result.error ?? 'No se pudo iniciar sesión.');
       }

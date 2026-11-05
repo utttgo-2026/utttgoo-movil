@@ -2,17 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
 import { AppButton, AppText, Avatar, Badge, BrandLogo, Screen, SectionHeader, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import { colors, fontFamily, fontSize, layout, radii, spacing } from '@/theme';
+import { colors, fontFamily, fontSize, layout, radii, spacing, moderateScale, horizontalScale, verticalScale } from '@/theme';
 import { mockCategories, featuredFoods, mockFoods } from '@/data/mock';
 import type { FoodItem } from '@/types/models';
 
 export default function BuyerHomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const CATEGORY_CARD_WIDTH = moderateScale(76);
+  const FOOD_IMAGE_WIDTH = (screenWidth - layout.screenPadding * 2 - spacing.md) / 2;
 
   const handleCategoryPress = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -36,11 +41,11 @@ export default function BuyerHomeScreen() {
             Bienvenido a UTTT-GO
           </AppText>
         </View>
-        <Avatar name={user?.fullName || 'Usuario'} size={44} />
+        <Avatar name={user?.fullName || 'Usuario'} size={moderateScale(44)} />
       </View>
 
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={20} color={colors.textSubtle} />
+        <Ionicons name="search-outline" size={moderateScale(20)} color={colors.textSubtle} />
         <AppText variant="body" color={colors.textSubtle}>
           Buscar alimentos…
         </AppText>
@@ -53,12 +58,12 @@ export default function BuyerHomeScreen() {
           <View
             key={cat.id}
             style={[
-              styles.categoryCard,
+              { ...styles.categoryCard, width: CATEGORY_CARD_WIDTH },
               selectedCategory === cat.id && styles.categoryCardActive,
             ]}
           >
             <View style={[styles.categoryIcon, { backgroundColor: cat.color }]}>
-              <Ionicons name={cat.icon as any} size={20} color={colors.text} />
+              <Ionicons name={cat.icon as any} size={moderateScale(20)} color={colors.text} />
             </View>
             <AppText variant="label" style={styles.categoryName}>
               {cat.name}
@@ -71,11 +76,11 @@ export default function BuyerHomeScreen() {
 
       <View style={styles.foodsList}>
         {filteredFoods.map((food) => (
-          <Pressable key={food.id} style={styles.foodCard} onPress={() => handleFoodPress(food)}>
+          <Pressable key={food.id} style={[styles.foodCard, { width: FOOD_IMAGE_WIDTH }]} onPress={() => handleFoodPress(food)}>
             <View style={styles.foodImage}>
               {food.image ? (
                 <View style={styles.foodImageContainer}>
-                  <Ionicons name="restaurant-outline" size={32} color={colors.textMuted} />
+                  <Ionicons name="restaurant-outline" size={moderateScale(32)} color={colors.textMuted} />
                 </View>
               ) : null}
               {food.availability === 'sold-out' ? (
@@ -87,7 +92,7 @@ export default function BuyerHomeScreen() {
               ) : null}
               {food.isFavorite ? (
                 <View style={styles.favoriteBadge}>
-                  <Ionicons name="heart" size={18} color={colors.danger} />
+                  <Ionicons name="heart" size={moderateScale(18)} color={colors.danger} />
                 </View>
               ) : null}
             </View>
@@ -120,9 +125,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 20,
   },
   headerLeft: {
     flex: 1,
@@ -131,23 +136,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceMuted,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginHorizontal: layout.screenPadding,
-    marginBottom: spacing.xl,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    marginBottom: 24,
   },
   categoriesList: {
     flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: layout.screenPadding,
-    marginBottom: spacing.xl,
+    gap: 12,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
   categoryCard: {
     width: 76,
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radii.lg,
+    padding: 12,
+    borderRadius: 16,
     backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
     borderColor: colors.border,
@@ -159,30 +164,32 @@ const styles = StyleSheet.create({
   categoryIcon: {
     width: 44,
     height: 44,
-    borderRadius: radii.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
   categoryName: {
     textAlign: 'center',
-    fontSize: fontSize.sm,
+    fontSize: 12,
   },
   foodsList: {
-    paddingHorizontal: layout.screenPadding,
-    gap: spacing.md,
+    paddingHorizontal: 20,
+    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   foodCard: {
-    flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
   },
   foodImage: {
-    width: 96,
-    height: 96,
+    width: '100%',
+    height: 120,
     backgroundColor: colors.surfaceMuted,
     justifyContent: 'center',
     alignItems: 'center',
@@ -200,30 +207,29 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    paddingVertical: 4,
   },
   favoriteBadge: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
+    top: 8,
+    right: 8,
     backgroundColor: colors.textOnPrimary,
-    borderRadius: radii.pill,
-    padding: spacing.xs,
+    borderRadius: 999,
+    padding: 4,
   },
   foodInfo: {
-    flex: 1,
-    padding: spacing.md,
+    padding: 12,
     justifyContent: 'center',
   },
   foodRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: 8,
   },
   price: {
-    fontSize: fontSize.lg,
-    fontFamily: fontFamily.bold,
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
     color: colors.primary,
   },
 });
