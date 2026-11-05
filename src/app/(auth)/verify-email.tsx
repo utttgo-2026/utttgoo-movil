@@ -22,7 +22,7 @@ export default function VerifyEmailScreen() {
     try {
       // Simulación de verificación de token
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.replace('/welcome');
+      router.replace('/buyer' as any);
     } finally {
       setLoading(false);
     }

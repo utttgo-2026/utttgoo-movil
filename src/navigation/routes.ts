@@ -14,7 +14,6 @@ export const ROUTES = {
     availableNow: '/buyer/available-now',
     category: '/buyer/category',
     foodDetail: '/buyer/food',
-    sellerProfile: '/buyer/seller',
     orderData: '/buyer/order-data',
     confirmOrder: '/buyer/confirm-order',
     orderCreated: '/buyer/order-created',
@@ -24,9 +23,6 @@ export const ROUTES = {
     cancelOrder: '/buyer/cancel-order',
     notifications: '/buyer/notifications',
     profile: '/buyer/profile',
-    editProfile: '/buyer/edit-profile',
-    chats: '/buyer/chats',
-    chat: '/buyer/chat',
   },
   seller: {
     dashboard: '/seller',

@@ -1,8 +1,11 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { demoAccounts, demoUsers, findDemoUserByEmail } from '@/data/mock';
 import { delay } from '@/services/mockApi';
 import type { User, UserRole } from '@/types/models';
+
+const STORAGE_KEY = '@uttgo:users';
 
 type AuthResult = { success: boolean; error?: string };
 
@@ -20,6 +23,57 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const stored = JSON.parse(raw) as User[];
+          // Merge stored users with demo users (stored take precedence by email)
+          const demoByEmail = new Map(demoUsers.map((u) => [u.email.toLowerCase(), u]));
+          const merged = [...demoUsers];
+          for (const storedUser of stored) {
+            const existing = merged.find((u) => u.email.toLowerCase() === storedUser.email.toLowerCase());
+            if (existing) {
+              Object.assign(existing, storedUser);
+            } else {
+              merged.push(storedUser);
+            }
+          }
+          // Replace demoUsers reference is not possible, but we can use merged for lookups
+          // We'll store merged in a ref-like approach via state
+        }
+      } catch {
+        // ignore storage errors
+      } finally {
+        setLoaded(true);
+      }
+    };
+
+    loadUsers();
+  }, []);
+
+  const getStoredUsers = useCallback(async (): Promise<User[]> => {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        return JSON.parse(raw) as User[];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }, []);
+
+  const saveUsers = useCallback(async (users: User[]) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     await delay(650);
@@ -45,6 +99,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Check stored users
+    const stored = await getStoredUsers();
+    const storedUser = stored.find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (storedUser && storedUser.password) {
+      // Simple password check (stored as plain text for prototype)
+      if (storedUser.password === password) {
+        setUser({ ...storedUser, password: undefined });
+        return { success: true };
+      }
+      return { success: false, error: 'Correo o contraseña incorrectos.' };
+    }
+
+    // Fallback: create buyer
     const buyer = demoUsers.find((item) => item.role === 'buyer');
     setUser({
       ...(buyer as User),
@@ -52,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: normalizedEmail,
     });
     return { success: true };
-  }, []);
+  }, [getStoredUsers]);
 
   const register = useCallback(
     async (fullName: string, email: string, password: string): Promise<AuthResult> => {
@@ -62,16 +129,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: 'Completa todos los campos correctamente.' };
       }
 
-      setUser({
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const existing = demoUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+      const stored = await getStoredUsers();
+      const existingStored = stored.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+      if (existing || existingStored) {
+        return { success: false, error: 'Ya existe una cuenta con este correo.' };
+      }
+
+      const newUser: User = {
         id: `buyer-${Date.now()}`,
         role: 'buyer',
         fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         joinedAt: new Date().toISOString(),
-      });
+        password,
+      };
+
+      const updated = [...stored, newUser];
+      await saveUsers(updated);
+
+      setUser({ ...newUser, password: undefined });
       return { success: true };
     },
-    []
+    [getStoredUsers, saveUsers]
   );
 
   const signInAs = useCallback((role: UserRole) => {
@@ -89,14 +172,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       role: user?.role ?? 'buyer',
-      isAuthenticated: Boolean(user),
+      isAuthenticated: Boolean(user) && loaded,
       login,
       register,
       signInAs,
       logout,
     }),
-    [user, login, register, signInAs, logout]
+    [user, loaded, login, register, signInAs, logout]
   );
+
+  if (!loaded) {
+    return null;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -14,6 +14,7 @@ export interface User {
   rating?: number;
   reviewCount?: number;
   joinedAt?: string;
+  password?: string;
 }
 
 export interface FoodCategory {
@@ -29,6 +30,7 @@ export type FoodAvailability = 'available' | 'sold-out' | 'scheduled';
 export interface FoodItem {
   id: string;
   sellerId: string;
+  sellerName?: string;
   categoryId: string;
   name: string;
   description: string;
