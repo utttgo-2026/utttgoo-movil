@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
+import { AppButton, AppHeader, AppText, Badge, Screen, Surface } from '@/components';
 import { useCart } from '@/context/CartContext';
 import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
@@ -43,7 +43,7 @@ export default function ConfirmOrderScreen() {
           <View style={styles.orderItems}>
             {items.map((item) => (
               <View key={item.food.id} style={styles.orderItemRow}>
-                <View style={styles.orderItemInfo}>
+                <View style={styles.orderItemQty}>
                   <AppText variant="bodyStrong">x{item.quantity}</AppText>
                 </View>
                 <View style={styles.orderItemInfo}>
@@ -75,6 +75,21 @@ export default function ConfirmOrderScreen() {
           </View>
         </Surface>
 
+        <View style={styles.paymentMethodCard}>
+          <View style={styles.paymentMethodIcon}>
+            <Ionicons name="cash-outline" size={24} color={colors.primary} />
+          </View>
+          <View style={styles.paymentMethodInfo}>
+            <AppText variant="label">Método de pago</AppText>
+            <AppText variant="bodyStrong" color={colors.text}>
+              Efectivo
+            </AppText>
+            <AppText variant="caption" color={colors.textMuted}>
+              Pago al recibir el pedido
+            </AppText>
+          </View>
+        </View>
+
         <View style={styles.sellerInfo}>
           <View style={styles.sellerRow}>
             <AppText variant="label">Vendedor</AppText>
@@ -98,7 +113,7 @@ export default function ConfirmOrderScreen() {
         </View>
 
         <AppButton
-          label="Confirmar y pagar"
+          label="Confirmar pedido"
           variant="primary"
           onPress={handleConfirm}
           style={styles.confirmButton}
@@ -141,6 +156,10 @@ const styles = StyleSheet.create({
   orderItemInfo: {
     flex: 1,
   },
+  orderItemQty: {
+    width: 40,
+    textAlign: 'right',
+  },
   orderDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
@@ -159,6 +178,24 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xxl,
     fontWeight: '700',
     color: colors.primary,
+  },
+  paymentMethodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  paymentMethodIcon: {
+    padding: spacing.sm,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.sm,
+  },
+  paymentMethodInfo: {
+    flex: 1,
   },
   sellerInfo: {
     gap: spacing.sm,

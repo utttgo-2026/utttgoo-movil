@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
+import { AppButton, AppHeader, AppText, Screen, Surface } from '@/components';
 import { useCart } from '@/context/CartContext';
 import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
@@ -78,17 +78,24 @@ export default function OrderDataScreen() {
 
         <View style={styles.paymentRow}>
           <AppText variant="label">Método de pago</AppText>
-          <AppInput
-            label="Tarjeta universitaria"
-            leftIcon="card-outline"
-            value=""
-            editable={false}
-            placeholder="···· ···· ···· 1234"
-          />
+          <View style={styles.paymentMethodCard}>
+            <View style={styles.paymentMethodIcon}>
+              <Ionicons name="cash-outline" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.paymentMethodInfo}>
+              <AppText variant="bodyStrong" color={colors.text}>
+                Efectivo
+              </AppText>
+              <AppText variant="caption" color={colors.textMuted}>
+                Pago al recibir el pedido
+              </AppText>
+            </View>
+            <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+          </View>
         </View>
 
         <AppButton
-          label="Continuar con el pago"
+          label="Continuar"
           variant="primary"
           onPress={handleContinue}
           disabled={items.length === 0}
@@ -156,6 +163,24 @@ const styles = StyleSheet.create({
   },
   paymentRow: {
     gap: spacing.md,
+  },
+  paymentMethodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  paymentMethodIcon: {
+    padding: spacing.sm,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.sm,
+  },
+  paymentMethodInfo: {
+    flex: 1,
   },
   continueButton: {
     marginTop: spacing.xl,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View, Image } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { FlatList, Pressable, StyleSheet, View, Image, TextInput } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 
 import { AppButton, AppText, Avatar, Badge, BrandLogo, Screen, SectionHeader, Surface } from '@/components';
@@ -31,26 +31,35 @@ export default function BuyerHomeScreen() {
   const { user } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const CAT_CARD_WIDTH = moderateScale(156);
   const CAT_CARD_HEIGHT = moderateScale(200);
   const FOOD_CARD_WIDTH = (screenWidth - layout.screenPadding * 2 - spacing.md) / 2;
   const FOOD_CARD_HEIGHT = moderateScale(280);
 
-  const handleCategoryPress = (categoryId: string) => {
+  const handleCategoryPress = useCallback((categoryId: string) => {
     setSelectedCategory(categoryId);
     router.push(`/buyer/category?categoryId=${categoryId}` as any);
-  };
+  }, [router]);
 
-  const handleFoodPress = (food: FoodItem) => {
+  const handleFoodPress = useCallback((food: FoodItem) => {
     router.push(`/buyer/food/${food.id}` as any);
-  };
+  }, [router]);
+
+  const handleSearch = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, []);
 
   const filteredFoods = selectedCategory
     ? mockFoods.filter((f) => f.categoryId === selectedCategory && f.availability === 'available')
     : featuredFoods;
 
-  const renderCategory = ({ item }: { item: typeof mockCategories[0] }) => (
+  const filteredAndSearchedFoods = filteredFoods.filter((f) =>
+    f.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderCategory = useCallback(({ item }: { item: typeof mockCategories[0] }) => (
     <Pressable key={item.id} style={[styles.categoryCard, { width: CAT_CARD_WIDTH, height: CAT_CARD_HEIGHT }]} onPress={() => handleCategoryPress(item.id)}>
       <View style={styles.categoryImageContainer}>
         <Image
@@ -75,9 +84,9 @@ export default function BuyerHomeScreen() {
         </View>
       </View>
     </Pressable>
-  );
+  ), [handleCategoryPress]);
 
-  const renderFood = ({ item }: { item: FoodItem }) => (
+  const renderFood = useCallback(({ item }: { item: FoodItem }) => (
     <Pressable key={item.id} style={[styles.foodCard, { width: FOOD_CARD_WIDTH, height: FOOD_CARD_HEIGHT }]} onPress={() => handleFoodPress(item)}>
       <View style={styles.foodImageContainer}>
         <Image
@@ -110,10 +119,10 @@ export default function BuyerHomeScreen() {
         </View>
       </View>
     </Pressable>
-  );
+  ), [handleFoodPress]);
 
-  return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+  const renderHeader = useCallback(() => (
+    <View style={styles.headerContent}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <AppText variant="title">Hola, {user?.fullName.split(' ')[0]}</AppText>
@@ -126,9 +135,14 @@ export default function BuyerHomeScreen() {
 
       <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={moderateScale(20)} color={colors.textSubtle} />
-        <AppText variant="body" color={colors.textSubtle}>
-          Buscar alimentos…
-        </AppText>
+        <TextInput
+          placeholder="Buscar alimentos…"
+          value={searchQuery}
+          onChangeText={handleSearch}
+          placeholderTextColor={colors.textSubtle}
+          style={styles.searchInput}
+          underlineColorAndroid="transparent"
+        />
       </View>
 
       <SectionHeader title="Categorías" actionLabel="Ver todas" onAction={() => router.push('/buyer/category' as any)} />
@@ -145,21 +159,30 @@ export default function BuyerHomeScreen() {
       />
 
       <SectionHeader title="Disponible ahora" />
+    </View>
+  ), [user, router, renderCategory, handleSearch]);
 
+  return (
+    <Screen backgroundColor={colors.background} padded={false}>
       <FlatList
-        data={filteredFoods}
+        data={filteredAndSearchedFoods}
         renderItem={renderFood}
         keyExtractor={(item) => item.id}
         horizontal={false}
         numColumns={2}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.foodsList}
+        ListHeaderComponent={renderHeader}
+        ListHeaderComponentStyle={styles.headerContent}
       />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  headerContent: {
+    paddingBottom: spacing.md,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -180,6 +203,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginHorizontal: layout.screenPadding,
     marginBottom: spacing.xl,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.text,
+    paddingHorizontal: spacing.sm,
   },
   categoriesList: {
     paddingHorizontal: layout.screenPadding,

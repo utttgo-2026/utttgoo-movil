@@ -75,7 +75,8 @@ export interface Order {
   pickupAt?: string;
   pickupLocation: string;
   notes?: string;
-  paymentMethod: string;
+  paymentMethod: 'cash';
+  qrPayload?: string;
   rated?: boolean;
 }
 
