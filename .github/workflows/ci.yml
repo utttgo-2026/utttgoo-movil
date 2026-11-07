@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, HRDCORE]
+  push:
+    branches: [main, HRDCORE]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+  expo-doctor:
+    name: Expo Doctor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Expo Doctor
+        run: npx expo-doctor
+
+  # tests:
+  #   name: Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: ${{ env.NODE_VERSION }}
+      #     cache: 'npm'
+      # - name: Install dependencies
+      #   run: npm ci
+      # - name: Run tests
+      #   run: npm run test:ci
+      #   # Descomentar cuando existan tests automatizados
+
+  summary:
+    name: CI Summary
+    needs: [typecheck, lint, expo-doctor]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: CI Summary
+        run: |
+          echo "=== CI Summary ==="
+          echo "TypeScript: ${{ needs.typecheck.result }}"
+          echo "Lint: ${{ needs.lint.result }}"
+          echo "Expo Doctor: ${{ needs.expo-doctor.result }}"
+          # echo "Tests: ${{ needs.tests.result }}"
+          if [[ "${{ needs.typecheck.result }}" != "success" ]] || [[ "${{ needs.lint.result }}" != "success" ]] || [[ "${{ needs.expo-doctor.result }}" != "success" ]]; then
+            echo "::error::CI failed"
+            exit 1
+          fi
+          echo "All checks passed!"

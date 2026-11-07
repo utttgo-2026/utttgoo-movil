@@ -118,7 +118,7 @@ export default function OrderCreatedScreen() {
         </View>
 
         <AppText variant="caption" align="center" color={colors.textSubtle} style={styles.footer}>
-          Puedes ver el estado de tu pedido en "Mis pedidos"
+          Puedes ver el estado de tu pedido en {'"'}Mis pedidos{' "'}
         </AppText>
       </View>
     </Screen>

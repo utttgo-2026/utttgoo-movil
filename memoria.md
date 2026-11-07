@@ -79,7 +79,7 @@
 | 2025-11-05 | Backend pendiente (solo mock) | Enfoque en UI/UX para demo académica |
 | 2025-11-05 | Solo Android (Expo Go) | Requisito académico: demo en Android |
 | 2025-11-05 | No tests automatizados | Tiempo limitado, validación manual Expo Go |
-| 2025-11-05 | No CI/CD | Desarrollo local, entrega académica |
+| 2025-11-05 | CI/CD con GitHub Actions + EAS | CI: TypeScript, Lint, Expo Doctor | CD Preview: Android via EAS |
 | 2025-11-05 | Single-vendor cart | Regla de negocio explícita |
 | 2025-11-05 | Sin pagos reales | Mock only, demo académica |
 | 2025-11-05 | Sin notificaciones push reales | Mock only |
@@ -92,6 +92,7 @@
 | Fecha | Problema | Solución | Archivos |
 |-------|----------|----------|----------|
 | 2025-11-05 | Expo Router "Too many screens" | Eliminar Stack.Screen redundantes auth/buyer | `_layout.tsx` |
+| 2025-11-06 | CI/CD Pipeline con GitHub Actions + EAS | CI: TypeScript, Lint, Expo Doctor | CD Preview: Android via EAS | `.github/workflows/ci.yml`, `.github/workflows/build-android.yml`, `eas.json` |
 | 2025-11-05 | Imagen no resuelve `@/assets/...` | Rutas relativas `../../assets/...` | `welcome.tsx`, `index.tsx` |
 | 2025-11-05 | Back navigation salta a Welcome | `router.replace` → `router.push` en login/verify | `login.tsx`, `verify-email.tsx` |
 | 2025-11-05 | Imagen no carga (Image vs ImageBackground) | `ImageBackground` para hero con overlay | `welcome.tsx` |

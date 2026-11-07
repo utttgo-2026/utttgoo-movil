@@ -308,7 +308,57 @@ Las siguientes actividades contempladas son:
 
 ---
 
-## 8. Estado actual
+## 8. CI/CD
+
+### CI (Integración Continua)
+
+Pipeline automatizado con GitHub Actions que se ejecuta en cada Pull Request y push a `main` / `HRDCORE`:
+
+| Job | Comando | Descripción |
+|-----|---------|-------------|
+| TypeScript | `npx tsc --noEmit` | Verificación de tipos estricta |
+| Lint | `npm run lint` | `expo lint` - Reglas ESLint + Expo |
+| Expo Doctor | `npx expo-doctor` | Validación configuración Expo |
+
+**Triggers:** PR a `main`/`HRDCORE`, `push` a `main`/`HRDCORE`
+
+### CD (Despliegue Continuo) - Fase 1: Preview
+
+Build Android de prueba mediante Expo Application Services (EAS):
+
+```yaml
+# Trigger manual
+workflow_dispatch:
+  inputs:
+    profile:
+      type: choice
+      options: [preview, development]
+      default: preview
+
+# Trigger automático opcional
+push:
+  branches: [HRDCORE]
+```
+
+**Comando:** `eas build --platform android --profile preview --non-interactive`
+
+**Requisitos previos:**
+- Proyecto vinculado a Expo Services (`eas build:configure`)
+- Secret `EXPO_TOKEN` en GitHub Secrets
+- Perfil `preview` en `eas.json` (APK interna)
+
+### Fase 2 - Producción (Pendiente)
+
+| Funcionalidad | Estado |
+|---------------|--------|
+| Build producción (AAB + IPA) | ⏳ Pendiente |
+| `eas submit` automático | ⏳ Pendiente |
+| Credenciales Google Play / App Store | ⏳ Pendiente |
+| Notificaciones release (Slack/Email) | ⏳ Pendiente |
+
+---
+
+## 9. Estado actual
 
 El proyecto se encuentra en una etapa avanzada de desarrollo. Ya cuenta con:
 - Estructura organizada y modular

@@ -213,6 +213,10 @@ npx expo start --android
 
 # Lint
 npx expo lint
+
+# Tests
+npm run test
+npm run test:ci
 ```
 
 **Regla**: No commit sin `npx tsc --noEmit` = 0 errors + prueba manual en Expo Go.
@@ -279,18 +283,38 @@ npx expo lint
 
 ---
 
-## 11. Contacto / Escalación
+## 12. Reglas CI/CD (Obligatorias)
 
-Si hay duda sobre:
-- **Diseño**: Revisar `UTTT-Go/` + `ANALISIS_FIGMA.md`
-- **Arquitectura**: Revisar `CONSTITUTION.md`
-- **Qué construir**: Revisar `specs/XXX/spec.md`
-- **Cómo implementar**: Revisar `plans/XXX-plan.md`
-- **Qué hacer ahora**: Revisar `tasks/XXX-tasks.md`
-- **Decisiones pasadas**: Revisar `memoria.md` + `SDD_CHANGELOG.md`
+### CI (Integración Continua)
+- **Obligatorio antes de merge**: CI debe pasar en GitHub Actions
+- **Jobs obligatorios**: TypeScript, Lint, Expo Doctor
+- **Tests**: Cuando existan, deben pasar en CI
+- **Pipeline**: `.github/workflows/ci.yml` (TypeScript, Lint, Expo Doctor)
+- **Triggers**: PR/push a `main` y `HRDCORE`
+
+### CD (Despliegue Continuo)
+- **Fase 1 (Actual)**: Preview builds Android via EAS
+  - Workflow: `.github/workflows/build-android.yml`
+  - Trigger: `workflow_dispatch` + opcional `push` a `HRDCORE`
+  - Profile: `preview` (APK interna)
+  - Requiere: `EXPO_TOKEN` en GitHub Secrets, proyecto vinculado a EAS
+- **Fase 2 (Futuro)**: Production builds + `eas submit`
+  - Requiere credenciales Google Play / App Store
+  - NO implementar sin autorización explícita
+
+### Reglas de Seguridad
+- ❌ NO commit sin `npx tsc --noEmit` = 0 errors + `npm run lint` limpio
+- ❌ NO push sin CI passing en GitHub Actions
+- ❌ NO secrets en código (`EXPO_TOKEN`, credenciales) → usar GitHub Secrets
+- ❌ NO `router.replace` en login/verify-email (usa `push`)
+- ❌ NO builds de producción sin autorización explícita
+- ❌ NO publicar en tiendas sin autorización explícita
+
+### Workflow Daily
+1. `npx tsc --noEmit` + `npm run lint` local antes de commit
+2. `npx expo start -c` para probar en Expo Go
+3. Push → CI corre en GitHub Actions
+4. Merge solo si CI pasa
+5. Para build preview: `workflow_dispatch` → `build-android.yml`
 
 ---
-
-**Última actualización**: 2025-11-05
-**Versión AGENTS**: 1.0
-**Proyecto**: UTTT-Go Móvil
