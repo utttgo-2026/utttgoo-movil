@@ -294,8 +294,64 @@ npx expo start --android  # Android directo
 - `src/data/mock/categories.ts`
 - `src/data/mock/foods.ts`
 
+### Corrección de VirtualizedList + CI/CD Pipeline + QR Code + Efectivo (2025-11-06)
+
+**Commit**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`
+
+**Cambios**:
+- **VirtualizedList anidado corregido**: Reestructuración `BuyerHomeScreen` con `FlatList` único + `ListHeaderComponent` (eliminado `ScrollView` anidado)
+- **Navegación back corregida**: `router.replace` → `router.push` en login/verify-email (mantiene historial)
+- **CI Pipeline** (`.github/workflows/ci.yml`): TypeScript, Lint, Expo Doctor + Summary gate
+- **CD Preview Build** (`.github/workflows/build-android.yml`): Android preview via EAS (`workflow_dispatch` + push HRDCORE)
+- **EAS Config** (`eas.json`): Perfiles development/preview/production
+- **Package.json**: Scripts test (jest, test:watch, test:ci), dependencias test (jest, jest-expo, react-test-renderer, @testing-library/react-native, @testing-library/jest-native, react-native-qrcode-svg, react-native-svg)
+- **EAS Config** (`eas.json`): Perfiles development/preview/production
+- **App Config**: `app.json` corregido (removido `newArchEnabled`, `edgeToEdgeEnabled`)
+- **Dependencias**: `@react-native-async-storage/async-storage@2.2.0`, `jest@30.5.0`, `@types/jest@30.0.0`, `jest-expo@58`, `react-test-renderer@19.3.0`, `@testing-library/react-native@14.1.0`, `@testing-library/jest-native@5.4.3`, `react-native-qrcode-svg@6.3.54`, `react-native-svg@15.16.0`
+- **Método de pago**: EFECTIVO en `order-data.tsx`, `confirm-order.tsx`, `order-created.tsx`
+- **QR Code real**: Generación dinámica con `react-native-qrcode-svg` en `order-created.tsx`
+- **Modelo Order**: `paymentMethod: 'cash'`, `qrPayload` agregado
+- **Mock Orders**: `paymentMethod: 'cash'`, `qrPayload` JSON agregado
+- **Correcciones lint/tsc**: Errores de lint resueltos (comillas escapadas, tipos)
+- **VirtualizedList fix**: `nestedScrollEnabled` en `Screen` + quitar `scroll` en pantallas con FlatList
+- **Navegación food**: Query params → segmento dinámico `/buyer/food/:id` + `useLocalSearchParams`
+
+**Archivos creados/modificados**: 30+ archivos
+
+**Verificaciones**: `npx tsc --noEmit` ✅ 0 errores | `npm run lint` ✅ 0 errores | `npx expo-doctor` ✅ 20/20 checks passed
+
+---
+
+### Corrección de VirtualizedList + CI/CD Pipeline + QR Code + Efectivo (2025-11-06)
+
+**Commit**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`
+
+**Cambios**:
+- **VirtualizedList anidado corregido**: Reestructuración `BuyerHomeScreen` con `FlatList` único + `ListHeaderComponent` (eliminado `ScrollView` anidado)
+- **Navegación back corregida**: `router.replace` → `router.push` en login/verify-email (mantiene historial)
+- **CI Pipeline** (`.github/workflows/ci.yml`): TypeScript, Lint, Expo Doctor + Summary gate
+- **CD Preview Build** (`.github/workflows/build-android.yml`): Android preview via EAS (`workflow_dispatch` + push HRDCORE)
+- **EAS Config** (`eas.json`): Perfiles development/preview/production
+- **Package.json**: Scripts test (jest, test:watch, test:ci), dependencias test (jest, jest-expo, react-test-renderer, @testing-library/react-native, @testing-library/jest-native, react-native-qrcode-svg, react-native-svg)
+- **EAS Config** (`eas.json`): Perfiles development/preview/production
+- **App Config**: `app.json` corregido (removido `newArchEnabled`, `edgeToEdgeEnabled`)
+- **Dependencias**: `@react-native-async-storage/async-storage@2.2.0`, `jest@30.5.0`, `@types/jest@30.0.0`, `jest-expo@58`, `react-test-renderer@19.3.0`, `@testing-library/react-native@14.1.0`, `@testing-library/jest-native@5.4.3`, `react-native-qrcode-svg@6.3.54`, `react-native-svg@15.16.0`
+- **Método de pago**: EFECTIVO en `order-data.tsx`, `confirm-order.tsx`, `order-created.tsx`
+- **QR Code real**: Generación dinámica con `react-native-qrcode-svg` en `order-created.tsx`
+- **Modelo Order**: `paymentMethod: 'cash'`, `qrPayload` agregado
+- **Mock Orders**: `paymentMethod: 'cash'`, `qrPayload` JSON agregado
+- **Correcciones lint/tsc**: Errores de lint resueltos (comillas escapadas, tipos)
+- **VirtualizedList fix**: `nestedScrollEnabled` en `Screen` + quitar `scroll` en pantallas con FlatList
+- **Navegación food**: Query params → segmento dinámico `/buyer/food/:id` + `useLocalSearchParams`
+
+**Archivos creados/modificados**: 30+ archivos
+
+**Verificaciones**: `npx tsc --noEmit` ✅ 0 errores | `npm run lint` ✅ 0 errores | `npx expo-doctor` ✅ 20/20 checks passed
+
+---
+
 ### Última actualización
 
-**Fecha**: 2025
-**Commit**: `a866774` — "Fix: Scroll en Home con nestedScrollEnabled"
-**Branch**: `main` → `origin/main` sincronizado
+**Fecha**: 2025-11-06
+**Branch**: `HRDCORE` → `origin/HRDCORE` sincronizado
+**Commits**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`

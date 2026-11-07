@@ -1,17 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 import { AppButton, AppHeader, AppText, Badge, Screen, Surface } from '@/components';
 import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
+import { mockOrders } from '@/data/mock';
 
 export default function OrderCreatedScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+
+  // Find the order by ID from query params, fallback to first order
+  const orderId = id || 'order-1';
+  const order = mockOrders.find((o) => o.id === orderId) || mockOrders[0];
+
+  const qrPayload = order.qrPayload || JSON.stringify({
+    orderId: order.id,
+    code: order.code,
+    buyerId: order.buyerId,
+    sellerId: order.sellerId,
+    timestamp: order.createdAt,
+    status: order.status,
+  });
 
   const handleTrackOrder = () => {
-    router.push('/buyer/order-tracking' as any);
+    router.push(`/buyer/order-tracking?orderId=${order.id}` as any);
   };
 
   const handleBackHome = () => {
@@ -36,17 +52,23 @@ export default function OrderCreatedScreen() {
           <View style={styles.orderInfo}>
             <AppText variant="label">Número de pedido</AppText>
             <AppText variant="bodyStrong" style={styles.orderCode}>
-              UTTT-1005
+              {order.code}
             </AppText>
           </View>
           <View style={styles.orderInfo}>
             <AppText variant="label">Estado</AppText>
-            <Badge label="Pendiente" tone="warning" />
+            <Badge label={order.status === 'delivered' ? 'Entregado' : order.status === 'preparing' ? 'En preparación' : order.status === 'ready' ? 'Listo' : order.status === 'pending' ? 'Pendiente' : 'Cancelado'} tone={order.status === 'delivered' || order.status === 'ready' ? 'success' : order.status === 'preparing' ? 'warning' : order.status === 'cancelled' ? 'danger' : 'info'} />
+          </View>
+          <View style={styles.orderInfo}>
+            <AppText variant="label">Método de pago</AppText>
+            <AppText variant="bodyStrong" style={styles.orderTotal}>
+              Efectivo
+            </AppText>
           </View>
           <View style={styles.orderInfo}>
             <AppText variant="label">Total</AppText>
             <AppText variant="bodyStrong" style={styles.orderTotal}>
-              $118.00
+              ${order.total.toFixed(2)}
             </AppText>
           </View>
           <View style={styles.orderInfo}>
@@ -54,6 +76,27 @@ export default function OrderCreatedScreen() {
             <AppText variant="body">30 min</AppText>
           </View>
         </Surface>
+
+        <AppText variant="subtitle" align="center" style={styles.qrTitle}>
+          Código QR para la entrega
+        </AppText>
+        <AppText variant="caption" align="center" color={colors.textMuted} style={styles.qrSubtitle}>
+          Muestra este QR al vendedor al recibir tu pedido
+        </AppText>
+
+        <Surface style={styles.qrContainer} bordered={false} backgroundColor={colors.background}>
+          <QRCode
+            value={qrPayload}
+            size={200}
+            color={colors.text}
+            backgroundColor={colors.background}
+            getRef={(ref) => { /* QRCode ref */ }}
+          />
+        </Surface>
+
+        <AppText variant="caption" align="center" color={colors.textSubtle} style={styles.qrCodeText}>
+          {order.code}
+        </AppText>
 
         <AppText variant="subtitle" align="center" style={styles.nextSectionTitle}>
           ¿Qué quieres hacer ahora?
@@ -75,7 +118,7 @@ export default function OrderCreatedScreen() {
         </View>
 
         <AppText variant="caption" align="center" color={colors.textSubtle} style={styles.footer}>
-          Puedes ver el estado de tu pedido en "Mis pedidos"
+          Puedes ver el estado de tu pedido en {'"'}Mis pedidos{' "'}
         </AppText>
       </View>
     </Screen>
@@ -123,6 +166,24 @@ const styles = StyleSheet.create({
   },
   nextSectionTitle: {
     marginTop: spacing.lg,
+  },
+  qrTitle: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.xs,
+  },
+  qrSubtitle: {
+    marginBottom: spacing.lg,
+  },
+  qrContainer: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: spacing.lg,
+  },
+  qrCodeText: {
+    marginTop: spacing.sm,
+    fontFamily: 'monospace',
   },
   actions: {
     gap: spacing.md,
