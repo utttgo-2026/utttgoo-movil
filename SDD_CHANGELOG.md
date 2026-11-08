@@ -15,6 +15,27 @@
 
 # Historial de cambios
 
+## Fase 004 - Preparación CI/CD, DevSecOps y contrato API
+
+### Estado
+
+**EN DESARROLLO**. Se actualizó la fase vigente sin crear una segunda estructura SDD.
+
+### Cambios
+
+- Node 22.13.1 unificado mediante `.nvmrc`, `engines` y workflows.
+- Scripts reales de tests, coverage e integración.
+- Pruebas deterministas para correo institucional, utilidades y `ApiError`.
+- Configuración API por entorno y cliente centralizado aislado de los mocks.
+- CI con quality, Expo Doctor y trazabilidad SDD.
+- CodeQL, Dependency Review, npm audit, Dependabot y Gitleaks.
+- Workflows manuales para Preview EAS, release AAB y smoke test Backend.
+- Documentación de entornos, branch protection, evidencias y bloqueos externos.
+
+### Bloqueos
+
+`BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `BLOCKED_BY_BACKEND_HTTPS`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
+
 ## Etapa 1 — Inicialización del proyecto
 
 ### Objetivo

@@ -310,6 +310,10 @@ Las siguientes actividades contempladas son:
 
 ## 8. CI/CD
 
+La fase vigente es `specs/004-ci-cd/`. La preparación actual usa Node.js 22.13.1 y workflows separados para calidad, seguridad, preview, release y smoke test. Production requiere Backend HTTPS, enlace EAS, `EXPO_TOKEN`, primer build exitoso y aprobación humana; no se ejecuta `eas submit` automáticamente.
+
+Variables de entorno: consultar `docs/environments.md` y `.env.example`. No incluir JWT, contraseñas ni tokens en `EXPO_PUBLIC_*`.
+
 ### CI (Integración Continua)
 
 Pipeline automatizado con GitHub Actions que se ejecuta en cada Pull Request y push a `main` / `HRDCORE`:

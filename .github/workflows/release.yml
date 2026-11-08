@@ -1,0 +1,56 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22.13.1'
+
+jobs:
+  gates:
+    name: Release Gates
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run doctor
+      - name: Validate release configuration
+        run: |
+          grep -q 'mx.edu.utt.uttgo' app.json
+          grep -q 'app-bundle' eas.json
+          grep -q 'BLOCKED_BY_BACKEND_HTTPS' docs/evidencias/ci-cd/release-gate.md
+      - name: Block release until Backend HTTPS exists
+        run: |
+          echo "::error::BLOCKED_BY_BACKEND_HTTPS"
+          exit 1
+  build:
+    name: Production AAB
+    needs: gates
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Validate EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN"
+      - name: Build Android App Bundle
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile production --non-interactive --wait

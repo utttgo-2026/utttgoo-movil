@@ -285,6 +285,8 @@ npm run test:ci
 
 ## 12. Reglas CI/CD (Obligatorias)
 
+La fase CI/CD vigente es `specs/004-ci-cd/`. La versión única de Node es 22.13.1. Los builds EAS de preview y production requieren enlace real del proyecto y `EXPO_TOKEN`; no deben simularse con `echo`. Production requiere HTTPS del Backend y genera AAB, no APK.
+
 ### CI (Integración Continua)
 - **Obligatorio antes de merge**: CI debe pasar en GitHub Actions
 - **Jobs obligatorios**: TypeScript, Lint, Expo Doctor

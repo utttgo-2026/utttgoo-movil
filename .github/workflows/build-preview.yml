@@ -1,0 +1,55 @@
+name: Build Android Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS profile
+        type: choice
+        required: true
+        default: preview
+        options: [preview, development]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22.13.1'
+
+jobs:
+  gates:
+    name: Preview Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --runInBand
+      - run: npm run doctor
+
+  build:
+    name: EAS Preview Build
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Validate EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN"
+      - run: npx eas-cli@latest --version
+      - name: Build Android preview
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait

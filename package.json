@@ -1,6 +1,9 @@
 {
   "name": "uttgo",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.1",
@@ -51,18 +54,23 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "test": "jest",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --coverage",
+    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --testPathPatterns=integration --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:ci": "jest --ci --coverage",
-    "doctor": "expo-doctor"
+    "test:ci": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --ci --runInBand --coverage",
+    "doctor": "npx expo-doctor"
   },
   "jest": {
-    "preset": "jest-expo",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.[jt]sx?$": ["babel-jest", { "presets": ["babel-preset-expo"] }]
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
     "transformIgnorePatterns": [
       "node_modules/(?!(react-native|@expo|@react-native|expo)/)"
-    ],
-    "setupFilesAfterEnv": [
-      "@testing-library/jest-native/extend-expect"
     ],
     "moduleFileExtensions": [
       "ts",
@@ -77,8 +85,25 @@
     ],
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",
-      "!src/**/*.d.ts"
-    ]
+      "!src/**/*.d.ts",
+      "!src/app/**",
+      "!src/components/**",
+      "!src/context/**",
+      "!src/data/**",
+      "!src/theme/**",
+      "!src/hooks/**",
+      "!src/navigation/**",
+      "!src/types/models.ts",
+      "!src/services/mockApi.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
   },
   "private": true
 }

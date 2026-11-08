@@ -1,5 +1,9 @@
 # Memoria — UTTT-Go Móvil
 
+## Decisión CI/CD vigente
+
+La fase `004-ci-cd` concentra la preparación de calidad, seguridad y release. Node se fija en 22.13.1. La URL API se obtiene de entorno; no se hardcodea el Backend HTTP ni se debilita la seguridad Android para Production. El cliente API interpreta el contrato `ApiError` centralmente, pero las pantallas continúan usando mocks hasta que exista contrato funcional aprobado.
+
 > Registro de decisiones arquitectónicas, de diseño, de navegación, de datos mock y de alcance del proyecto UTTT-Go Móvil.
 
 ---

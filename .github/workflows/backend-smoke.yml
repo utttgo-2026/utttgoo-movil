@@ -1,0 +1,20 @@
+name: Backend Smoke Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check backend health
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          test -n "$API_BASE_URL"
+          curl --fail --silent --show-error --max-time 15 "$API_BASE_URL/health"
