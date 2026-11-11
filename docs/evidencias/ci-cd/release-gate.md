@@ -15,5 +15,7 @@ Estado de auditoría inicial:
 - Expo Doctor: `20/20` checks passed.
 - EAS project info: `@utttgoo/uttgoo`, project ID `52014672-c800-4cf6-af6a-330cb13986e8`.
 - `punycode`: `NON_BLOCKING_EAS_WARNING`; Node trace apunta a `whatwg-url` dentro de EAS CLI (`C:\Users\Valeria\AppData\Local\npm-cache\_npx\...`), no a código UTTT-GO.
+- Preview EAS: `PENDIENTE`, en cola; Build ID `fee81d7d-abef-4b8f-b255-c1d6c09b2ec5`.
+- Commit de cambios: `0a004e7`.
 
 Mientras exista Backend HTTP, ningún release Production se considera listo para Google Play.

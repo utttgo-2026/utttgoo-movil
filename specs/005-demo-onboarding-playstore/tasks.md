@@ -7,21 +7,31 @@
 ## Tareas
 
 - [x] Crear spec, plan y tasks de la fase.
-- [ ] Crear fuente aislada de datos demo.
-- [ ] Implementar Demo invitado 1/2.
-- [ ] Implementar Demo invitado 2/2.
-- [ ] Conectar Welcome con el demo.
-- [ ] Corregir Splash e identidad visual.
-- [ ] Integrar Login con `POST /api/v1/auth/login`.
-- [ ] Integrar Registro con `POST /api/v1/auth/register` y respuesta `202`.
-- [ ] Sustituir token simulado por confirmación de enlace Supabase.
-- [ ] Añadir almacenamiento seguro para JWT.
-- [ ] Corregir icono, adaptive icon, splash y nombre Android.
+- [x] Crear fuente aislada de datos demo.
+- [x] Implementar Demo invitado 1/2.
+- [x] Implementar Demo invitado 2/2.
+- [x] Conectar Welcome con el demo.
+- [x] Corregir Splash e identidad visual.
+- [x] Integrar Login con `POST /api/v1/auth/login`.
+- [x] Integrar Registro con `POST /api/v1/auth/register` y respuesta `202`.
+- [x] Sustituir token simulado por confirmación de enlace Supabase.
+- [x] Añadir almacenamiento seguro para JWT.
+- [x] Corregir icono, adaptive icon, splash y nombre Android.
 - [x] Agregar pruebas del flujo demo y auth.
-- [ ] Actualizar documentación y evidencias.
-- [ ] Ejecutar validaciones locales.
-- [ ] Ejecutar Preview EAS si la autenticación está disponible.
-- [ ] Hacer commit y push únicamente a `origin/eas-google-play`.
+- [x] Actualizar documentación y evidencias.
+- [x] Ejecutar validaciones locales.
+- [x] Ejecutar Preview EAS si la autenticación está disponible.
+- [x] Hacer commit y push únicamente a `origin/eas-google-play`.
+
+## Evidencia de validación
+
+- Node: `v22.13.1`.
+- TypeScript: `0 errors`.
+- Tests: `14 passed`.
+- Coverage: `92.5%` statements, `80.64%` branches, `100%` functions, `92.3%` lines.
+- Expo Doctor: `20/20 checks passed`.
+- EAS project: `@utttgoo/uttgoo`, project ID `52014672-c800-4cf6-af6a-330cb13986e8`.
+- Preview Build: `PENDIENTE`, en cola; ID `fee81d7d-abef-4b8f-b255-c1d6c09b2ec5`.
 
 ## Bloqueos esperados
 
