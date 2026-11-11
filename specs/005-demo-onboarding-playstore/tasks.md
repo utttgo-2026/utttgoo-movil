@@ -31,7 +31,7 @@
 - Coverage: `92.5%` statements, `80.64%` branches, `100%` functions, `92.3%` lines.
 - Expo Doctor: `20/20 checks passed`.
 - EAS project: `@utttgoo/uttgoo`, project ID `52014672-c800-4cf6-af6a-330cb13986e8`.
-- Preview Build: `PENDIENTE`, en cola; ID `fee81d7d-abef-4b8f-b255-c1d6c09b2ec5`.
+- Preview Build: `PENDIENTE`, en cola; ID `3eadc96f-4954-43f0-9b24-723f7f234e6f` (commit actual `5af69a5`).
 
 ## Bloqueos esperados
 
