@@ -1,4 +1,4 @@
-# UTTT-Go Móvil
+# UTTT-GO Móvil
 
 Aplicación móvil del proyecto **UTTT-Go**, una plataforma orientada a facilitar la compra y venta de alimentos dentro de la comunidad de la Universidad Tecnológica de Tula-Tepeji (UTTT).
 
@@ -149,7 +149,7 @@ Actividades realizadas:
 
 ### Etapa 2. Autenticación ✅ COMPLETADA
 
-Implementación del flujo completo de autenticación local con persistencia.
+Implementación del flujo de autenticación y onboarding con Backend autorizado.
 
 Pantallas implementadas:
 - **UI-001**: Splash
@@ -161,10 +161,10 @@ Pantallas implementadas:
 
 Funcionalidades:
 - Splash con auto-navegación a Bienvenida tras 2.5s
-- Login/Registro con validaciones y usuarios demo
-- Persistencia AsyncStorage (usuarios registrados sobreviven reinicios)
+- Login/Registro con validaciones y contratos autorizados
+- Persistencia segura de sesión mediante SecureStore
 - Recuperación de contraseña simulada
-- Verificación de correo (token 6 dígitos simulado)
+- Confirmación de correo mediante enlace enviado por Supabase
 - Logout con reset de stack
 - Navegación back correcta (push vs replace)
 
@@ -247,11 +247,11 @@ Funcionalidades:
 
 ## 5. Datos y servicios
 
-Actualmente se utilizan datos simulados (*mock*) para facilitar el desarrollo y las pruebas de interfaz.
+Actualmente el catálogo comprador conserva datos simulados (*mock*) para facilitar el desarrollo y las pruebas de interfaz. El demo invitado usa una fuente separada en `src/data/demo/`.
 
-No existe todavía una conexión funcional con el backend.
+Login y registro usan el `ApiClient` cuando existe configuración de API. El demo invitado no requiere Backend.
 
-La autenticación, el registro y la recuperación de contraseña son simulaciones locales, no procesos de autenticación reales.
+La confirmación de correo se realiza mediante el enlace enviado por Supabase; no existe token ni endpoint de verificación en la app.
 
 ---
 

@@ -1,11 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
+import { isInstitutionalEmail } from '@/utils/validation';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -34,6 +34,10 @@ export default function RegisterScreen() {
       setError('Ingresa tu correo institucional.');
       return;
     }
+    if (!isInstitutionalEmail(form.email)) {
+      setError('Usa un correo con dominio @utt.edu.mx.');
+      return;
+    }
     if (form.password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
       return;
@@ -47,7 +51,7 @@ export default function RegisterScreen() {
     try {
       const result = await register(form.fullName, form.email, form.password);
       if (result.success) {
-        router.push('/verify-email');
+        router.push({ pathname: '/verify-email', params: { email: form.email.trim().toLowerCase() } });
       } else {
         setError(result.error ?? 'No se pudo crear la cuenta.');
       }

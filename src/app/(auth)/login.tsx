@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 export default function LoginScreen() {
   const router = useRouter();

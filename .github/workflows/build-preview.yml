@@ -31,6 +31,7 @@ jobs:
       - run: npm run lint
       - run: npm test -- --runInBand
       - run: npm run doctor
+      - run: npx expo-doctor
 
   build:
     name: EAS Preview Build

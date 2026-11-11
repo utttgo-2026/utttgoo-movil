@@ -79,4 +79,14 @@ describe('apiClient', () => {
       details: { status, code: `ERROR_${status}` },
     });
   });
+
+  it('accepts a 202 register response without inventing a response body', async () => {
+    const fetchImplementation = jest.fn().mockResolvedValue(new Response(null, { status: 202 }));
+    const client = createApiClient({ fetchImplementation });
+
+    await expect(client('/api/v1/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'alumno@utt.edu.mx', password: 'password', displayName: 'Alumno' }),
+    })).resolves.toBeUndefined();
+  });
 });

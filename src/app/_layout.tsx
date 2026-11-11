@@ -58,6 +58,8 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)/register" />
               <Stack.Screen name="(auth)/forgot-password" />
               <Stack.Screen name="(auth)/verify-email" />
+              <Stack.Screen name="demo-one" />
+              <Stack.Screen name="demo-two" />
               {/* Buyer routes */}
               <Stack.Screen name="buyer" />
               <Stack.Screen name="buyer/search" />

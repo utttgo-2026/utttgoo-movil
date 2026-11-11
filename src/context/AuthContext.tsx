@@ -1,13 +1,20 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
-import { demoAccounts, demoUsers, findDemoUserByEmail } from '@/data/mock';
-import { delay } from '@/services/mockApi';
+import { createApiClient, ApiRequestError } from '@/services/apiClient';
 import type { User, UserRole } from '@/types/models';
 
-const STORAGE_KEY = '@uttgo:users';
+const TOKEN_KEY = 'uttgo.auth.token';
 
 type AuthResult = { success: boolean; error?: string };
+type AuthResponse = { token?: string; accessToken?: string; jwt?: string; user?: BackendUser };
+type BackendUser = {
+  id?: string;
+  email?: string;
+  displayName?: string;
+  fullName?: string;
+  role?: UserRole;
+};
 
 interface AuthContextValue {
   user: User | null;
@@ -21,177 +28,114 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiRequestError) {
+    if (error.details.code === 'INVALID_CREDENTIALS' || error.details.status === 401) {
+      return 'Correo o contraseña incorrectos.';
+    }
+    return error.details.message || fallback;
+  }
+  if (error instanceof Error && error.message === 'EXPO_PUBLIC_API_BASE_URL is required.') {
+    return 'El acceso institucional no está disponible en este entorno.';
+  }
+  return fallback;
+}
+
+function toUser(value: BackendUser, email: string): User {
+  return {
+    id: value.id ?? email,
+    role: value.role ?? 'buyer',
+    fullName: value.displayName ?? value.fullName ?? email,
+    email: value.email ?? email,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const loadUsers = async () => {
+    const restoreSession = async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const stored = JSON.parse(raw) as User[];
-          // Merge stored users with demo users (stored take precedence by email)
-          const demoByEmail = new Map(demoUsers.map((u) => [u.email.toLowerCase(), u]));
-          const merged = [...demoUsers];
-          for (const storedUser of stored) {
-            const existing = merged.find((u) => u.email.toLowerCase() === storedUser.email.toLowerCase());
-            if (existing) {
-              Object.assign(existing, storedUser);
-            } else {
-              merged.push(storedUser);
-            }
-          }
-          // Replace demoUsers reference is not possible, but we can use merged for lookups
-          // We'll store merged in a ref-like approach via state
+        const token = await SecureStore.getItemAsync(TOKEN_KEY);
+        if (token) {
+          const client = createApiClient({ getToken: async () => token });
+          const me = await client<BackendUser>('/api/v1/auth/me');
+          setUser(toUser(me, me.email ?? ''));
         }
       } catch {
-        // ignore storage errors
+        await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => undefined);
       } finally {
         setLoaded(true);
       }
     };
 
-    loadUsers();
-  }, []);
-
-  const getStoredUsers = useCallback(async (): Promise<User[]> => {
-    try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        return JSON.parse(raw) as User[];
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  }, []);
-
-  const saveUsers = useCallback(async (users: User[]) => {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-    } catch {
-      // ignore storage errors
-    }
+    restoreSession();
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    await delay(650);
-
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !password) {
-      return { success: false, error: 'Ingresa tu correo y contraseña.' };
+      return { success: false, error: 'Ingresa tu correo institucional y contraseña.' };
     }
 
-    if (password.length < 6) {
-      return { success: false, error: 'La contraseña debe tener al menos 6 caracteres.' };
-    }
-
-    const account = demoAccounts.find(
-      (item) => item.email.toLowerCase() === normalizedEmail
-    );
-
-    if (account) {
-      const demoUser = findDemoUserByEmail(account.email);
-      if (demoUser) {
-        setUser(demoUser);
-        return { success: true };
+    try {
+      const client = createApiClient();
+      const response = await client<AuthResponse>('/api/v1/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+      const token = response.accessToken ?? response.token ?? response.jwt;
+      if (!token) {
+        return { success: false, error: 'La respuesta de acceso no contiene una sesión válida.' };
       }
-    }
-
-    // Check stored users
-    const stored = await getStoredUsers();
-    const storedUser = stored.find((u) => u.email.toLowerCase() === normalizedEmail);
-    if (storedUser && storedUser.password) {
-      // Simple password check (stored as plain text for prototype)
-      if (storedUser.password === password) {
-        setUser({ ...storedUser, password: undefined });
-        return { success: true };
-      }
-      return { success: false, error: 'Correo o contraseña incorrectos.' };
-    }
-
-    // Fallback: create buyer
-    const buyer = demoUsers.find((item) => item.role === 'buyer');
-    setUser({
-      ...(buyer as User),
-      id: `buyer-${Date.now()}`,
-      email: normalizedEmail,
-    });
-    return { success: true };
-  }, [getStoredUsers]);
-
-  const register = useCallback(
-    async (fullName: string, email: string, password: string): Promise<AuthResult> => {
-      await delay(650);
-
-      if (!fullName.trim() || !email.trim() || password.length < 6) {
-        return { success: false, error: 'Completa todos los campos correctamente.' };
-      }
-
-      const normalizedEmail = email.trim().toLowerCase();
-
-      const existing = demoUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
-      const stored = await getStoredUsers();
-      const existingStored = stored.find((u) => u.email.toLowerCase() === normalizedEmail);
-
-      if (existing || existingStored) {
-        return { success: false, error: 'Ya existe una cuenta con este correo.' };
-      }
-
-      const newUser: User = {
-        id: `buyer-${Date.now()}`,
-        role: 'buyer',
-        fullName: fullName.trim(),
-        email: normalizedEmail,
-        joinedAt: new Date().toISOString(),
-        password,
-      };
-
-      const updated = [...stored, newUser];
-      await saveUsers(updated);
-
-      setUser({ ...newUser, password: undefined });
+      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      const backendUser = response.user ?? await createApiClient({ getToken: async () => token })<BackendUser>('/api/v1/auth/me');
+      setUser(toUser(backendUser, normalizedEmail));
       return { success: true };
-    },
-    [getStoredUsers, saveUsers]
-  );
-
-  const signInAs = useCallback((role: UserRole) => {
-    const demoUser = demoUsers.find((item) => item.role === role);
-    if (demoUser) {
-      setUser(demoUser);
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error, 'No se pudo iniciar sesión.') };
     }
+  }, []);
+
+  const register = useCallback(async (fullName: string, email: string, password: string): Promise<AuthResult> => {
+    try {
+      const client = createApiClient();
+      await client('/api/v1/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password, displayName: fullName.trim() }),
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error, 'No se pudo crear la cuenta.') };
+    }
+  }, []);
+
+  const signInAs = useCallback((_role: UserRole) => {
+    // Demo guest navigation does not authenticate or create a productive user.
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
+    SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => undefined);
   }, []);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
-      user,
-      role: user?.role ?? 'buyer',
-      isAuthenticated: Boolean(user) && loaded,
-      login,
-      register,
-      signInAs,
-      logout,
-    }),
-    [user, loaded, login, register, signInAs, logout]
-  );
+  const value = useMemo<AuthContextValue>(() => ({
+    user,
+    role: user?.role ?? 'buyer',
+    isAuthenticated: Boolean(user) && loaded,
+    login,
+    register,
+    signInAs,
+    logout,
+  }), [user, loaded, login, register, signInAs, logout]);
 
-  if (!loaded) {
-    return null;
-  }
-
+  if (!loaded) return null;
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider');
-  }
+  if (!context) throw new Error('useAuth debe usarse dentro de un AuthProvider');
   return context;
 }

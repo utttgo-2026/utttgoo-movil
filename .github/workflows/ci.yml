@@ -2,7 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, HRDCORE, eas-google-play]
+  push:
+    branches: [main, HRDCORE, eas-google-play]
   workflow_dispatch:
 
 permissions:

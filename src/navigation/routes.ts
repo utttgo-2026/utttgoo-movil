@@ -7,6 +7,10 @@ export const ROUTES = {
     forgotPassword: '/forgot-password',
     verifyEmail: '/verify-email',
   },
+  demo: {
+    first: '/demo-one',
+    second: '/demo-two',
+  },
   buyer: {
     home: '/buyer',
     search: '/buyer/search',

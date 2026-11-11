@@ -79,7 +79,7 @@ export default function WelcomeScreen() {
           label="Seguir explorando"
           variant="ghost"
           onPress={() => {
-            // navegar como invitado al home comprador
+            router.push('/demo-one');
           }}
           style={styles.ghostButton}
         />

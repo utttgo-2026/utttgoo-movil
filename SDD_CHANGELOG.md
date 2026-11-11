@@ -15,6 +15,27 @@
 
 # Historial de cambios
 
+## Fase 005 - Demo invitado, onboarding y preparación Play Store
+
+### Estado
+
+**EN DESARROLLO**. Se creó una fase SDD específica antes de implementar.
+
+### Cambios
+
+- Demo invitado 1/2 y 2/2 con datos separados en `src/data/demo`.
+- Welcome conectado al demo y Splash con identidad UTTT-GO.
+- Login y Registro conectados al `ApiClient` autorizado.
+- JWT almacenado con `expo-secure-store`; no se guardan contraseñas locales.
+- Verificación de correo adaptada al enlace real de Supabase, sin token ficticio.
+- Nombre, icono, adaptive icon, splash y workflows Android actualizados.
+- Pruebas específicas del demo y respuesta `202 Accepted` de registro.
+
+### Bloqueos
+
+`BLOCKED_BY_BACKEND_EMAIL_RESEND`, `BLOCKED_BY_BACKEND_HTTPS`, `BLOCKED_BY_EAS_AUTH`,
+`NON_BLOCKING_EAS_WARNING` y `EXPECTED_SIDELOAD_WARNING` quedan sujetos a validación.
+
 ## Fase 004 - Preparación CI/CD, DevSecOps y contrato API
 
 ### Estado

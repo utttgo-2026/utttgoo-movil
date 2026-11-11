@@ -4,6 +4,14 @@
 
 La fase `004-ci-cd` concentra la preparación de calidad, seguridad y release. Node se fija en 22.13.1. La URL API se obtiene de entorno; no se hardcodea el Backend HTTP ni se debilita la seguridad Android para Production. El cliente API interpreta el contrato `ApiError` centralmente, pero las pantallas continúan usando mocks hasta que exista contrato funcional aprobado.
 
+## Fase 005: demo y onboarding
+
+El demo invitado vive en `src/data/demo` y no utiliza el cliente API. Login y registro
+usan únicamente los contratos autorizados; el JWT se guarda en `expo-secure-store`.
+La pantalla de confirmación explica el enlace de Supabase y no presenta token, OTP ni
+reenvío simulado. El icono y splash usan assets UTTT-GO rojos; Production sigue bloqueada
+por `BLOCKED_BY_BACKEND_HTTPS` mientras el Backend no exponga HTTPS.
+
 > Registro de decisiones arquitectónicas, de diseño, de navegación, de datos mock y de alcance del proyecto UTTT-Go Móvil.
 
 ---
