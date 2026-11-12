@@ -32,6 +32,7 @@
 - Pruebas específicas del demo y respuesta `202 Accepted` de registro.
 - Pruebas de contrato para Welcome, Demo 1, Demo 2 y ausencia de redirect por sesión.
 - Flujo inicial corregido: Splash navega directamente a Demo 1; Welcome queda fuera del arranque.
+- Expo actualizado a `~58.0.25` para satisfacer la validación de dependencias de Expo Doctor.
 - Deuda documentada: `CartProvider` se conserva por dependencia de pantallas buyer antiguas.
 - Launcher simplificado sin texto para icono normal, adaptive icon y monochrome icon.
 - Validación local repetida en `eas-google-play`: TypeScript limpio, 16 tests, coverage sobre umbrales,
