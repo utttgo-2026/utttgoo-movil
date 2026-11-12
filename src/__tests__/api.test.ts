@@ -61,6 +61,26 @@ describe('apiClient', () => {
     );
   });
 
+  it('uses the HTTPS API origin and rejects the OpenAPI document URL as a base', async () => {
+    process.env.EXPO_PUBLIC_API_BASE_URL = 'https://3.129.142.54.nip.io';
+    const fetchImplementation = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 })
+    );
+    const client = createApiClient({ fetchImplementation });
+
+    await expect(client('/health')).resolves.toEqual({ ok: true });
+    expect(fetchImplementation).toHaveBeenCalledWith(
+      'https://3.129.142.54.nip.io/health',
+      expect.anything()
+    );
+
+    process.env.EXPO_PUBLIC_API_BASE_URL = 'https://3.129.142.54.nip.io/openapi/v1.json';
+    expect(() => createApiClient()).not.toThrow();
+    await expect(client('/health')).rejects.toThrow(
+      'EXPO_PUBLIC_API_BASE_URL must be an API origin without a path.'
+    );
+  });
+
   it.each([401, 403, 422])('throws the contract error for HTTP %s', async (status) => {
     const fetchImplementation = jest.fn().mockResolvedValue(
       new Response(

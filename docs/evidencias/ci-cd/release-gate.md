@@ -6,7 +6,7 @@ Estado de auditoría inicial:
 - AAB Production: `BLOCKED_BY_FIRST_EAS_BUILD`.
 - Project ID EAS: configurado en `app.json`; pendiente validación con EAS CLI.
 - `EXPO_TOKEN`: pendiente validar autenticación local/CI.
-- Backend Production HTTPS: `BLOCKED_BY_BACKEND_HTTPS`.
+- Backend Production HTTPS: `RESOLVED`, verificado el 2026-11-12 mediante TLS válido, `GET /health` `200` y OpenAPI accesible.
 - Política de privacidad: `PENDIENTE`, debe exponerse desde la aplicación mediante una spec funcional.
 - Landing Netlify: `PENDING_LANDING_URL_DOCUMENTATION`.
 - Carga a Google Play: `MANUAL_GOOGLE_PLAY_UPLOAD`.
@@ -19,4 +19,4 @@ Estado de auditoría inicial:
 - Preview EAS trazable al commit actual: `PENDIENTE`, en cola; Build ID `3eadc96f-4954-43f0-9b24-723f7f234e6f`.
 - Commit de cambios: `0a004e7`.
 
-Mientras exista Backend HTTP, ningún release Production se considera listo para Google Play.
+El release Production sigue siendo manual y requiere validación física del Preview, configuración de `EXPO_TOKEN` y los gates restantes.

@@ -23,7 +23,7 @@
 - [ ] Vincular proyecto EAS real (`BLOCKED_BY_EXPO_LINK`).
 - [ ] Configurar `EXPO_TOKEN` (`BLOCKED_BY_EXPO_TOKEN`).
 - [ ] Ejecutar primer build EAS (`BLOCKED_BY_FIRST_EAS_BUILD`).
-- [ ] Obtener Backend HTTPS (`BLOCKED_BY_BACKEND_HTTPS`).
+- [x] Verificar Backend HTTPS, `GET /health` y OpenAPI en `https://3.129.142.54.nip.io`.
 - [ ] Documentar URL real de Landing (`PENDING_LANDING_URL_DOCUMENTATION`).
 - [ ] Añadir acceso legal desde la app mediante spec funcional.
 

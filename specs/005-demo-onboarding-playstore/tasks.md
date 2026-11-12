@@ -36,8 +36,7 @@
 
 ## Bloqueos esperados
 
-- `BLOCKED_BY_BACKEND_EMAIL_RESEND`
-- `BLOCKED_BY_BACKEND_HTTPS`
+- `BLOCKED_BY_BACKEND_EMAIL_RESEND` queda pendiente por falta de contrato de reenvío.
 - `BLOCKED_BY_EAS_AUTH`
 - `NON_BLOCKING_EAS_WARNING`
 - `EXPECTED_SIDELOAD_WARNING`

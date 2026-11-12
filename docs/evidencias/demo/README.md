@@ -45,7 +45,7 @@ No se reprodujo un defecto de código que omitiera el demo. La evidencia anterio
 ## Bloqueos y advertencias
 
 - `BLOCKED_BY_BACKEND_EMAIL_RESEND`: no se muestra reenvío porque no existe contrato autorizado.
-- `BLOCKED_BY_BACKEND_HTTPS`: Production permanece bloqueada mientras el Backend no tenga HTTPS.
+- HTTPS del Backend resuelto el 2026-11-12: `https://3.129.142.54.nip.io/health` respondió `200` y OpenAPI fue accesible por TLS válido.
 - `EXPECTED_SIDELOAD_WARNING`: Play Protect puede advertir APKs instaladas fuera de Play Store.
 
 No se almacenan contraseñas, JWT, tokens ni credenciales en esta evidencia.

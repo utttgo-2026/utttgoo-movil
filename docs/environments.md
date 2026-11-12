@@ -2,11 +2,11 @@
 
 | Entorno | Configuración | Estado |
 |---|---|---|
-| development | `EXPO_PUBLIC_APP_ENV=development`; URL proporcionada externamente | Disponible para pruebas controladas |
+| development | `EXPO_PUBLIC_APP_ENV=development`; `EXPO_PUBLIC_API_BASE_URL=https://3.129.142.54.nip.io` | Disponible para pruebas controladas |
 | preview | Configuración de GitHub/EAS y variables del entorno | `BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN` |
-| production | `EXPO_PUBLIC_APP_ENV=production`; requiere URL HTTPS | `BLOCKED_BY_BACKEND_HTTPS` |
+| production | `EXPO_PUBLIC_APP_ENV=production`; `EXPO_PUBLIC_API_BASE_URL=https://3.129.142.54.nip.io` | HTTPS verificado; release manual pendiente |
 
-La URL HTTP temporal del Backend no se almacena en el repositorio. Production rechaza cualquier origen que no use HTTPS. No se habilita `usesCleartextTraffic`.
+La base pública verificada es `https://3.129.142.54.nip.io`; el documento OpenAPI vive en `/openapi/v1.json` y no se usa como base. Production rechaza cualquier origen que no use HTTPS. No se habilita `usesCleartextTraffic`.
 
 Los endpoints actualmente autorizados por contrato son `GET /health`, autenticación, perfil, vendedor individual y administración de usuarios. Catálogo, ofertas, órdenes, chat, notificaciones, QR, reviews y categorías adicionales permanecen `BLOCKED_BY_BACKEND`.
 

@@ -33,6 +33,8 @@
 - Pruebas de contrato para Welcome, Demo 1, Demo 2 y ausencia de redirect por sesión.
 - Flujo inicial corregido: Splash navega directamente a Demo 1; Welcome queda fuera del arranque.
 - Expo actualizado a `~58.0.25` para satisfacer la validación de dependencias de Expo Doctor.
+- Backend HTTPS verificado el 2026-11-12: base `https://3.129.142.54.nip.io`, health `200`, OpenAPI accesible y TLS válido.
+- `EXPO_PUBLIC_API_BASE_URL` documenta la base HTTPS sin `/openapi/v1.json`; Backend Smoke usa HTTPS con validación TLS estricta.
 - Deuda documentada: `CartProvider` se conserva por dependencia de pantallas buyer antiguas.
 - Launcher simplificado sin texto para icono normal, adaptive icon y monochrome icon.
 - Validación local repetida en `eas-google-play`: TypeScript limpio, 16 tests, coverage sobre umbrales,
@@ -43,7 +45,7 @@
 
 ### Bloqueos
 
-`BLOCKED_BY_BACKEND_EMAIL_RESEND`, `BLOCKED_BY_BACKEND_HTTPS`, `BLOCKED_BY_EAS_AUTH`,
+`BLOCKED_BY_BACKEND_EMAIL_RESEND`, `BLOCKED_BY_EAS_AUTH`,
 `NON_BLOCKING_EAS_WARNING` y `EXPECTED_SIDELOAD_WARNING` quedan sujetos a validación.
 
 ## Fase 004 - Preparación CI/CD, DevSecOps y contrato API
@@ -65,7 +67,7 @@
 
 ### Bloqueos
 
-`BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `BLOCKED_BY_BACKEND_HTTPS`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
+`BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
 
 ## Etapa 1 — Inicialización del proyecto
 

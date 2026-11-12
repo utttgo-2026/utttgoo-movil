@@ -37,11 +37,7 @@ jobs:
         run: |
           grep -q 'mx.edu.utt.uttgo' app.json
           grep -q 'app-bundle' eas.json
-          grep -q 'BLOCKED_BY_BACKEND_HTTPS' docs/evidencias/ci-cd/release-gate.md
-      - name: Block release until Backend HTTPS exists
-        run: |
-          echo "::error::BLOCKED_BY_BACKEND_HTTPS"
-          exit 1
+          grep -q 'Backend Production HTTPS: `RESOLVED`' docs/evidencias/ci-cd/release-gate.md
 
   build:
     name: Production AAB

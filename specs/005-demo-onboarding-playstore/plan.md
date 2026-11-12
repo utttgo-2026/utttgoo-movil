@@ -21,7 +21,7 @@ Tasks: `specs/005-demo-onboarding-playstore/tasks.md`
 - Login y Registro usan el cliente API central; no hay fallback silencioso que invente usuarios.
 - La navegación de regreso usa `push`/`back`; logout conserva `replace` para reiniciar sesión.
 - La confirmación de correo explica el enlace enviado por Supabase. El reenvío queda `BLOCKED_BY_BACKEND_EMAIL_RESEND` si no hay soporte real.
-- Production continúa bloqueada por `BLOCKED_BY_BACKEND_HTTPS` mientras el origen sea HTTP.
+- HTTPS del Backend queda resuelto para la base `https://3.129.142.54.nip.io`; Production continúa siendo un release manual.
 - Un warning de tooling se documenta como `NON_BLOCKING_EAS_WARNING` solo después de revisar su log exacto.
 
 ## Validación

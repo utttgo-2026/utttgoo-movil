@@ -10,6 +10,9 @@ export function getApiBaseUrl(): string {
   }
 
   const url = new URL(value);
+  if (url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('EXPO_PUBLIC_API_BASE_URL must be an API origin without a path.');
+  }
   if (environment === 'production' && url.protocol !== 'https:') {
     throw new Error('BLOCKED_BY_BACKEND_HTTPS');
   }
