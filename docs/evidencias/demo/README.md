@@ -30,6 +30,11 @@
 - `npx expo export --platform android --clear`: completado; bundle Hermes Android generado.
 - Export web oficial de Expo Router: generó chunks para `welcome`, `demo-one`, `demo-two`, `login` y `register`, además del archivo de rutas.
 - Los assets demo se mantienen en `src/data/demo` y no importan servicios Backend.
+- Preview EAS: `FINISHED`; Build ID `a79cfe03-5d21-4a04-aa5f-e7d192cd9afe`.
+- Commit EAS: `54ee2e9b8568f4a727dacff10dd226bb30c55dc8`.
+- URL Expo: `https://expo.dev/accounts/utttgoo/projects/utttgoo/builds/a79cfe03-5d21-4a04-aa5f-e7d192cd9afe`.
+- APK: `https://expo.dev/artifacts/eas/_jJE2gNZGpq6m7vqSz5PkwzAfViWFisTY9c_Hk4f9y0.apk`.
+- Version: `1.0.0`; versionCode: `1`; package: `mx.edu.utt.uttgo`; profile: `preview`.
 
 No se reprodujo un defecto de código que omitiera el demo. La evidencia anterior del APK no permitía distinguir entre un problema de navegación y una validación insuficiente del bundle Hermes.
 

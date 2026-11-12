@@ -36,6 +36,8 @@
 - Validación local repetida en `eas-google-play`: TypeScript limpio, 15 tests, coverage sobre umbrales,
   Expo Doctor 20/20 y export Android exitoso. Expo Router generó chunks independientes para Welcome,
   Demo 1, Demo 2, Login y Registro en el export web de verificación.
+- Preview Android finalizado correctamente con EAS usando el commit `54ee2e9`; Build ID
+  `a79cfe03-5d21-4a04-aa5f-e7d192cd9afe`, APK interna y package `mx.edu.utt.uttgo`.
 
 ### Bloqueos
 
