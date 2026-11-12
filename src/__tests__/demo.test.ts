@@ -12,8 +12,21 @@ describe('guest demo', () => {
   });
 
   it('keeps demo navigation separate from productive buyer routes', () => {
+    expect(ROUTES.auth.welcome).toBe('/welcome');
+    expect(ROUTES.auth.login).toBe('/login');
+    expect(ROUTES.auth.register).toBe('/register');
     expect(ROUTES.demo.first).toBe('/demo-one');
     expect(ROUTES.demo.second).toBe('/demo-two');
     expect(ROUTES.buyer.home).toBe('/buyer');
+  });
+
+  it('keeps the expected guest demo content', () => {
+    expect(demoFoods[0].name).toBe('Torta de milanesa');
+    expect(demoOffers.map((offer) => offer.seller)).toEqual([
+      'Cocina de Lupita',
+      'El Sabor de Toño',
+      'Antojitos del Barrio',
+      'La Tortería',
+    ]);
   });
 });

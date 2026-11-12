@@ -6,6 +6,8 @@ node_modules/
 # Expo
 .expo/
 dist/
+coverage/
+expo-export.log
 web-build/
 expo-env.d.ts
 

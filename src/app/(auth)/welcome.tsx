@@ -3,6 +3,7 @@ import React from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppText, BrandLogo, Screen } from '@/components';
+import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
 
 export default function WelcomeScreen() {
@@ -66,20 +67,20 @@ export default function WelcomeScreen() {
         <AppButton
           label="Iniciar sesión"
           variant="primary"
-          onPress={() => router.push('/login')}
+          onPress={() => router.push(ROUTES.auth.login)}
           style={styles.primaryButton}
         />
         <AppButton
           label="Crear cuenta"
           variant="outline"
-          onPress={() => router.push('/register')}
+          onPress={() => router.push(ROUTES.auth.register)}
           style={styles.secondaryButton}
         />
         <AppButton
           label="Seguir explorando"
           variant="ghost"
           onPress={() => {
-            router.push('/demo-one');
+            router.push(ROUTES.demo.first);
           }}
           style={styles.ghostButton}
         />

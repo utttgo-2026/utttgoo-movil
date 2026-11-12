@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppButton, AppText, AppHeader, BrandLogo, Screen, Surface } from '@/components';
 import { demoOffers } from '@/data/demo';
+import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
 
@@ -56,7 +57,7 @@ export default function DemoTwoScreen() {
             </Surface>
           ))}
         </View>
-        <AppButton label="Continuar para pedir" icon="arrow-forward" iconPosition="right" onPress={() => router.push('/login')} style={styles.button} />
+        <AppButton label="Continuar para pedir" icon="arrow-forward" iconPosition="right" onPress={() => router.push(ROUTES.auth.login)} style={styles.button} />
         <AppText variant="caption" color={colors.textSubtle} align="center">Para pedir necesitas iniciar sesión.</AppText>
       </View>
     </Screen>

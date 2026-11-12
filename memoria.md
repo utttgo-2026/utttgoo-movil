@@ -12,6 +12,14 @@ La pantalla de confirmación explica el enlace de Supabase y no presenta token, 
 reenvío simulado. El icono y splash usan assets UTTT-GO rojos; Production sigue bloqueada
 por `BLOCKED_BY_BACKEND_HTTPS` mientras el Backend no exponga HTTPS.
 
+La restauración de sesión no controla la navegación inicial: el splash lleva a Welcome
+para todos los usuarios. `CartProvider` se conserva porque las pantallas buyer antiguas
+dependen de `useCart`; no forma parte del demo invitado y queda como deuda separada.
+
+La revisión del APK se validó contra el grafo de rutas de Expo Router y no solo contra
+texto del bundle Hermes. El export incluyó chunks separados para Welcome, Demo 1, Demo 2,
+Login y Registro; no se encontró un redirect de autenticación que omita el onboarding.
+
 > Registro de decisiones arquitectónicas, de diseño, de navegación, de datos mock y de alcance del proyecto UTTT-Go Móvil.
 
 ---

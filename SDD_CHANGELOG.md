@@ -30,6 +30,12 @@
 - Verificación de correo adaptada al enlace real de Supabase, sin token ficticio.
 - Nombre, icono, adaptive icon, splash y workflows Android actualizados.
 - Pruebas específicas del demo y respuesta `202 Accepted` de registro.
+- Pruebas de contrato para Welcome, Demo 1, Demo 2 y ausencia de redirect por sesión.
+- Deuda documentada: `CartProvider` se conserva por dependencia de pantallas buyer antiguas.
+- Launcher simplificado sin texto para icono normal, adaptive icon y monochrome icon.
+- Validación local repetida en `eas-google-play`: TypeScript limpio, 15 tests, coverage sobre umbrales,
+  Expo Doctor 20/20 y export Android exitoso. Expo Router generó chunks independientes para Welcome,
+  Demo 1, Demo 2, Login y Registro en el export web de verificación.
 
 ### Bloqueos
 

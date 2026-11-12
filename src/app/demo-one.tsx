@@ -5,6 +5,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppText, BrandLogo, Screen, Surface } from '@/components';
 import { demoFoods } from '@/data/demo';
+import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
 
@@ -46,10 +47,10 @@ export default function DemoOneScreen() {
           label="Ver torta de milanesa"
           icon="arrow-forward"
           iconPosition="right"
-          onPress={() => router.push('/demo-two')}
+          onPress={() => router.push(ROUTES.demo.second)}
           style={styles.primaryButton}
         />
-        <Pressable accessibilityRole="button" accessibilityLabel="Ir a iniciar sesión" onPress={() => router.push('/login')} style={styles.accountLink}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Ir a iniciar sesión" onPress={() => router.push(ROUTES.auth.login)} style={styles.accountLink}>
           <AppText variant="label" style={styles.linkText}>Ya tengo cuenta</AppText>
         </Pressable>
         <AppText variant="caption" color={colors.textSubtle} align="center" style={styles.demoNote}>
