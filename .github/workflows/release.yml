@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   NODE_VERSION: '22.13.1'
 
@@ -13,18 +17,22 @@ jobs:
   gates:
     name: Release Gates
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - run: npm test
       - run: npm run test:coverage
-      - run: npm run doctor
+      - run: npx expo-doctor
       - name: Validate release configuration
         run: |
           grep -q 'mx.edu.utt.uttgo' app.json
@@ -34,14 +42,18 @@ jobs:
         run: |
           echo "::error::BLOCKED_BY_BACKEND_HTTPS"
           exit 1
+
   build:
     name: Production AAB
     needs: gates
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm

@@ -2,4 +2,4 @@
 useDefault = true
 
 [allowlist]
-paths = ["coverage/", "docs/evidencias/"]
+paths = ["node_modules/", "dist/", "coverage/", "docs/evidencias/"]

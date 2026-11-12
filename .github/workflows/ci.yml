@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '22.13.1'
 
@@ -17,11 +21,14 @@ jobs:
   quality:
     name: Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -31,10 +38,14 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: Tests
+        run: npm test
       - name: Tests and coverage
         run: npm run test:coverage
+      - name: Expo Android export
+        run: npx expo export --platform android --clear
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage
           path: coverage/
@@ -43,30 +54,37 @@ jobs:
   expo-doctor:
     name: Expo Doctor
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Expo Doctor
-        run: npm run doctor
+        run: npx expo-doctor
 
   sdd:
     name: SDD Traceability Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Verify active SDD documents
         run: |
           test -s specs/004-ci-cd/spec.md
           test -s specs/004-ci-cd/plan.md
           test -s specs/004-ci-cd/tasks.md
-          grep -q "004-ci-cd" specs/004-ci-cd/spec.md
-          grep -q "004-ci-cd" specs/004-ci-cd/plan.md
-          grep -q "004-ci-cd" specs/004-ci-cd/tasks.md
+          test "$(basename "$(dirname specs/004-ci-cd/spec.md)")" = "004-ci-cd"
+          grep -Eq '^# Specification 004([[:space:]-]|$)' specs/004-ci-cd/spec.md
+          grep -Eq '^# Plan 004([[:space:]-]|$)' specs/004-ci-cd/plan.md
+          grep -Eq '^# Tasks 004([[:space:]-]|$)' specs/004-ci-cd/tasks.md

@@ -11,3 +11,7 @@ Configurar en GitHub `Settings > Branches > Branch protection rules`:
 - Requerir aprobación del environment `production` para releases.
 
 La configuración requiere permisos de administrador del repositorio y no se ejecuta automáticamente desde este proyecto.
+
+La protección efectiva no pudo verificarse desde la API durante esta ejecución.
+Debe confirmarse en GitHub que `main` requiera Pull Request, una aprobación,
+checks de CI/Security y que bloquee force-push y eliminación de la rama.
