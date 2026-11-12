@@ -8,7 +8,7 @@ Tasks: `specs/005-demo-onboarding-playstore/tasks.md`
 ## Fases
 
 1. **SDD y datos:** crear contrato de fase y módulos demo aislados.
-2. **Experiencia inicial:** corregir Splash, Welcome y navegación de invitado.
+2. **Experiencia inicial:** dirigir Splash a Demo 1 y conservar Welcome fuera del arranque.
 3. **Demo:** implementar las dos pantallas demo con accesibilidad y responsive layout.
 4. **Auth:** conectar Login/Registro al `ApiClient`, asegurar JWT y mostrar confirmación de correo real.
 5. **Identidad:** corregir nombre, iconos, adaptive icon y splash de Expo SDK 58.

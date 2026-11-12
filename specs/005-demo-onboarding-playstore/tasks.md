@@ -27,7 +27,7 @@
 
 - Node: `v22.13.1`.
 - TypeScript: `0 errors`.
-- Tests: `14 passed`.
+- Tests: `16 passed`.
 - Coverage: `92.5%` statements, `80.64%` branches, `100%` functions, `92.3%` lines.
 - Expo Doctor: `20/20 checks passed`.
 - EAS project: `@utttgoo/uttgoo`, project ID `52014672-c800-4cf6-af6a-330cb13986e8`.

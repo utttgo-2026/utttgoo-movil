@@ -20,6 +20,11 @@ describe('guest demo', () => {
     expect(ROUTES.buyer.home).toBe('/buyer');
   });
 
+  it('starts the app at Demo 1 instead of Welcome', () => {
+    expect(ROUTES.demo.first).toBe('/demo-one');
+    expect(ROUTES.auth.welcome).not.toBe(ROUTES.demo.first);
+  });
+
   it('keeps the expected guest demo content', () => {
     expect(demoFoods[0].name).toBe('Torta de milanesa');
     expect(demoOffers.map((offer) => offer.seller)).toEqual([

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, BrandLogo, Screen } from '@/components';
+import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
 
 export default function SplashScreen() {
@@ -10,7 +11,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/welcome');
+      router.replace(ROUTES.demo.first);
     }, 2500);
 
     return () => clearTimeout(timer);

@@ -38,7 +38,7 @@ autorizados.
 
 ## Criterios de aceptación
 
-1. Un usuario puede recorrer Splash → Welcome → Demo 1 → Demo 2 sin Backend.
+1. Un usuario puede recorrer Splash → Demo 1 → Demo 2 sin Backend.
 2. Desde el demo puede llegar a Login o Registro.
 3. Demo local y datos productivos viven en módulos separados.
 4. Registro valida nombre, dominio `@utt.edu.mx`, contraseña y confirmación.
@@ -48,3 +48,8 @@ autorizados.
 8. El nombre visible es `UTTT-GO` y el package es `mx.edu.utt.uttgo`.
 9. Preview conserva APK, Production conserva AAB y no contiene secretos.
 10. Typecheck, lint, tests, coverage y Expo Doctor pasan, o los bloqueos externos quedan documentados.
+
+## Flujo inicial definitivo
+
+El Splash navega directamente a Demo 1. Welcome se conserva como pantalla de
+compatibilidad para rutas existentes, pero no forma parte del arranque inicial.

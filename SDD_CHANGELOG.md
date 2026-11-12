@@ -31,9 +31,10 @@
 - Nombre, icono, adaptive icon, splash y workflows Android actualizados.
 - Pruebas específicas del demo y respuesta `202 Accepted` de registro.
 - Pruebas de contrato para Welcome, Demo 1, Demo 2 y ausencia de redirect por sesión.
+- Flujo inicial corregido: Splash navega directamente a Demo 1; Welcome queda fuera del arranque.
 - Deuda documentada: `CartProvider` se conserva por dependencia de pantallas buyer antiguas.
 - Launcher simplificado sin texto para icono normal, adaptive icon y monochrome icon.
-- Validación local repetida en `eas-google-play`: TypeScript limpio, 15 tests, coverage sobre umbrales,
+- Validación local repetida en `eas-google-play`: TypeScript limpio, 16 tests, coverage sobre umbrales,
   Expo Doctor 20/20 y export Android exitoso. Expo Router generó chunks independientes para Welcome,
   Demo 1, Demo 2, Login y Registro en el export web de verificación.
 - Preview Android finalizado correctamente con EAS usando el commit `54ee2e9`; Build ID
