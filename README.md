@@ -2,6 +2,17 @@
 
 Aplicación móvil del proyecto **UTTT-Go**, una plataforma orientada a facilitar la compra y venta de alimentos dentro de la comunidad de la Universidad Tecnológica de Tula-Tepeji (UTTT).
 
+## Estado actualizado — AWS-API-INTEGRATION (Etapa 005)
+
+La infraestructura de API y sesión segura está implementada y en validación. La autenticación simulada descrita más abajo corresponde al historial anterior: ya no se usa para iniciar sesión. Login real permanece bloqueado por HTTPS y el contrato JSON de identidad/JWT; el registro 202 no inicia sesión. Catálogo y pedidos continúan con mocks. Acceso al catálogo mediante **Seguir explorando** sin crear usuario ficticio.
+
+- `.env` local (ignorado por Git): `EXPO_PUBLIC_API_BASE_URL` con el origen proporcionado por backend. `.env.example` documenta la variable sin repetir la IP. Al clonar, copiar el ejemplo y completar el origen; recargar Expo Go tras cambiarlo.
+- Solo `GET /health` público permite HTTP. No introducir credenciales reales mientras falte HTTPS.
+- En desarrollo: Login → **Comprobar conexión** consulta el health desde el dispositivo sin token. Ver tareas 005 para evidencia y bloqueos.
+- JWT preparado en SecureStore; datos legacy `@uttgo:users` conservados sin leerlos para autenticar ni borrarlos automáticamente.
+- Ver [spec](specs/005-aws-api-integration/spec.md), [plan](plans/005-aws-api-integration-plan.md) y [tareas/evidencia](tasks/005-aws-api-integration-tasks.md).
+- Entorno recomendado: Node 24 LTS; CI añade Jest al gate. La ejecución local actual con Node 25 produjo advertencias de engines.
+
 ## 1. Descripción del proyecto
 
 UTTT-Go Móvil es el cliente móvil de la plataforma UTTT-Go. Su propósito es ofrecer una interfaz para que estudiantes, docentes y vendedores puedan interactuar con los servicios de la plataforma desde dispositivos Android.

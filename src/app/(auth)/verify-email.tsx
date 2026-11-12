@@ -1,58 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
-  const [token, setToken] = useState('');
+  const { email } = useLocalSearchParams<{ email?: string }>();
   const [error, setError] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
-
-  const handleVerify = async () => {
-    setError(undefined);
-    if (!token.trim() || token.length < 6) {
-      setError('Ingresa el token de verificación.');
-      return;
-    }
-    setLoading(true);
-    try {
-      // Simulación de verificación de token
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push('/buyer' as any);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Token reenviado (simulado)
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Verificar correo" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Verificar correo" />
-
           <AppText variant="title" style={styles.title}>
             Confirma tu correo
           </AppText>
           <AppText variant="body" color={colors.textMuted} style={styles.subtitle}>
-            Enviamos un token a tu correo institucional. Introdúcelo para completar tu
-            registro en UTTT-GO.
+            La verificación de correo se realiza mediante Supabase. Falta confirmar el
+            flujo con el backend; esta pantalla todavía no valida ni reenvía códigos.
           </AppText>
 
           <Surface style={styles.card} bordered>
@@ -63,27 +33,27 @@ export default function VerifyEmailScreen() {
               autoCorrect={false}
               keyboardType="email-address"
               editable={false}
-              value="20230184@utt.edu.mx"
-              placeholder="20230184@utt.edu.mx"
+              value={email ?? ''}
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppInput
               label="Token de verificación"
               leftIcon="key-outline"
               keyboardType="number-pad"
               maxLength={6}
-              value={token}
-              onChangeText={setToken}
-              error={error ? 'Token requerido' : undefined}
-              placeholder="Introduce tu token"
+              editable={false}
+              value=""
+              placeholder="Pendiente de contrato de verificación"
             />
             <AppButton
-              label="Verificar y continuar"
+              label="Volver a iniciar sesión"
               variant="primary"
-              onPress={handleVerify}
-              loading={loading}
+              onPress={() => router.push('/login')}
               style={styles.verifyButton}
             />
           </Surface>
+
+          {error ? <AppText variant="caption" color={colors.danger}>{error}</AppText> : null}
 
           <View style={styles.resendRow}>
             <AppText variant="body" color={colors.textMuted}>
@@ -92,7 +62,7 @@ export default function VerifyEmailScreen() {
             <AppButton
               label="Reenviar token"
               variant="outline"
-              onPress={handleResend}
+              onPress={() => setError('El contrato de reenvío de Supabase aún no está disponible. No se envió ningún código.')}
               fullWidth={false}
             />
           </View>
@@ -108,7 +78,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },

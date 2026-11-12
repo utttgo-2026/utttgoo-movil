@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -34,8 +33,8 @@ export default function RegisterScreen() {
       setError('Ingresa tu correo institucional.');
       return;
     }
-    if (form.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    if (!form.password.trim()) {
+      setError('Ingresa tu contraseña.');
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -47,24 +46,23 @@ export default function RegisterScreen() {
     try {
       const result = await register(form.fullName, form.email, form.password);
       if (result.success) {
-        router.push('/verify-email');
+        router.push({ pathname: '/verify-email', params: { email: form.email.trim().toLowerCase() } });
       } else {
         setError(result.error ?? 'No se pudo crear la cuenta.');
       }
     } finally {
+      setForm((prev) => ({ ...prev, password: '', confirmPassword: '' }));
       setLoading(false);
     }
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Crear cuenta" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Crear cuenta" />
-
           <AppText variant="title" style={styles.title}>
             Únete a UTTT-GO
           </AppText>
@@ -88,8 +86,7 @@ export default function RegisterScreen() {
               keyboardType="email-address"
               value={form.email}
               onChangeText={(v) => setField('email', v)}
-              error={error ? 'Correo inválido' : undefined}
-              placeholder="20230184@utt.edu.mx"
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppInput
               label="Contraseña"
@@ -97,7 +94,6 @@ export default function RegisterScreen() {
               secureTextEntry
               value={form.password}
               onChangeText={(v) => setField('password', v)}
-              error={error ? 'Contraseña requerida' : undefined}
               placeholder="········"
             />
             <AppInput
@@ -106,9 +102,9 @@ export default function RegisterScreen() {
               secureTextEntry
               value={form.confirmPassword}
               onChangeText={(v) => setField('confirmPassword', v)}
-              error={error ? 'Las contraseñas no coinciden' : undefined}
               placeholder="Repite tu contraseña"
             />
+            {error ? <AppText variant="caption" color={colors.danger}>{error}</AppText> : null}
             <AppButton
               label="Crear mi cuenta"
               variant="primary"
@@ -134,7 +130,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },

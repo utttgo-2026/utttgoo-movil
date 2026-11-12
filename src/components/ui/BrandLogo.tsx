@@ -64,6 +64,9 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    maxWidth: '100%',
     alignItems: 'center',
     gap: 10,
   },
@@ -73,6 +76,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   wordmark: {
+    flexShrink: 1,
+    textAlign: 'center',
     fontFamily: fontFamily.bold,
     color: colors.primary,
     letterSpacing: 0.2,

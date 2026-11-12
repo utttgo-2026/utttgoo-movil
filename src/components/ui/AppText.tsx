@@ -8,6 +8,7 @@ export type TextVariant =
   | 'display'
   | 'title'
   | 'subtitle'
+  | 'cardTitle'
   | 'body'
   | 'bodyStrong'
   | 'label'
@@ -48,6 +49,12 @@ const variantStyles: Record<TextVariant, TextStyle> = {
   },
   body: {
     fontFamily: fontFamily.regular,
+    fontSize: fontSize.md,
+    lineHeight: lineHeight.md,
+    color: colors.text,
+  },
+  cardTitle: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.md,
     lineHeight: lineHeight.md,
     color: colors.text,

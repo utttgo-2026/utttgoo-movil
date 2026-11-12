@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
 
 jobs:
   typecheck:
@@ -70,26 +70,25 @@ jobs:
       - name: Run Expo Doctor
         run: npx expo-doctor
 
-  # tests:
-  #   name: Tests
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: ${{ env.NODE_VERSION }}
-      #     cache: 'npm'
-      # - name: Install dependencies
-      #   run: npm ci
-      # - name: Run tests
-      #   run: npm run test:ci
-      #   # Descomentar cuando existan tests automatizados
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm run test:ci
 
   summary:
     name: CI Summary
-    needs: [typecheck, lint, expo-doctor]
+    needs: [typecheck, lint, expo-doctor, tests]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -99,8 +98,8 @@ jobs:
           echo "TypeScript: ${{ needs.typecheck.result }}"
           echo "Lint: ${{ needs.lint.result }}"
           echo "Expo Doctor: ${{ needs.expo-doctor.result }}"
-          # echo "Tests: ${{ needs.tests.result }}"
-          if [[ "${{ needs.typecheck.result }}" != "success" ]] || [[ "${{ needs.lint.result }}" != "success" ]] || [[ "${{ needs.expo-doctor.result }}" != "success" ]]; then
+          echo "Tests: ${{ needs.tests.result }}"
+          if [[ "${{ needs.typecheck.result }}" != "success" ]] || [[ "${{ needs.lint.result }}" != "success" ]] || [[ "${{ needs.expo-doctor.result }}" != "success" ]] || [[ "${{ needs.tests.result }}" != "success" ]]; then
             echo "::error::CI failed"
             exit 1
           fi
