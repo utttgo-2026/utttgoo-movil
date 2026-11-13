@@ -7,8 +7,8 @@
 - **Framework**: React Native + Expo
 - **Lenguaje**: TypeScript
 - **Navegación**: Expo Router
-- **Estado actual**: Desarrollo local / Mock
-- **Backend**: No conectado actualmente
+- **Estado actual**: Etapa006 P0/P1/P2 y registro P3 en pruebas;11 fotos pendientes; etapa005 continúa en pruebas; catálogo/pedidos mock
+- **Backend**: /health verificado desde desarrollo; autenticación real bloqueada por HTTPS y contratos
 - **Fuente principal de UI**: Figma
 
 ---
@@ -68,6 +68,114 @@
 ### Bloqueos
 
 `BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
+## Preparación de publicación HRDCORE — Expo58.0.25 (2026-11-12)
+- Usuario autoriza commit/push de los cambios acumulados005/006 y, tras detectar bloqueo real de CI, el parche adicional Expo58.0.24→58.0.25. Solo cambia ese rango y la entrada Expo del lockfile; otras dependencias directas/transitivas intactas respecto al estado P2/P3.
+- Verificación repetida: tsc0errores, lint0errores/30warnings,178pruebas/15suites y **Doctor20/20**. Bundle Android HTTP200/1402módulos/12564ms, sin teléfono. Se resuelve el19/20 registrado en la sección histórica P2/P3, no los bloqueos funcionales005 ni las fotos/pruebas físicas006.
+-37 archivos protegidos fuera del parche y SDD mantienen huella34da1bb65f37b94cb59fa367ee96e0c589d34744. .env y artefactos locales excluidos. HRDCORE sin divergencia al preparar; CI remoto anterior success. Resultado de la nueva publicación se comprobará en GitHub Actions.
+
+## Etapa006 — continuación P2/P3 (2026-11-12)
+
+**Estado: EN PRUEBAS**, P4 diferido. Evidencia física del usuario:7 PASS/1 PENDIENTE de P0/P1, limitada al recorrido reportado; modelo/SO/Expo Go/fecha exacta pendientes. Sin prueba física nueva de P2/P3.
+
+### Cambios
+- Layout reactivo mediante useWindowDimensions, matriz320/360/390/430×fontScale1/1.3/1.6/2, grid1/2 columnas por filas estables dentro de una FlatList. Query/input/lista conservados, offset restaurado al reflujo. Tarjetas flexibles, textos escalables y controles por rol, botón loading con geometría reservada. Headers/formularios/tabs/SafeArea actualizados; Poppins y paleta conservados.
+- Registro canónico foodMedia para21 ids y FoodImage con expo-image instalado: misma identidad por producto en tarjeta, categoría, detalle, datos/confirmación del pedido. Fallback neutro en error/pendiente y reinicio de carga al cambiar id/resolución. Retirados diccionario por nombre, fallback de hotcakes como Torta y21 URLs legacy del mock. Ningún otro campo comercial cambia en P3.
+- **10 productos con foto**:8 alternativas Pexels con autor/página/licencia y2 recortes Figma temporales. **11 productos con foto pendiente**, representados por marcador neutro. Hero/banderola de Tortas recortados de las referencias; no pantalla completa como hero. Titular/beneficios/acciones de bienvenida son componentes nativos, iconos Ionicons en lugar de emojis.
+-22 JPEG locales,1241641bytes (≈1,24MB), ambos tamaños y hero/banner incluidos. Script reproducible con jimp-compact ya disponible, originales intactos. Manifiesto de21 ids y JSON de dimensiones/pesos/hashes; recortes con resolución limitada y autor/licencia externa no informados.
+
+### Verificación
+| Check | Resultado |
+|---|---|
+| Checkpoint P2 anterior a P3 | tsc0, lint0errores/30warnings,167/167 en14suites |
+| npx tsc --noEmit final | 0 errores |
+| npm run lint final | 0 errores,30 warnings remanentes |
+| npm run test:ci final | **178 aprobadas,15 suites** (147 anteriores+20 P2+11 P3) |
+| npx expo-doctor final | **19/20**: recomienda expo~58.0.25, instalado58.0.24 conservado |
+| Bundle Android Metro -c | HTTP200,1402 módulos,13543ms; sin dispositivo |
+| git diff --check | Sin errores de whitespace |
+| Huella protegida41 archivos | e110daf4583f61239b177a0f3d373ee8b0058d6e, intacta |
+
+Pendientes:11 fotos apropiadas, exports individuales Figma/procedencia, revisión separada del parche recomendado por Doctor y comparación física con escalas/teclado/foco/offset. Recorridos y evidencia en tareas006; no declarar fidelidad completa ni cierre del síntoma de regreso inesperado. Sin cambios AWS/AuthContext/SecureStore/CartContext/rutas/dependencias; no commits/pushes.
+
+## Etapa006 — Figma UI / Navigation Fixes — P0/P1 (2026-11-12)
+
+**Estado: EN PRUEBAS.** Solo alcance P0/P1 autorizado; detener antes de P2/P3/P4.
+
+### Cambios
+- Spec, matriz Figma, plan y tareas006 creados antes de implementar. ANALISIS_FIGMA y MAPA_NAVEGACION corregidos con inventario63 PNG y correspondencias verificadas. Constitución/AGENTS aclaran ownership/back/fallback/contadores reales.
+- Rutas reales food/[id] tipadas desde listados, sin as any en pantallas. Root/buyer/grupos sin duplicación de hijos; anchor público SDK58.
+- Cinco tabs con identidad Figma: Inicio/Buscar/Pedidos/Avisos/Perfil. Archivos reorganizados en (tabs) y (private), conservando URLs. Guardas no montan datos personales de invitado ni crean sesión ficticia; no se modifica AuthContext.
+- Flechas restauradas en login/seguimiento/calificación/cancelación; back con historial y fallback seguro sin historial. Gesto nativo conservado, Android con delegación/fallback probado en simulación.
+- Diagnóstico sanitizado [navigation], +not-found y ErrorBoundary. Cierre/login inesperado sigue pendiente de reproducción y evidencia física; no se atribuye a AuthContext ni se declara resuelto.
+- Seis categorías Figma con mapeo explícito por ids;21 productos conservados. Conteos1/3/3/3/3/0 y8 alimentos sin categoría compatible, aún visibles en general. Solo categoryId normalizado; datos originales restantes intactos.
+- Selector en Buscar, categoría seleccionada en UI-012, estado vacío real y parámetros preservados al abrir detalle/regresar. Filtros locales vuelven por dismissTo al origen permitido. Sin carrusel duplicado en Inicio; chips wrap de UI-007.
+- Una FlatList vertical por listado, viewport acotado, separación de columnas y encabezado estable. Pedidos/avisos sin ScrollView exterior; sin usar nestedScrollEnabled como solución superficial.
+
+### Verificación ejecutada
+| Check | Resultado |
+|-------|-----------|
+| npx tsc --noEmit | 0 errores |
+| npm run lint | 0 errores,34 advertencias remanentes (antes69) |
+| npm run test:ci | **147 aprobadas,0 fallidas,12 suites**;104 previas+43 nuevas |
+| npx expo-doctor | **20/20** |
+| git diff --check | Sin errores de whitespace |
+| Bundle Android por Metro | HTTP200,2406 módulos,11637ms; no dispositivo |
+| Protección de alcance | Huella28 archivos AWS/contextos/dependencias/SDD005 intacta |
+
+### Pendientes
+Expo Go físico: flecha/Android/gesto, scroll final, teclado, deep links y privacidad. HTTPS/contratos siguen bloqueando sesión real de005. Responsividad integral, fotos y negocio de pedidos/QR/cancelar/reseñar permanecen diferidos. No nuevas dependencias, endpoints, commits ni pushes.
+
+Detalles de recorridos, archivos y limitaciones en `tasks/006-figma-ui-navigation-fixes-tasks.md`.
+
+---
+
+## Etapa 005 — AWS-API-INTEGRATION (2026-11-11)
+
+### Continuidad — diez parches autorizados aplicados y verificados
+- Registro de git status y snapshots ANTES de instalar para conservar los cambios previos. Comparación contra estado inicial: únicamente package.json, package-lock.json y tasks005/memoria/changelog cambian en esta intervención; huella de los otros130 archivos preservada.
+- Actualizadas dependencias directas: @expo/ui58.0.27→58.0.28; expo58.0.23→58.0.24; expo-constants58.0.15→58.0.16; expo-font58.0.11→58.0.12; expo-linking58.0.16→58.0.17; expo-router58.0.30→58.0.31; expo-splash-screen58.0.13→58.0.14; expo-status-bar58.0.4→58.0.5; expo-symbols58.0.4→58.0.5; expo-web-browser58.0.7→58.0.8.
+- SDK58, React19.3.0, RN0.88.1, SecureStore y todas las otras dependencias directas conservadas. Lock sincronizado; npm resuelve41 cambios de versión transitivos y elimina getenv ya no referenciado (no dependencia directa). Cambios internos documentados en tareas005; sin overrides ni actualización mayor de Expo/RN.
+- Retiradas dos adiciones incidentales de plugins realizadas por Expo CLI: app.json vuelve exactamente a su contenido previo, preservando los cambios anteriores de SecureStore.
+- Verificaciones: expo install --check al día; **Expo Doctor20/20**; tsc0errores; ESLint0errores/69warningsprevios; test:ci **104aprobadas/0fallidas,7suites**; pruebas focalizadas **48aprobadas/0fallidas,2suites** (incluidas en104); git diff --check sin errores. npm ls confirma versiones objetivo.
+- Metro arrancó con caché limpia/.env, ventana acotada offline25s y proceso detenido. Aún no hay prueba física ni resultados nuevos de AWS en esta intervención. Node25.4 local emite warnings engines; recomendar Node24LTS. Ningún servicio, restricción HTTPS, AuthContext o pantalla modificado respecto al inicio de esta actualización.
+- Etapa005 continúa EN PRUEBAS: dependencias resueltas; HTTPS, contratos JSON y Expo Go pendientes. Sin commits/pushes.
+
+### Continuidad — revisión de parches y preparación de prueba manual
+- Ejecutado `npx expo install --check`: confirma diez desajustes de parches SDK58 ya reportados por Doctor. Ajustes recomendados documentados en tareas005; pendientes de aprobación, sin modificación de dependencias en esta revisión.
+- Revisados hook useApiHealth y botón de diagnóstico, guardas HTTP, contrato bloqueado y ruta de invitado. Prueba física de Expo Go aún pendiente de evidencia del usuario.
+- Reejecutadas suites existentes de cliente HTTP y coordinador: 48 tests/2 suites aprobadas, con mocks. No se reconstruyeron servicios ni se habilitó autenticación real.
+- Precisado orden de validación para prueba manual: login valida correo antes de HTTPS; registro bloquea por HTTPS antes de validar dominio en el coordinador. Metro no registra automáticamente las peticiones; ausencia de logs no demuestra ausencia de tráfico.
+
+### Alcance implementado (EN PRUEBAS, no cierre de integración real)
+- Spec, plan y tareas siguiendo la estructura SDD existente, antes de código.
+- .env local ignorado y .env.example; origen centralizado con acceso estático Expo.
+- Cliente fetch GET/POST/PATCH, JSON, Bearer, timeout, errores HTTP/red/configuración/respuesta. Solo health público puede usar HTTP; contraseñas/JWT bloqueados antes de fetch.
+- Servicios health/auth/users/sellers/admin con rutas/cuerpos/status acordados, parámetros admin conocidos y listas blancas PATCH. Respuestas sin contrato como unknown; sin adaptar User/JWT con campos supuestos.
+- SecureStore 58.0.3 y plugin. Coordinador del único AuthContext con storage serializado, restauración preparada y logout/cancelación de respuestas tardías; sin fallback demo, sin contraseñas persistidas.
+- Adaptadores de sesión bloqueados (`sessionContract = null`) hasta JSON real. Registro 202 no autentica; verificación/recuperación ya no simulan OTP/enlace exitoso.
+- Login/registro/perfil adaptados conservando componentes y estilos; diagnóstico /health solo __DEV__, exploración invitado sin usuario ficticio. Mocks comprador, carrito, pedidos, filtros y QR conservados.
+- AsyncStorage legacy conservado sin lecturas de autenticación ni limpieza automática; estrategia no destructiva en plan/memoria.
+- Jest existente corregido para transformaciones Expo ESM y tipos TS6. CI habilita tests en gate y Node24. Constitución, AGENTS y README alineados con etapa005.
+
+### Verificación ejecutada
+| Check | Resultado |
+|-------|-----------|
+| npx tsc --noEmit | 0 errores |
+| npm run lint | 0 errores, 69 advertencias en archivos existentes fuera del código adaptado |
+| npm run test:ci | 7 suites / 104 tests aprobados, fetch/SecureStore simulados |
+| npx expo-doctor | 19/20; 10 dependencias existentes requieren parches SDK58 |
+| GET /health real desde PC | 200 OK, JSON API/MongoDB/Redis Healthy, ~0.376s |
+| HTTPS /health | Conexión a 443 no establecida, curl error 7; sin respuesta HTTP |
+| Metro cache limpio | Inicia y carga .env; ventana acotada offline sin dispositivo/render completo |
+| Expo Go físico | Pendiente; adb no disponible |
+| CI YAML | Validado localmente; GitHub Actions no ejecutado |
+
+### Bloqueos y seguimiento
+HTTPS/certificado, contrato JWT/identidad/roles/perfiles/errores/paginación, límites/formato de campos, flujo Supabase-AWS y prueba móvil. Doctor no está aprobado; Node local25.4 fuera de engines recomendados, usar Node24. Solo health se probó contra AWS; tests unitarios no prueban backend. Ningún commit/push realizado.
+
+Archivos/evidencia detallados en `tasks/005-aws-api-integration-tasks.md`. Datos de red fechados localmente 2026-11-11; header servidor UTC 2026-11-12.
+
+---
 
 ## Etapa 1 — Inicialización del proyecto
 
@@ -409,3 +517,14 @@ npx expo start --android  # Android directo
 **Fecha**: 2025-11-06
 **Branch**: `HRDCORE` → `origin/HRDCORE` sincronizado
 **Commits**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`
+
+---
+
+## Sincronización `HRDCORE` → `eas-google-play` (2026-11-13)
+
+- Se integraron los cambios funcionales de `HRDCORE` (`91799ca`) mediante merge no fast-forward iniciado sobre la rama de publicación.
+- Se conservaron CI/CD, DevSecOps, acciones fijadas por SHA, Node 22.13.1, Expo SDK 58, EAS, iconos, splash y origen HTTPS de producción.
+- Se incorporaron catálogo responsivo, grupos de navegación, guardas privadas, servicios API tipados, coordinación de sesión con SecureStore y pruebas nuevas.
+- El registro conserva `POST /api/v1/auth/register` con respuesta 202 y el flujo de verificación por enlace; no se incorporó OTP/PIN.
+- El contrato de identidad del backend permanece bloqueado hasta confirmación, por lo que el login real no se declara operativo.
+- CartContext permanece como deuda histórica no activada por el alcance de compra directa.

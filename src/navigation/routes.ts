@@ -17,7 +17,7 @@ export const ROUTES = {
     filters: '/buyer/filters',
     availableNow: '/buyer/available-now',
     category: '/buyer/category',
-    foodDetail: '/buyer/food',
+    foodDetail: '/buyer/food/[id]',
     orderData: '/buyer/order-data',
     confirmOrder: '/buyer/confirm-order',
     orderCreated: '/buyer/order-created',

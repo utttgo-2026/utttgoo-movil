@@ -151,4 +151,73 @@ Login y Registro; no se encontró un redirect de autenticación que omita el onb
 
 **Última actualización**: 2025-11-05
 **Versión**: 1.0
+## 10. AWS-API-INTEGRATION — 2026-11-11
+
+### Decisiones de integración
+- Conservar arquitectura original y único AuthContext. Reemplazar autenticación demo/AsyncStorage por coordinador de sesión AWS; ningún error activa un usuario ficticio. `role` es null sin identidad, no buyer supuesto.
+- fetch nativo es suficiente; no Axios. Configuración del origen en .env ignorado, acceso estático solo en api/config.ts. .env.example documenta variable vacía; IP no repetida en servicios/docs.
+- Solo GET /health público permite HTTP. Login, registro, JWT, perfil y servicios restantes requieren HTTPS antes de llamar fetch. No cambios nativos globales; redirect:error solicitado, pero su soporte en RN requiere validación física y endpoints backend sin downgrade.
+- Tipos de solicitudes según información del equipo; respuestas desconocidas como unknown. sessionContract permanece null deliberadamente: no sabemos dónde está el JWT ni cómo mapear User/roles; login no transmite credenciales hasta confirmar contrato y HTTPS.
+- Registro 202 no autentica. Se retira OTP/envío local simulado de verificación y recuperación; relación Supabase-AWS pendiente, sin SDK/endpoints inventados.
+- expo-secure-store 58.0.3 instalado con expo install y plugin agregado. Solo JWT, acceso device-only sin biometría obligatoria en Expo Go; errores explícitos sin fallback. Operaciones de storage serializadas y generaciones de sesión evitan resurrección tras logout. Validar auth/me y users/me antes de autenticar; red/timeout no borran automáticamente tokens, 401 de validación sí los invalida.
+- @uttgo:users no se lee/reusa/borra automáticamente. La limpieza futura requiere autorización, inspección local sin exponer datos, eliminación dirigida y verificación de otras claves; nunca AsyncStorage.clear(). No se migran contraseñas ni se interpretan usuarios locales como AWS.
+- Mantener UI/componentes Figma. Diagnóstico de health dentro de login solo __DEV__. Acción existente Seguir explorando habilitada sin crear sesión; perfil para invitado. Edición visual de perfil bloqueada, servicio PATCH preparado sin inventar formulario.
+- PATCH valida listas blancas/null/tipos/texto; faltan límites exactos y formato phone para completar validación funcional. Sin filtros admin adicionales.
+- Jest reutilizado; corregir override de transformIgnorePatterns heredado que impedía ESM Expo y añadir tipos explícitos TS6. Tests nunca llaman AWS ni almacenan credenciales reales. CI agrega job/gate tests y Node 24 compatible con SDK58; no ejecución remota aún.
+
+### Evidencia y límites
+- GET /health desde desarrollo: 200 JSON reportando API/MongoDB/Redis Healthy (0.376s). HTTPS en el mismo host no conecta a 443 (curl 7), causa AWS exacta no determinada.
+- tsc 0 errores; lint 0 errores/69 warnings de archivos existentes fuera de esta integración; Jest 104 tests/7 suites aprobados.
+- Doctor 19/20: 10 paquetes existentes requieren parches SDK58. No se oculta fallo ni actualiza masivamente dependencias. Node local25.4 emite advertencias engines; recomendar Node24.
+- Metro inicia con caché limpia, .env cargado y espera conexión; prueba acotada/offline sin render ni dispositivo. adb no disponible; Expo Go físico pendiente.
+- Cierre bloqueado por HTTPS, JSON real/JWT/roles/errores, límites de campos, contrato Supabase/recuperación y prueba móvil. Estado EN PRUEBAS, no login real completado.
+
+## 11. Alineación controlada de parches SDK58 — 2026-11-11
+
+- Autorizados por el usuario únicamente diez cambios directos: @expo/ui58.0.27→58.0.28, expo58.0.23→58.0.24, expo-constants58.0.15→58.0.16, expo-font58.0.11→58.0.12, expo-linking58.0.16→58.0.17, expo-router58.0.30→58.0.31, expo-splash-screen58.0.13→58.0.14, expo-status-bar58.0.4→58.0.5, expo-symbols58.0.4→58.0.5 y expo-web-browser58.0.7→58.0.8. Aplicados con expo install y rangos ~58.0.x; React19.3.0, RN0.88.1 y SecureStore58.0.3 conservados.
+- Se guardó estado inicial de Git, snapshots de manifest/lock como objetos sin commit y huella de los otros130 archivos; revisión final confirma que solo manifest/lock y tres documentos SDD difieren del inicio de esta intervención. No confundir cambios previos de etapa005 con el ajuste de dependencias.
+- Mantener el grafo transitivo requerido por versiones Expo aprobadas: lock actualiza41 entradas transitivas y retira getenv, que ya no es referenciado. Algunas internas pasan a58.1.0 (core/autolinking/server) o0.5.0 (modules-cli) por requisitos del paquete, sin cambio de SDK ni versiones React/RN. No usar overrides para forzar internas antiguas. No se eliminó ninguna dependencia directa.
+- Expo CLI agregó dos plugins incidentalmente; se retiraron esas adiciones para restablecer app.json inicial, sin tocar el plugin SecureStore ya existente.
+- Resultados: compatibilidad al día, Doctor20/20, tsc0errores, lint0errores/69warningsprevios, Jest104/104 en7suites y comprobación focalizada48/48 en2suites (incluidas en las104). Metro arranca con caché limpia/.env; prueba acotada sin teléfono.
+- Permanecen advertencias engines por Node25.4 local: recomendar Node24LTS compatible. Sin actualización de Node global, auditoría automática correctiva ni cambios de código de la aplicación. Auth y validación física continúan pendientes; etapa005 EN PRUEBAS.
+
+## 12. Etapa006 — P0/P1 implementados (verificación2026-11-12)
+
+- SDD antes del código: spec/matriz/plan/tasks006. Inventario real63 PNG; corregidas correspondencias UI-007(selector), UI-012(categoría seleccionada), UI-025(comprador)/-1(vendedor), UI-014(vendedor público) y UI-026(edición compartida). No afirmar auditoría visual de las63 ni fidelidad completa sin capturas de ejecución.
+- Expo Router: root deja de declarar hijos buyer; buyer posee (tabs), detalles/listados y grupo (private). Los cinco tabs y seis pantallas de pedido se reubican en grupos sin cambiar URLs. Usar anchor público (tabs), API recomendada en SDK58, sin reemplazos indiscriminados.
+- Contrato de rutas tipado food/[id] desde Inicio/Buscar/Categoría/Disponible. AppHeader muestra flechas secundarias y usa back o fallback público exclusivamente sin historial. Listener Android delega regreso nativo si existe historial; raíz agotada no se confunde automáticamente con crash. Gesto físico pendiente.
+- Diagnóstico __DEV__ sanitizado: navegación, retroceso, historial agotado, ruta desconocida y error de ejecución; sin query/ids reales/error.message. +not-found y ErrorBoundary dan salida al catálogo/reintento. No se atribuye ni da por resuelto el regreso inesperado a login sin reproducción del usuario.
+- RequireSession consume el único AuthContext; anonymous/blocked/restoring no montan hijos privados. No hay usuario demo, guardas no envían credenciales ni cambian cliente AWS. Perfil invitado no muestra datos personales. Flujo físico autenticado bloqueado por005.
+- Categorías Figma: Tortas1, Comida corrida3, Postres3, Bebidas3, Snacks3, Vegano0. Ocho desayunos/antojitos conservados como no clasificados técnicos y visibles en Todo/Buscar/Disponible. No inventar productos ni dieta vegana, no confundir clasificación antigua del source con export normalizado. Solo categoryId cambia en los21 alimentos; ids/precios/fotos/stock permanecen.
+- Inicio sin carrusel añadido; selector en Buscar con chips wrap verificados, UI-012 sin selección duplicada. Filtros/orden/query/categoría en params tipados; dismissTo al origen cierra filtros. Encabezado de búsqueda de tipo estable; no recrear el componente por pulsación.
+- Screen usa flex:1 para viewport y flexGrow:1 para contenido scrollable. FlatList única para cada listado; pedidos/avisos ya no se anidan en ScrollView. Sin nestedScrollEnabled como parche. Insets inferiores en tabs a cargo de tab bar.
+- P2/P3/P4 expresamente detenidos: tamaños generales/fotos/hero/banner/recientes/filtros avanzados y negocio de pedidos/QR/cancelar/reseñar pendientes. Solo cambios de navegación/guardas/flechas/scroll en las pantallas privadas; CartContext y datos de pedidos intactos.
+- Pruebas:147/147 en12suites (104previas+43nuevas), tsc0errores, lint0errores/34warnings, Doctor20/20, diffcheck sin errores. Router real en memoria valida tabs/selección/privacidad/deep links/detalle/back; listener Android y scroll se simulan, no equivalen a teléfono. RNTL14 usa queries públicas/RenderRouterResult, mock SafeArea requiere default y BackHandler0.88 tiene evento tipado; ajustes de tests sin dependencias nuevas.
+- Metro compila bundle Android HTTP200,2406 módulos,11637ms; no dispositivo. Huella protegida de28 archivos idéntica:3636d1036ef997841f8dedd076a5dbd7e3bb35af (AWS/AuthContext/SecureStore/CartContext/dependencias/SDD005 sin cambios). Estado EN PRUEBAS, no COMPLETADO.
+
+## 13. Etapa006 — P2/P3 y límites de evidencia (2026-11-12)
+
+- Autorización de continuación registrada antes del código en spec/matriz/plan/tasks006. Usuario reportó7 PASS/1 PENDIENTE físico en P0/P1; sin modelo/versión/fecha exacta, no se extrapola a todos los recorridos ni se cierra el síntoma de login inesperado.
+- P2 usa dimensiones reactivas nativas, cálculos puros de columnas y alturas por rol. Se agrupan filas1/2 dentro de una FlatList con identidad estable, en lugar de cambiar numColumns/key y desmontar lista/input; se restaura offset mediante scrollToOffset. Cálculos de16 combinaciones de ancho/fontScale y tests de identidad no son renders físicos. Poppins/paleta y font scaling nativo conservados.
+- P3 centraliza fuentes en foodMedia por food.id, no nombres. FoodImage comparte foto entre resoluciones y consumidores; marco reservado, cover/foco, recyclingKey y remount por identidad de producto/foto/resolución para reiniciar errores. Pendiente/error produce icono neutro, nunca otra comida. Tipos globales FoodItem intactos; se retiró solamente image legacy del mock, conservando datos comerciales/categorías de P1.
+-10 productos tienen foto:8 alternativas Pexels y2 recortes temporales de Figma.11 siguen pendientes.22 archivos JPEG incluyen tamaños/hero/banner y pesan1241641bytes; preparación con jimp-compact existente, sin nueva dependencia. Originales no modificados. Manifiesto y hashes en specs006; permisos externos de capturas Figma no se inventan, exports individuales pendientes.
+- Bienvenida usa solo la pieza promocional recortada de UI-002; titular, descripción, beneficios e iniciar/registrar/explorar son componentes nativos reales. El artwork conserva su teléfono/texto ilustrados como en Figma, no controles de pantalla falsos. Banner UI-012 solo en Tortas. Calidad limitada de recortes explícita.
+- Verificaciones: checkpoint P2=167tests/14suites antes de P3; final=178/178,15suites, tsc0errores, lint0errores/30warnings, diffcheck limpio; bundle Android HTTP200/1402módulos/13543ms con proceso terminado, sin teléfono. Doctor **19/20** por recomendación nueva de Expo58.0.25; instalado58.0.24 permanece intacto. No ocultar este resultado con el20/20 histórico.
+- Huella protegida41 archivos idéntica `e110daf4583f61239b177a0f3d373ee8b0058d6e`: AWS/contextos/rutas/clasificación/dependencias/SDD005 conservados. No pruebas de AWS ni sesión real nuevas; privados solo presentación/medios. P4 diferido. Etapa006 EN PRUEBAS hasta evidencia física,11 fotos y pendientes documentados; no commits/pushes.
+
+## 14. Publicación autorizada y parche adicional Expo (2026-11-12)
+- Usuario solicita subir el trabajo acumulado005/006 a HRDCORE; confirma explícitamente actualizar solo Expo58.0.24→58.0.25 y lock para que Doctor vuelva a pasar. Mantener SDK58 y las otras dependencias, sin modificación del negocio P4 ni contratos AWS.
+- Diff contra snapshots confirma solo versión/rango/resolved/integrity de Expo; sin cambios transitivos adicionales. Huella37 archivos protegidos excluyendo manifest/lock/SDD005:34da1bb65f37b94cb59fa367ee96e0c589d34744 intacta.
+- Checks repetidos:178tests/15suites, tsc0errores, lint0errores/30warnings, Doctor20/20; Metro Android HTTP200/1402módulos/12564ms. No convertir esta verificación en prueba física ni cierre de005/006. CI anterior remoto success; CI del nuevo commit se comprobará tras publicar.
+
+**Última actualización**: 2026-11-12
+**Versión**: 1.4
 **Autor**: Equipo UTTT-Go Móvil
+
+## Sincronización con rama funcional (2026-11-13)
+
+- Fuente revisada: `HRDCORE` en `91799ca`; destino: `eas-google-play`.
+- Se priorizó la configuración de publicación y seguridad del destino frente a la versión fuente de CI, que intentaba cambiar Node 22.13.1 por Node 24.
+- Se conservaron los contratos HTTPS, SecureStore, onboarding Demo 1/Demo 2 y verificación por enlace Supabase.
+- Se integraron la arquitectura de API tipada, sesión centralizada, rutas privadas y catálogo responsivo.
+- Bloqueo restante: `sessionContract` continúa sin contrato de identidad confirmado por backend; no se habilita una sesión ficticia ni se inventan endpoints.

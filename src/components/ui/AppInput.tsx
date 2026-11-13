@@ -52,6 +52,7 @@ export const AppInput = forwardRef<React.ComponentRef<typeof TextInput>, AppInpu
       <View
         style={[
           styles.inputWrapper,
+          rest.multiline && styles.multilineWrapper,
           focused ? styles.inputFocused : null,
           error ? styles.inputError : null,
         ]}
@@ -69,7 +70,7 @@ export const AppInput = forwardRef<React.ComponentRef<typeof TextInput>, AppInpu
             setFocused(false);
             onBlur?.(event);
           }}
-          style={[styles.input, style]}
+          style={[styles.input, rest.multiline && styles.multiline, style]}
           {...rest}
         />
         {secureTextEntry ? (
@@ -111,6 +112,7 @@ export const AppInput = forwardRef<React.ComponentRef<typeof TextInput>, AppInpu
 
 const styles = StyleSheet.create({
   wrapper: {
+    minWidth: 0,
     gap: spacing.sm,
   },
   label: {
@@ -135,12 +137,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
+    lineHeight: 22,
     color: colors.text,
     paddingVertical: spacing.md,
   },
   helper: {
     paddingHorizontal: spacing.xs,
   },
+  multilineWrapper: { alignItems: 'flex-start' },
+  multiline: { minHeight: 96, textAlignVertical: 'top' },
 });

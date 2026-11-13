@@ -1,64 +1,53 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 
 import { AppButton, AppText, BrandLogo, Screen } from '@/components';
 import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
+import { useSafeBack } from '@/navigation/useSafeBack';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  useSafeBack();
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} padded={false} scroll constrained>
       <View style={styles.content}>
-        <BrandLogo size="md" />
-
-        <ImageBackground
-          source={require('../../assets/images/welcome-hero.png')}
+        <Image
+          source={require('../../assets/images/foods/welcome-artwork-detail.jpg')}
           style={styles.heroImage}
-          resizeMode="cover"
-        >
-          <View style={styles.heroOverlay}>
-            <View style={styles.logoBadge}>
-              <AppText variant="label" style={styles.badgeText}>
-                UTTT-GO
-              </AppText>
-            </View>
-          </View>
-        </ImageBackground>
+          contentFit="cover"
+          accessible accessibilityLabel="UTTT-GO: comida universitaria al alcance de todos"
+        />
 
         <View style={styles.textBlock}>
           <AppText variant="display" style={styles.headline}>
-            Comida universitaria al alcance de todos
+            “Tu antojo, más cerca.”
           </AppText>
           <AppText variant="body" color={colors.textMuted} style={styles.subhead}>
-            Descubre, apoya y disfruta lo mejor del campus.
+            Descubre alimentos preparados por la comunidad, pide desde tu salón y recoge sin hacer fila.
           </AppText>
         </View>
 
         <View style={styles.features}>
           <View style={styles.featureCard}>
             <View style={styles.featureIcon}>
-              <AppText variant="body" style={styles.featureIconText}>
-                ⏱️
-              </AppText>
+              <Ionicons name="time-outline" size={22} color={colors.primary} accessible={false} />
             </View>
             <AppText variant="label">A tiempo</AppText>
           </View>
           <View style={styles.featureCard}>
             <View style={styles.featureIcon}>
-              <AppText variant="body" style={styles.featureIconText}>
-                📍
-              </AppText>
+              <Ionicons name="location-outline" size={22} color={colors.primary} accessible={false} />
             </View>
             <AppText variant="label">En campus</AppText>
           </View>
           <View style={styles.featureCard}>
             <View style={styles.featureIcon}>
-              <AppText variant="body" style={styles.featureIconText}>
-                ❤️
-              </AppText>
+              <Ionicons name="heart-outline" size={22} color={colors.primary} accessible={false} />
             </View>
             <AppText variant="label">Hecho cerca</AppText>
           </View>
@@ -93,33 +82,15 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xxl,
     gap: spacing.xxl,
     justifyContent: 'flex-start',
   },
   heroImage: {
     width: '100%',
-    height: 320,
+    aspectRatio: 1.27,
     borderRadius: radii.xxl,
     overflow: 'hidden',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.md,
-    alignItems: 'flex-start',
-    zIndex: 1,
-  },
-  logoBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    color: colors.textOnPrimary,
-    fontWeight: '700',
   },
   textBlock: {
     alignItems: 'center',
@@ -133,11 +104,14 @@ const styles = StyleSheet.create({
   },
   features: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: spacing.md,
   },
   featureCard: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '28%',
+    minWidth: 90,
     backgroundColor: colors.surfaceMuted,
     borderRadius: radii.lg,
     padding: spacing.lg,
@@ -151,9 +125,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceBlue,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  featureIconText: {
-    fontSize: 24,
   },
   primaryButton: {
     marginTop: spacing.lg,

@@ -5,11 +5,13 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
+import { useApiHealth } from '@/hooks/useApiHealth';
 import { colors, spacing } from '@/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, status, sessionError } = useAuth();
+  const health = useApiHealth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
@@ -25,24 +27,23 @@ export default function LoginScreen() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push('/buyer' as any);
+        router.push('/buyer');
       } else {
         setError(result.error ?? 'No se pudo iniciar sesión.');
       }
     } finally {
+      setPassword('');
       setLoading(false);
     }
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Acceso UTTT" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Acceso UTTT" showBack={false} />
-
           <AppText variant="title" style={styles.title}>
             ¿Qué gusto verte
           </AppText>
@@ -60,7 +61,7 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               error={error}
-              placeholder="20230184@utt.edu.mx"
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppInput
               label="Contraseña"
@@ -84,9 +85,14 @@ export default function LoginScreen() {
               variant="primary"
               onPress={handleLogin}
               loading={loading}
+              disabled={status === 'restoring'}
               style={styles.loginButton}
             />
           </Surface>
+
+          {sessionError && !error ? (
+            <AppText variant="caption" color={colors.danger}>{sessionError}</AppText>
+          ) : null}
 
           <Surface style={styles.infoCard} bordered={false} backgroundColor={colors.surfaceBlue}>
             <View style={styles.infoRow}>
@@ -98,6 +104,23 @@ export default function LoginScreen() {
                 </AppText>
               </View>
             </View>
+            {__DEV__ ? (
+              <>
+                <AppButton
+                  label="Comprobar conexión"
+                  variant="ghost"
+                  size="sm"
+                  loading={health.loading}
+                  onPress={() => { void health.check(); }}
+                />
+                {health.response ? (
+                  <AppText variant="caption" color={colors.textMuted}>
+                    HTTP {health.response.status} · API: {health.response.data.status} · MongoDB: {health.response.data.checks.mongodb} · Redis: {health.response.data.checks.redis}
+                  </AppText>
+                ) : null}
+                {health.error ? <AppText variant="caption" color={colors.danger}>{health.error}</AppText> : null}
+              </>
+            ) : null}
           </Surface>
 
           <View style={styles.signupRow}>
@@ -123,7 +146,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },
@@ -155,6 +177,7 @@ const styles = StyleSheet.create({
   },
   signupRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,

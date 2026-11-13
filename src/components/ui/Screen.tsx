@@ -19,6 +19,8 @@ interface ScreenProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   style?: StyleProp<ViewStyle>;
   keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
+  header?: React.ReactNode;
+  constrained?: boolean;
 }
 
 export function Screen({
@@ -30,24 +32,28 @@ export function Screen({
   contentContainerStyle,
   style,
   keyboardShouldPersistTaps = 'handled',
+  header,
+  constrained = false,
 }: ScreenProps) {
   return (
-    <SafeAreaView edges={edges} style={[styles.safeArea, { backgroundColor }, style]}>
+    <SafeAreaView edges={Array.from(new Set<Edge>([...edges, 'left', 'right']))} style={[styles.safeArea, { backgroundColor }, style]}>
+      {header}
       {scroll ? (
         <ScrollView
           contentContainerStyle={[
             styles.content,
             padded ? styles.paddedContent : null,
+            constrained && styles.constrained,
             contentContainerStyle,
           ]}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}
+          style={styles.viewport}
         >
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.content, padded ? styles.paddedContent : null, contentContainerStyle]}>
+        <View style={[styles.viewport, padded ? styles.paddedContent : null, constrained && styles.constrained, contentContainerStyle]}>
           {children}
         </View>
       )}
@@ -62,7 +68,11 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
   },
+  viewport: {
+    flex: 1,
+  },
   paddedContent: {
     paddingHorizontal: layout.screenPadding,
   },
+  constrained: { width: '100%', maxWidth: layout.maxContentWidth, alignSelf: 'center' },
 });

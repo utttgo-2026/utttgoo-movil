@@ -14,7 +14,7 @@
 - **Estilos**: StyleSheet + Theme system (colores, tipografía, espaciado, sombras, radios)
 - **Tipografía**: Poppins (via @expo-google-fonts/poppins)
 - **Iconos**: @expo/vector-icons (Ionicons)
-- **Almacenamiento local**: @react-native-async-storage/async-storage
+- **Sesión**: expo-secure-store para JWT; AsyncStorage legacy se conserva sin autoridad de autenticación (Etapa 005).
 - **Ejecución**: Expo Go (Android) — sin development builds
 
 ### Patrones Arquitectónicos
@@ -52,7 +52,7 @@
 4. **Safe Areas**: Respeto de áreas seguras (notches, barras de sistema) via `react-native-safe-area-context`.
 
 ### Recursos Gráficos
-- **Carpeta origen**: `UTTT-Go/` (66 imágenes exportadas de Figma)
+- **Carpeta origen**: `../UTTT-Go/` (63 PNG inventariados; correspondencias verificadas en Etapa006)
 - **Carpeta destino**: `src/assets/images/` (recursos copiados para uso en runtime)
 - **Naming**: Mantener nombres descriptivos basados en ID Figma (ej: `welcome-hero.png` de UI-002)
 - **No modificar originales**: Nunca modificar ni eliminar archivos en `UTTT-Go/`.
@@ -87,8 +87,8 @@
 ### Estado Actual: Mock Local
 - **Fuente**: `src/data/mock/` (archivos TypeScript)
 - **Tipado**: `src/types/models.ts` (FoodItem, Order, User, Category, etc.)
-- **Persistencia**: AsyncStorage solo para usuarios registrados (AuthContext)
-- **Backend**: NO conectado — pendiente de integración futura
+- **Persistencia**: JWT en SecureStore; registros legacy AsyncStorage conservados, no leídos ni borrados automáticamente para autenticar.
+- **Backend**: Etapa 005 en desarrollo: /health público verificado desde desarrollo; auth/perfiles bloqueados por HTTPS y contratos JSON.
 
 ### Separación Datos/UI
 - **Mock data**: `src/data/mock/*.ts` (arrays tipados, funciones de búsqueda)
@@ -103,7 +103,7 @@
 - **Funcionalidad**: Filtrado real por `categoryId` en mock data
 
 ### Productos Mock (Regla)
-- Mínimo por categoría: 3 items para demostrar filtrado
+- Contadores reales y estado vacío sin productos compatibles; no inventar 3 items por categoría (autorización Etapa006).
 - Campos obligatorios: id, sellerId, categoryId, name, description, price, image, rating, reviewCount, prepTimeMinutes, stock, availability, tags, isFavorite
 - Distribución equilibrada entre categorías reales de Figma
 - Precios, descripciones, tags coherentes con temática universitaria (UTTT)
@@ -124,9 +124,9 @@
 
 ### Navegación
 - **Expo Router**: Typed routes (`experiments.typedRoutes: true`)
-- **Back navigation**: `router.push` (no `replace`) para mantener historial, excepto logout
+- **Navegación (006)**: push para avanzar, back para regresar; replace de fallback solo sin historial o cierre explícito documentado. Nunca login como fallback genérico.
 - **Rutas dinámicas**: Segmentos `[id]` + `useLocalSearchParams`
-- **Stack único**: Root layout con todos los screens declarados
+- **Ownership (006)**: un propietario por pantalla; root/buyer/tabs/grupos declaran hijos de su nivel, sin duplicarlos en root.
 
 ### VirtualizedList / FlatList
 - **Nunca anidar FlatList en ScrollView** con misma orientación
@@ -137,7 +137,7 @@
 ### Funcionalidad Real
 - **No pantallas estáticas**: Botones, formularios, listas, filtros deben funcionar
 - **Datos mock**: Simular latencia (`delay`), respuestas realistas
-- **Persistencia**: AsyncStorage para usuarios registrados (AuthContext)
+- **Persistencia**: sesión real en SecureStore, validada remotamente; sin usuarios ficticios ni contraseñas persistidas.
 - **Carrito**: Single-vendor (un vendedor por pedido, regla de negocio)
 
 ---
@@ -210,10 +210,10 @@ SIGUIENTE ITERACIÓN
 | 7. Revisión visual | Comparación Figma | PENDIENTE |
 
 ### Fuera de Alcance (No Implementar Ahora)
-- Backend real (MongoDB, Supabase, API)
+- Productos/categorías/pedidos reales y flujo Supabase sin contrato (la preparación AWS auth/perfiles se autoriza en Etapa 005)
 - Pagos reales, notificaciones push, chat real
 - Funcionalidades administrativas
-- CI/CD, tests automatizados (unit/integration)
+- Publicación de producción (CI y tests unitarios ya disponibles; ver Etapas 004 y 005)
 
 ---
 
@@ -231,7 +231,24 @@ SIGUIENTE ITERACIÓN
 
 ---
 
-**Versión**: 1.0
-**Fecha**: 2025-11-05
+## Etapa 005 — AWS-API-INTEGRATION (2026-11-11)
+
+- Conservar Context API, Expo Router, componentes Figma y mocks de catálogo/carrito/pedidos.
+- URL solo en .env, lectura centralizada con `process.env.EXPO_PUBLIC_API_BASE_URL`; nunca secretos en EXPO_PUBLIC_*.
+- HTTP permitido únicamente para GET /health público sin datos/credenciales. Login, registro, JWT y demás datos requieren HTTPS; no desactivar ATS/cleartext globalmente.
+- Respuestas externas desconocidas se tratan como unknown; adaptadores de sesión bloqueados hasta contrato verificado. Registro 202 no autentica; no inventar OTP ni relación Supabase-AWS.
+- Único AuthContext, sin signInAs/fallback demo. Restaurar token no basta para autenticar: validar identidad y perfil remotamente. SecureStore no usa fallback AsyncStorage.
+- No guardar contraseñas. Conservar @uttgo:users sin leer/reusar/borrar automáticamente; limpieza dirigida futura requiere estrategia documentada y validada, nunca clear().
+- No declarar integración completada sin HTTPS, contratos JSON, tsc y pruebas reales Expo Go; tests con mocks no son evidencia AWS.
+
+## Etapa006 — P0/P1 (2026-11-12)
+- Navegación principal verificada: Inicio/Buscar/Pedidos/Avisos/Perfil. Invitado explora público, no monta información personal.
+- UI-007 contiene selector; UI-012 es categoría seleccionada. Seis categorías Figma con contadores reales; conservar21 productos y no forzar clasificación o dietas no verificadas.
+- Scroll vertical único y viewport acotado; nestedScrollEnabled no soluciona anidamiento inválido.
+- Cambios privados solo de navegación/guarda/scroll. AuthContext/AWS/SecureStore/pedidos/QR como negocio permanecen fuera de P0/P1.
+- P2/P3/P4 diferidos; no afirmar arreglado un cierre no reproducido ni verificación de dispositivo a partir de Jest/bundle.
+
+**Versión**: 1.2
+**Fecha**: 2026-11-12
 **Autor**: Equipo UTTT-Go Móvil
-**Basado en**: Análisis Figma (66 pantallas), SDD_CHANGELOG.md, ANALISIS_FIGMA.md, MAPA_NAVEGACION.md
+**Basado en**: Inventario real63 PNG, SDD_CHANGELOG.md, ANALISIS_FIGMA.md, MAPA_NAVEGACION.md

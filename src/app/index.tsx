@@ -35,6 +35,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },

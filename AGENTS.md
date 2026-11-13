@@ -10,8 +10,8 @@ Aplicación móvil de la plataforma **UTTT-Go** (Universidad Tecnológica de Tul
 
 - **Plataforma**: Android (Expo Go)
 - **Stack**: React Native + Expo (SDK 58+) + TypeScript + Expo Router
-- **UI Reference**: Figma (carpeta `UTTT-Go/` con 66 capturas)
-- **Estado**: Desarrollo local / Mock data / Sin backend
+- **UI Reference**: Figma (carpeta `../UTTT-Go/`,63 PNG inventariados)
+- **Estado**: Etapa005 EN PRUEBAS, auth bloqueada por HTTPS/contratos; etapa006 P0/P1 implementados, Expo Go pendiente. Catálogo/pedidos mock.
 - **Objetivo**: Prototipo funcional para presentación académica
 
 ---
@@ -27,7 +27,7 @@ Aplicación móvil de la plataforma **UTTT-Go** (Universidad Tecnológica de Tul
 | Estilos | StyleSheet + Theme system |
 | Tipografía | Poppins (@expo-google-fonts/poppins) |
 | Iconos | @expo/vector-icons (Ionicons) |
-| Almacenamiento | @react-native-async-storage/async-storage |
+| Almacenamiento | expo-secure-store (JWT); AsyncStorage legacy conservado, sin autoridad de sesión |
 | Ejecución | Expo Go (Android) |
 
 ---
@@ -152,9 +152,9 @@ SIGUIENTE ITERACIÓN
 - **Verifica contra Figma** antes de marcar COMPLETADO.
 
 ### Navegación
-- **Back navigation**: `router.push` (no `replace`) para mantener historial, excepto logout.
+- **Navegación (006)**: push para avanzar, back para regresar; replace de fallback solo sin historial o cierre explícito. Nunca login como fallback genérico.
 - **Rutas dinámicas**: Segmentos `[id]` + `useLocalSearchParams`.
-- **Stack único**: Root layout declara todas las screens.
+- **Ownership (006)**: root/buyer/tabs/grupos solo declaran pantallas de su nivel, sin duplicar hijos en root.
 - **No Stack.Screen redundantes**: Expo Router descubre rutas automáticamente.
 
 ### VirtualizedList / FlatList
@@ -168,7 +168,7 @@ SIGUIENTE ITERACIÓN
 ### Datos Mock
 - **Coherentes con Figma**: Categorías, productos, precios, imágenes según Figma.
 - **Single-vendor cart**: Un vendedor por compra (regla de negocio).
-- **Persistencia**: AsyncStorage solo para usuarios registrados (AuthContext).
+- **Persistencia**: JWT en SecureStore; no usar registros legacy AsyncStorage para autenticar, no borrarlos automáticamente.
 
 ### Recursos Gráficos
 - **Figma primero**: Si existe en Figma, úsalo. Carpeta origen: `UTTT-Go/`.
@@ -241,9 +241,9 @@ npm run test:ci
 
 | Carpeta | Contenido |
 |---------|-----------|
-| `UTTT-Go/` | 66 imágenes exportadas de Figma (originales, no modificar) |
+| `../UTTT-Go/` | 63 PNG inventariados (originales, no modificar) |
 | `src/assets/images/` | Copias para uso runtime |
-| `ANALISIS_FIGMA.md` | Inventario completo 66 pantallas |
+| `ANALISIS_FIGMA.md` | Inventario real63 PNG y alcance de inspección visual |
 | `MAPA_NAVEGACION.md` | Flujos de navegación por rol |
 
 ### Pantallas Clave Figma (Etapa 3 - Comprador)
@@ -293,6 +293,17 @@ La fase CI/CD vigente es `specs/004-ci-cd/`. La versión única de Node es 22.13
 - **Tests**: Cuando existan, deben pasar en CI
 - **Pipeline**: `.github/workflows/ci.yml` (TypeScript, Lint, Expo Doctor)
 - **Triggers**: PR/push a `main` y `HRDCORE`
+
+### AWS-API-INTEGRATION (Etapa 005)
+- SDD: `specs/005-aws-api-integration/spec.md`, `plans/005-aws-api-integration-plan.md`, `tasks/005-aws-api-integration-tasks.md`.
+- Mantener único AuthContext y respuestas sin contrato como unknown; no implementar adaptadores de login/User/roles con nombres supuestos.
+- Leer URL únicamente en `src/services/api/config.ts`, acceso estático EXPO_PUBLIC_API_BASE_URL; .env ignorado.
+- Solo GET /health sin credenciales admite HTTP. No enviar contraseñas/JWT por HTTP ni cambiar seguridad nativa global.
+- SecureStore para JWT, sin contraseñas/logs de tokens ni fallback de autenticación demo/AsyncStorage.
+- No leer/reutilizar/borrar automáticamente @uttgo:users; una limpieza futura necesita estrategia validada y eliminación dirigida.
+- Sin OTP local ni endpoints Supabase/refresh/recuperación supuestos. Registro 202 no crea sesión.
+- CI ejecuta tests y gate con Node 24; ejecutar también `npm run test:ci` local. No confundir fixtures unitarios con JSON real.
+- Login real sigue bloqueado hasta HTTPS, contrato verificado y Expo Go. Diagnóstico /health en login solo en desarrollo (__DEV__).
 
 ### CD (Despliegue Continuo)
 - **Fase 1 (Actual)**: Preview builds Android via EAS

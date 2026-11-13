@@ -15,9 +15,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { NavigationDiagnostics } from '@/components/navigation/NavigationDiagnostics';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+
+export { NavigationErrorBoundary as ErrorBoundary } from '@/components/navigation/NavigationErrorBoundary';
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -43,6 +46,7 @@ export default function RootLayout() {
         <AuthProvider>
           <CartProvider>
             <StatusBar style="dark" />
+            <NavigationDiagnostics />
             <Stack
               screenOptions={{
                 headerShown: false,
@@ -50,33 +54,7 @@ export default function RootLayout() {
                 animation: 'slide_from_right',
                 gestureEnabled: true,
               }}
-            >
-              <Stack.Screen name="index" />
-              {/* Auth routes */}
-              <Stack.Screen name="(auth)/welcome" />
-              <Stack.Screen name="(auth)/login" />
-              <Stack.Screen name="(auth)/register" />
-              <Stack.Screen name="(auth)/forgot-password" />
-              <Stack.Screen name="(auth)/verify-email" />
-              <Stack.Screen name="demo-one" />
-              <Stack.Screen name="demo-two" />
-              {/* Buyer routes */}
-              <Stack.Screen name="buyer" />
-              <Stack.Screen name="buyer/search" />
-              <Stack.Screen name="buyer/filters" />
-              <Stack.Screen name="buyer/available-now" />
-              <Stack.Screen name="buyer/category" />
-              <Stack.Screen name="buyer/food/[id]" />
-              <Stack.Screen name="buyer/order-data" />
-              <Stack.Screen name="buyer/confirm-order" />
-              <Stack.Screen name="buyer/order-created" />
-              <Stack.Screen name="buyer/orders" />
-              <Stack.Screen name="buyer/order-tracking" />
-              <Stack.Screen name="buyer/rate-order" />
-              <Stack.Screen name="buyer/cancel-order" />
-              <Stack.Screen name="buyer/notifications" />
-              <Stack.Screen name="buyer/profile" />
-            </Stack>
+            />
           </CartProvider>
         </AuthProvider>
       </SafeAreaProvider>

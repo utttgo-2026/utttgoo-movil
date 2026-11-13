@@ -1,136 +1,150 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { createApiClient, ApiRequestError } from '@/services/apiClient';
+import { ApiError, errorMessage } from '@/services/api/errors';
+import { createAuthSession } from '@/services/authSession';
+import type { UserPatch } from '@/types/api';
 import type { User, UserRole } from '@/types/models';
 
-const TOKEN_KEY = 'uttgo.auth.token';
-
 type AuthResult = { success: boolean; error?: string };
-type AuthResponse = { token?: string; accessToken?: string; jwt?: string; user?: BackendUser };
-type BackendUser = {
-  id?: string;
-  email?: string;
-  displayName?: string;
-  fullName?: string;
-  role?: UserRole;
-};
+type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
 
 interface AuthContextValue {
   user: User | null;
-  role: UserRole;
+  role: UserRole | null;
+  status: SessionStatus;
+  sessionError?: string;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (fullName: string, email: string, password: string) => Promise<AuthResult>;
-  signInAs: (role: UserRole) => void;
-  logout: () => void;
+  restoreSession: () => Promise<void>;
+  refreshProfile: () => Promise<AuthResult>;
+  updateProfile: (patch: UserPatch) => Promise<AuthResult>;
+  logout: () => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiRequestError) {
-    if (error.details.code === 'INVALID_CREDENTIALS' || error.details.status === 401) {
-      return 'Correo o contraseña incorrectos.';
-    }
-    return error.details.message || fallback;
-  }
-  if (error instanceof Error && error.message === 'EXPO_PUBLIC_API_BASE_URL is required.') {
-    return 'El acceso institucional no está disponible en este entorno.';
-  }
-  return fallback;
-}
-
-function toUser(value: BackendUser, email: string): User {
-  return {
-    id: value.id ?? email,
-    role: value.role ?? 'buyer',
-    fullName: value.displayName ?? value.fullName ?? email,
-    email: value.email ?? email,
-  };
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [session] = useState(createAuthSession);
   const [user, setUser] = useState<User | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState<SessionStatus>('restoring');
+  const [sessionError, setSessionError] = useState<string>();
+  const revision = useRef(0);
+
+  const restoreSession = useCallback(async () => {
+    const current = ++revision.current;
+    setUser(null);
+    setStatus('restoring');
+    setSessionError(undefined);
+    try {
+      const restored = await session.restore();
+      if (current !== revision.current) return;
+      setUser(restored);
+      setStatus(restored ? 'authenticated' : 'anonymous');
+    } catch (error) {
+      if (current !== revision.current) return;
+      setStatus('blocked');
+      setSessionError(errorMessage(error));
+    }
+  }, [session]);
 
   useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        const token = await SecureStore.getItemAsync(TOKEN_KEY);
-        if (token) {
-          const client = createApiClient({ getToken: async () => token });
-          const me = await client<BackendUser>('/api/v1/auth/me');
-          setUser(toUser(me, me.email ?? ''));
-        }
-      } catch {
-        await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => undefined);
-      } finally {
-        setLoaded(true);
-      }
-    };
-
-    restoreSession();
-  }, []);
+    let mounted = true;
+    const current = ++revision.current;
+    void session.restore().then((restored) => {
+      if (!mounted || current !== revision.current) return;
+      setUser(restored);
+      setStatus(restored ? 'authenticated' : 'anonymous');
+    }).catch((error: unknown) => {
+      if (!mounted || current !== revision.current) return;
+      setStatus('blocked');
+      setSessionError(errorMessage(error));
+    });
+    return () => { mounted = false; };
+  }, [session]);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !password) {
-      return { success: false, error: 'Ingresa tu correo institucional y contraseña.' };
-    }
-
+    const current = ++revision.current;
+    setUser(null);
+    setStatus('anonymous');
+    setSessionError(undefined);
     try {
-      const client = createApiClient();
-      const response = await client<AuthResponse>('/api/v1/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: normalizedEmail, password }),
-      });
-      const token = response.accessToken ?? response.token ?? response.jwt;
-      if (!token) {
-        return { success: false, error: 'La respuesta de acceso no contiene una sesión válida.' };
-      }
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      const backendUser = response.user ?? await createApiClient({ getToken: async () => token })<BackendUser>('/api/v1/auth/me');
-      setUser(toUser(backendUser, normalizedEmail));
+      const loggedIn = await session.login(email, password);
+      if (current !== revision.current) return { success: false };
+      setUser(loggedIn);
+      setStatus('authenticated');
       return { success: true };
     } catch (error) {
-      return { success: false, error: getErrorMessage(error, 'No se pudo iniciar sesión.') };
+      if (current === revision.current) {
+        setStatus('blocked');
+        setSessionError(errorMessage(error));
+      }
+      return { success: false, error: errorMessage(error) };
     }
-  }, []);
+  }, [session]);
 
   const register = useCallback(async (fullName: string, email: string, password: string): Promise<AuthResult> => {
     try {
-      const client = createApiClient();
-      await client('/api/v1/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password, displayName: fullName.trim() }),
-      });
+      await session.register(fullName, email, password);
       return { success: true };
     } catch (error) {
-      return { success: false, error: getErrorMessage(error, 'No se pudo crear la cuenta.') };
+      return { success: false, error: errorMessage(error) };
     }
-  }, []);
+  }, [session]);
 
-  const signInAs = useCallback((_role: UserRole) => {
-    // Demo guest navigation does not authenticate or create a productive user.
-  }, []);
+  const loadProfile = useCallback(async (patch?: UserPatch): Promise<AuthResult> => {
+    const current = revision.current;
+    try {
+      const updated = await session.refreshProfile(patch);
+      if (current !== revision.current) return { success: false };
+      setUser(updated);
+      return { success: true };
+    } catch (error) {
+      if (current === revision.current) {
+        setSessionError(errorMessage(error));
+        if (error instanceof ApiError && error.status === 401) {
+          setUser(null);
+          setStatus('blocked');
+        }
+      }
+      return { success: false, error: errorMessage(error) };
+    }
+  }, [session]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async (): Promise<AuthResult> => {
+    const current = ++revision.current;
     setUser(null);
-    SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => undefined);
-  }, []);
+    setStatus('anonymous');
+    setSessionError(undefined);
+    try {
+      await session.logout();
+      if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
+      return { success: true };
+    } catch (error) {
+      if (current === revision.current) {
+        setStatus('blocked');
+        setSessionError(errorMessage(error));
+      }
+      return { success: false, error: errorMessage(error) };
+    }
+  }, [session]);
 
+  const refreshProfile = useCallback(() => loadProfile(), [loadProfile]);
   const value = useMemo<AuthContextValue>(() => ({
     user,
-    role: user?.role ?? 'buyer',
-    isAuthenticated: Boolean(user) && loaded,
+    role: user?.role ?? null,
+    status,
+    sessionError,
+    isAuthenticated: status === 'authenticated' && user !== null,
     login,
     register,
-    signInAs,
+    restoreSession,
+    refreshProfile,
+    updateProfile: loadProfile,
     logout,
-  }), [user, loaded, login, register, signInAs, logout]);
+  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout]);
 
-  if (!loaded) return null;
+  // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

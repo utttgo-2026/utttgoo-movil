@@ -56,19 +56,18 @@ export default function RegisterScreen() {
         setError(result.error ?? 'No se pudo crear la cuenta.');
       }
     } finally {
+      setForm((prev) => ({ ...prev, password: '', confirmPassword: '' }));
       setLoading(false);
     }
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Crear cuenta" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Crear cuenta" />
-
           <AppText variant="title" style={styles.title}>
             Únete a UTTT-GO
           </AppText>
@@ -92,8 +91,7 @@ export default function RegisterScreen() {
               keyboardType="email-address"
               value={form.email}
               onChangeText={(v) => setField('email', v)}
-              error={error ? 'Correo inválido' : undefined}
-              placeholder="20230184@utt.edu.mx"
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppInput
               label="Contraseña"
@@ -101,7 +99,6 @@ export default function RegisterScreen() {
               secureTextEntry
               value={form.password}
               onChangeText={(v) => setField('password', v)}
-              error={error ? 'Contraseña requerida' : undefined}
               placeholder="········"
             />
             <AppInput
@@ -110,9 +107,9 @@ export default function RegisterScreen() {
               secureTextEntry
               value={form.confirmPassword}
               onChangeText={(v) => setField('confirmPassword', v)}
-              error={error ? 'Las contraseñas no coinciden' : undefined}
               placeholder="Repite tu contraseña"
             />
+            {error ? <AppText variant="caption" color={colors.danger}>{error}</AppText> : null}
             <AppButton
               label="Crear mi cuenta"
               variant="primary"
@@ -138,7 +135,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },

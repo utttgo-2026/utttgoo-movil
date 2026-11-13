@@ -1,0 +1,291 @@
+{
+  "preparedOn": "2026-11-12",
+  "assets": [
+    {
+      "id": "food-1",
+      "source": "https://www.pexels.com/photo/37074229/",
+      "download": "https://images.pexels.com/photos/37074229/pexels-photo-37074229.jpeg?w=960",
+      "author": "Iván Hernández-Cuevas",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-1-thumb.jpg",
+        "width": 315,
+        "height": 420,
+        "bytes": 57546,
+        "sha256": "9bdf6f4227aa938f3b3f92125e206b35aba6829fbef0a93b136ef84f92c80101"
+      },
+      "detail": {
+        "file": "food-1-detail.jpg",
+        "width": 720,
+        "height": 960,
+        "bytes": 214820,
+        "sha256": "a1326a4bcee718dda898568c9ab4cdb9c215baedf51c03ce6ff23b6a426e4fe0"
+      }
+    },
+    {
+      "id": "food-2",
+      "source": "https://www.pexels.com/photo/376464/",
+      "download": "https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?w=960",
+      "author": "Ash Craig",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-2-thumb.jpg",
+        "width": 420,
+        "height": 256,
+        "bytes": 27627,
+        "sha256": "acce43926aa4cd503cb47e07c781aae4793d04e49de0313f7a1bb9952ed8232c"
+      },
+      "detail": {
+        "file": "food-2-detail.jpg",
+        "width": 960,
+        "height": 586,
+        "bytes": 97966,
+        "sha256": "60ea988bc8310bb35e52f8e96e6b569da3594e30dd799c621123f112c6c45017"
+      }
+    },
+    {
+      "id": "food-3",
+      "source": "https://www.pexels.com/photo/31823016/",
+      "download": "https://images.pexels.com/photos/31823016/pexels-photo-31823016.jpeg?w=960",
+      "author": "Allan González",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-3-thumb.jpg",
+        "width": 280,
+        "height": 420,
+        "bytes": 29770,
+        "sha256": "fd05b0750ba3bb1a2140af4f1358512d41c7c3ee310c8eb256cbc00da95323df"
+      },
+      "detail": {
+        "file": "food-3-detail.jpg",
+        "width": 640,
+        "height": 960,
+        "bytes": 106135,
+        "sha256": "3b91d0d95e301eec5c019c82a90f311a560eb9d614001cf874f83ee16ef3c9ed"
+      }
+    },
+    {
+      "id": "food-4",
+      "source": "https://www.pexels.com/photo/4725753/",
+      "download": "https://images.pexels.com/photos/4725753/pexels-photo-4725753.jpeg?w=960",
+      "author": "Polina Tankilevitch",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-4-thumb.jpg",
+        "width": 280,
+        "height": 420,
+        "bytes": 15408,
+        "sha256": "3eb492c76ae17e17a0a979ce08e499d88e884c00966e115ae9775ff0d7dc94ae"
+      },
+      "detail": {
+        "file": "food-4-detail.jpg",
+        "width": 640,
+        "height": 960,
+        "bytes": 57480,
+        "sha256": "50915bffa12ed9a2993f416914ae8b534bc709e63a4b0e19ec3e63b57707023d"
+      }
+    },
+    {
+      "id": "food-5c",
+      "source": "https://www.pexels.com/photo/27603300/",
+      "download": "https://images.pexels.com/photos/27603300/pexels-photo-27603300.jpeg?w=960",
+      "author": "Snappr",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-5c-thumb.jpg",
+        "width": 420,
+        "height": 280,
+        "bytes": 44549,
+        "sha256": "25a1c7875448f642b821e66f40c64aab7d346abc74c3e9b5efe0473b1c5a8e90"
+      },
+      "detail": {
+        "file": "food-5c-detail.jpg",
+        "width": 960,
+        "height": 640,
+        "bytes": 174379,
+        "sha256": "be13c6cb7d8a4f66b1953122f9192373c3f33c9304571f0e64111430cde1d5d0"
+      }
+    },
+    {
+      "id": "food-8",
+      "source": "https://www.pexels.com/photo/5946635/",
+      "download": "https://images.pexels.com/photos/5946635/pexels-photo-5946635.jpeg?w=960",
+      "author": "Charlotte May",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-8-thumb.jpg",
+        "width": 280,
+        "height": 420,
+        "bytes": 23403,
+        "sha256": "f428d474c2eeb3b638e49b184c934e0b087c0f82b79c2c46136f379703712c98"
+      },
+      "detail": {
+        "file": "food-8-detail.jpg",
+        "width": 640,
+        "height": 960,
+        "bytes": 78999,
+        "sha256": "4303b2d7589dd93f54133d78e8f67f3b1fc94cc8c9d709b044970caef125586a"
+      }
+    },
+    {
+      "id": "food-8b",
+      "source": "https://www.pexels.com/photo/17429050/",
+      "download": "https://images.pexels.com/photos/17429050/pexels-photo-17429050.jpeg?w=960",
+      "author": "Jonathan Reynaga",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-8b-thumb.jpg",
+        "width": 280,
+        "height": 420,
+        "bytes": 17928,
+        "sha256": "74e6f833139a7475cca8dfde88d4fd9348459347394786c8698215a7953e031d"
+      },
+      "detail": {
+        "file": "food-8b-detail.jpg",
+        "width": 640,
+        "height": 960,
+        "bytes": 64473,
+        "sha256": "eba652aacc032b4a8197904ac0eef91a638fa4e2b9ce6b6d5f0ef9cc213401bc"
+      }
+    },
+    {
+      "id": "food-8c",
+      "source": "https://www.pexels.com/photo/18142614/",
+      "download": "https://images.pexels.com/photos/18142614/pexels-photo-18142614.jpeg?w=960",
+      "author": "Denys Gromov",
+      "license": "https://www.pexels.com/license/",
+      "kind": "licensed-alternative",
+      "transformation": "JPEG quality82; proportional resize; no upscaling",
+      "thumbnail": {
+        "file": "food-8c-thumb.jpg",
+        "width": 420,
+        "height": 280,
+        "bytes": 13525,
+        "sha256": "b24a78bd5aa0dcb81fd40974aa82ded0e9e70f1f7ee37ec806610900be3bb86d"
+      },
+      "detail": {
+        "file": "food-8c-detail.jpg",
+        "width": 960,
+        "height": 640,
+        "bytes": 57927,
+        "sha256": "0e1efe9048abd604007a5b3bdac57ac32ead62be2ac9409ab03c266b5923abe5"
+      }
+    },
+    {
+      "id": "food-5",
+      "source": "../UTTT-Go/UI-013 Detalle alimento.png",
+      "author": null,
+      "license": null,
+      "kind": "temporary-figma-crop",
+      "crop": [
+        16,
+        100,
+        358,
+        230
+      ],
+      "originalSha256": "bb2f895618e3bdabf7fbd9491e15e5ff45aa9c5c6a0e742485d8b1b0b7bb159f",
+      "transformation": "Temporary screenshot crop [x,y,width,height]; JPEG quality82; no upscaling",
+      "thumbnail": {
+        "file": "food-5-thumb.jpg",
+        "width": 358,
+        "height": 230,
+        "bytes": 28601,
+        "sha256": "e05ad6ea2a741876a00fbbe88f8de21300f57f4218ef78d369a1d2f6a6654b6d"
+      },
+      "detail": {
+        "file": "food-5-detail.jpg",
+        "width": 358,
+        "height": 230,
+        "bytes": 28601,
+        "sha256": "e05ad6ea2a741876a00fbbe88f8de21300f57f4218ef78d369a1d2f6a6654b6d"
+      }
+    },
+    {
+      "id": "food-5b",
+      "source": "../UTTT-Go/UI-037 Editar alimento.png",
+      "author": null,
+      "license": null,
+      "kind": "temporary-figma-crop",
+      "crop": [
+        16,
+        100,
+        358,
+        150
+      ],
+      "originalSha256": "6aa9472afd8f80f9d6268b3d15a52034d66812e32d9e10152ebdbcf7686875cf",
+      "transformation": "Temporary screenshot crop [x,y,width,height]; JPEG quality82; no upscaling",
+      "thumbnail": {
+        "file": "food-5b-thumb.jpg",
+        "width": 358,
+        "height": 150,
+        "bytes": 19755,
+        "sha256": "f01dc0ea0dfee496be24429af3157291652549c93d152e53653235a0fef7c825"
+      },
+      "detail": {
+        "file": "food-5b-detail.jpg",
+        "width": 358,
+        "height": 150,
+        "bytes": 19755,
+        "sha256": "f01dc0ea0dfee496be24429af3157291652549c93d152e53653235a0fef7c825"
+      }
+    },
+    {
+      "id": "welcome-artwork",
+      "source": "../UTTT-Go/UI-002 · Bienvenida.png",
+      "author": null,
+      "license": null,
+      "kind": "temporary-figma-crop",
+      "crop": [
+        16,
+        56,
+        358,
+        280
+      ],
+      "originalSha256": "b46a8d2e460f81d0d039a419101ef30bba17825ffd2f07c31b8032f9cafa6fc7",
+      "transformation": "Temporary screenshot crop [x,y,width,height]; JPEG quality82; no upscaling",
+      "detail": {
+        "file": "welcome-artwork-detail.jpg",
+        "width": 358,
+        "height": 280,
+        "bytes": 42631,
+        "sha256": "26fd80e506c6701b42a7bf0bfbc06c968375bf50323bb8e6154b2b58ce762e4a"
+      }
+    },
+    {
+      "id": "tortas-banner",
+      "source": "../UTTT-Go/UI-012 Categoría.png",
+      "author": null,
+      "license": null,
+      "kind": "temporary-figma-crop",
+      "crop": [
+        16,
+        100,
+        358,
+        120
+      ],
+      "originalSha256": "2796dea3ebb95041afe94e18c3a01bd687c6e2589a7977fe0b505ea5cc339232",
+      "transformation": "Temporary screenshot crop [x,y,width,height]; JPEG quality82; no upscaling",
+      "detail": {
+        "file": "tortas-banner-detail.jpg",
+        "width": 358,
+        "height": 120,
+        "bytes": 20363,
+        "sha256": "9e937fe3ab6c0e60e8ab7d0bdfa7d80746260a37ee58cf6c48440474bfee67c4"
+      }
+    }
+  ]
+}
