@@ -61,12 +61,10 @@
     "doctor": "npx expo-doctor"
   },
   "jest": {
-    "testEnvironment": "node",
-    "transform": { "^.+\\.[jt]sx?$": ["babel-jest", { "presets": ["babel-preset-expo"] }] },
-    "moduleNameMapper": { "^@/(.*)$": "<rootDir>/src/$1" },
-    "transformIgnorePatterns": ["node_modules/(?!(react-native|@expo|@react-native|expo)/)"],
     "preset": "jest-expo",
+    "moduleNameMapper": { "^@/(.*)$": "<rootDir>/src/$1" },
     "maxWorkers": 2,
+    "setupFiles": ["<rootDir>/jest.setup.js"],
     "setupFilesAfterEnv": ["@testing-library/jest-native/extend-expect"],
     "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json"],
     "testMatch": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],

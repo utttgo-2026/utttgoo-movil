@@ -527,4 +527,8 @@ npx expo start --android  # Android directo
 - Se incorporaron catálogo responsivo, grupos de navegación, guardas privadas, servicios API tipados, coordinación de sesión con SecureStore y pruebas nuevas.
 - El registro conserva `POST /api/v1/auth/register` con respuesta 202 y el flujo de verificación por enlace; no se incorporó OTP/PIN.
 - El contrato de identidad del backend permanece bloqueado hasta confirmación, por lo que el login real no se declara operativo.
+- Validación de integración: `npm test` 195/195, `npm run test:coverage` 195/195 con 97.57% statements, TypeScript 0 errores, Expo Doctor 20/20 y export Android exitoso.
+- Lint termina con 0 errores y 31 warnings preexistentes en pantallas buyer/UI.
+- El OpenAPI HTTPS respondió 200 y confirma `auth/login`, `auth/me`, `users/me` y `register`, pero publica `register` como 200 y un `servers.url` HTTP; esto queda como `BLOCKED_BY_BACKEND_CONTRACT` frente al contrato esperado 202/HTTPS.
+- El OpenAPI no declara endpoints OTP, Supabase ni resend; `HRDCORE` tampoco contiene SDK/configuración Supabase ni implementación `verifyOtp`. Estado: `BLOCKED_BY_BACKEND_SUPABASE_OTP`.
 - CartContext permanece como deuda histórica no activada por el alcance de compra directa.

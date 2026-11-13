@@ -221,3 +221,6 @@ Login y Registro; no se encontró un redirect de autenticación que omita el onb
 - Se conservaron los contratos HTTPS, SecureStore, onboarding Demo 1/Demo 2 y verificación por enlace Supabase.
 - Se integraron la arquitectura de API tipada, sesión centralizada, rutas privadas y catálogo responsivo.
 - Bloqueo restante: `sessionContract` continúa sin contrato de identidad confirmado por backend; no se habilita una sesión ficticia ni se inventan endpoints.
+- La sincronización terminó en el commit de integración `4d3623d`; el stash `stash@{0}` se conserva como respaldo y la rama `backup/eas-google-play-pre-auth-sync` apunta al HEAD previo.
+- Verificación local: Node `v22.13.1`, tsc limpio, 19 suites/195 tests, coverage 97.57% statements, Doctor 20/20 y export Android exitoso. Lint tiene 0 errores y 31 warnings existentes.
+- El backend HTTPS `/health` respondió 200. OpenAPI respondió 200, pero no documenta OTP/Supabase y expone discrepancias de `register` (200 publicado frente a 202 requerido) y servidor HTTP; no se declara autenticación OTP funcional.
