@@ -26,7 +26,7 @@ Las casillas registran implementación o evidencia técnica puntual; no sustituy
 - [x] AuthContext único sin fallback ficticio; restauración preparada con validación remota y protección frente a carreras.
 - [x] Adaptar login/registro/perfil y retirar simulación de verificación/recuperación sin rediseño. Exploración como invitado sin sesión ficticia.
 - [x] Conservar datos legacy sin leerlos/borrarlos para autenticar (test de Context).
-- [ ] Implementar decodificadores de JWT/identidad/perfil con JSON real; sessionContract permanece null.
+- [x] Decodificadores de login/auth-me/users-me implementados según contratos definitivos proporcionados; integración técnica verificada, recorrido real pendiente.
 - [ ] Validar sesión real y almacenamiento nativo en dispositivo.
 
 ### Fase 4: Verificación
@@ -41,7 +41,7 @@ Las casillas registran implementación o evidencia técnica puntual; no sustituy
 - [x] GET /health real desde desarrollo con evidencia.
 - [x] Arranque Metro con caché limpia y .env cargado; prueba acotada de 25 segundos, offline, puerto 8091.
 - [x] CI: habilitar Jest y gate, Node 24; YAML validado localmente.
-- [ ] Ejecutar CI remoto después de autorización de push (ningún push realizado).
+- [x] CI remoto del commit91799ca aprobado tras autorización anterior; esta continuación HTTPS no hace nuevos commits/pushes ni ejecuta CI remoto nuevo.
 - [ ] /health desde Expo Go en dispositivo.
 
 ### Fase 5: Memoria y cierre
@@ -50,7 +50,7 @@ Las casillas registran implementación o evidencia técnica puntual; no sustituy
 - [ ] Verificación completa HTTPS + contratos + Expo Go antes de COMPLETADO.
 
 ## Bloqueos
-HTTPS, contrato de login/JWT y User/roles, DTO de perfiles/vendedores/admin, error envelope, límites de campos, flujo Supabase/recuperación/refresh. La integración no está completada aunque pasen tests con mocks.
+Contratos de login, identidad y perfil Buyer ya implementados. Falta la validación física autorizada del recorrido completo (incluida recepción SMTP y lazy sync Active), seguridad/almacenamiento nativo y datos reales del servidor. SMTP Gmail/Token es reporte de backend, no observación móvil. Otros roles, vendedores/admin y recuperación/refresh no confirmados siguen fuera del alcance implementado; no inventar sus contratos. La etapa no está completada aunque pasen los tests con mocks.
 
 ## Evidencia — 2026-11-11 (hora local; headers de servidor en UTC)
 
@@ -70,7 +70,8 @@ HTTPS, contrato de login/JWT y User/roles, DTO de perfiles/vendedores/admin, err
 - Metro mostró `.env` cargado, React Compiler, raíz `src/app` y `Waiting on http://localhost:8091`. Proceso de comprobación detenido al finalizar ventana; no prueba de render/bundle completo.
 - `adb devices` no pudo ejecutarse porque adb no está instalado/en PATH. No existe evidencia de dispositivo Expo Go accesible; verificación móvil pendiente.
 
-## Prueba manual pendiente en Expo Go
+## Prueba manual inicial (histórica: configuración HTTP)
+El procedimiento vigente HTTPS/registro está en `specs/005-aws-api-integration/https-registration-verification.md`. Los pasos siguientes conservan el diagnóstico original; ya no describen la URL efectiva actual.
 1. Usar Node 24 LTS recomendado, ejecutar `npx expo start -c`, abrir proyecto en Expo Go Android y esperar splash/bienvenida.
 2. Ir a Login, tocar **Comprobar conexión** (solo __DEV__). Registrar HTTP/estado MongoDB/Redis o mensaje de red; no ingresar credenciales reales. El diagnóstico llama healthService sin token.
 3. Con datos ficticios @uttt.edu.mx, confirmar que login/registro se bloquean por HTTPS y no crean sesión. Login valida el dominio antes del transporte: con @utt.edu.mx debe rechazar el correo. Registro verifica HTTPS antes de validar correo en el coordinador: con la configuración HTTP actual debe mostrar primero bloqueo HTTPS, incluso para dominio incorrecto. La validación institucional del servicio de registro está cubierta por revisión de código/tests; no confundir el orden de mensajes con una petición enviada.
@@ -190,3 +191,87 @@ La prueba Metro usó `start -c --offline --port 8091` con CI=1 solo en el proces
 - [x] Contrastar huella37 archivos:34da1bb65f37b94cb59fa367ee96e0c589d34744 intacta. app.json, AWS, contextos, rutas y clasificación conservados.
 - Publicación commit/push autorizada; el resultado de ejecución se comprueba en historial Git y GitHub Actions, no se presume antes de subir. CI remoto de HEAD anterior1e9ee15 figura success.
 - .env, coverage y .expo ignorados; .env.example contiene únicamente configuración vacía. No credenciales nuevas en el commit. GitHub CLI portable temporal, sin instalación global ni persistencia de tokens.
+
+## Continuación puntual HTTPS y registro — 2026-11-12 (sin commit/push)
+- [x] Revisar .env/config y fuente efectiva: .env ya contiene https://3.129.142.54.nip.io, variable de shell ausente, sin .env.local ni otras variantes encontradas. No atribuir a esta corrección un cambio local que ya existía.
+- [x] Consultar OpenAPI HTTPS: cuerpo RegisterRequest=email/password/displayName; respuesta200 sin esquema. servers anuncia HTTP, inconsistencia documentada, no configuración de la app.
+- [x] Verificar TLS/health y consultar rutas sin credenciales ni POST real: health200, HEAD/OPTIONS registro405 AllowPOST, GET auth/me y users/me401, ninguno con Location.
+- [x] Actualizar ejemplo HTTPS y revisar precedencia: development/production/test cargan el mismo HTTPS; bundle real src/app contiene ese origen y no la antigua IP HTTP. .env ya era correcto y no se reescribió.
+- [x] Diagnósticos sanitizados __DEV__ y aceptación200/202 sin sesión; cuerpo exacto sin cambios, validación institucional y guardas HTTP intactas.
+- [x] Pruebas focalizadas80/80 en6suites; tsc0errores; lint0errores/30warnings; Jest193/193 en17suites; Doctor20/20. Fallo de tipo __DEV__ del test corregido antes del resultado final.
+- [x] Documentar procedimiento manual/backend y resultados reales en `specs/005-aws-api-integration/https-registration-verification.md`.
+- [ ] Registro real autorizado desde Expo Go y confirmación MongoDB con desarrollador backend.
+
+Certificado Let's Encrypt YE1, CN/SAN3.129.142.54.nip.io, Node authorizedtrue/TLSv1.3 y curl Schannel con confianza predeterminada, vigente2026-11-12 15:11:44→2027-02-10 15:11:43UTC. Health200 Healthy/mongodbHealthy/redisHealthy. HEAD/OPTIONS registro405 AllowPOST; auth/me y users/me401 anónimos, ninguno con Location. No POST real ni cuentas creadas. No se puede extrapolar la ausencia de redirects de HEAD/GET al POST pendiente: confirmar con backend. OpenAPI servers HTTP es inconsistencia pendiente, nunca fuente de URL de la app.
+
+Bundle Android con root explícito src/app: HTTP200,2414módulos,15887ms,11685754caracteres; formulario/diagnóstico/origenHTTPS presentes, IPHTTP antigua ausente. Caché limpia, puerto8095 y proceso detenido. No dispositivo ni render físico. AuthContext, SecureStore, dependencias y006 intactos. No commits/pushes en esta continuación.
+
+## Implementación OTP — contrato confirmado, sin commits/pushes
+- [x] Registrar arquitectura: AWS crea identidad Supabase+perfil MongoDB Buyer/PendingEmailVerification; Expo verifica email OTP/reenvía signup, nunca registra de nuevo.
+- [x] Instalar supabase-js2.119.0 y polyfill4.0.0; variables públicas creadas vacías en .env/.env.example, AWSHTTPS intacto.10 paquetes añadidos, sin otras versiones cambiadas.
+- [x] Cliente aislado sin persistencia/refresh/URL sessions; instancia efímera initialize→operación→dispose, sin signOut ni acceso SecureStore. Sesión Supabase no escapa de la fachada ni sustituye JWT AWS.
+- [x] Estado efímero del registro (30min, no expiración del OTP), correo fuera de URL, lock/id de flujo y pantalla OTP/cooldown accesibles, sin cambios006. Comparación estática con referencia Figma de verificación; prueba física pendiente.
+- [x] Tests OTP/error/expiración/reenvío/límites/red/config/duplicación/sesiónAWS:244/244 en21suites,193previos+51nuevos; SDK real con fetch simulado y UI con proveedor simulado.
+- [x] tsc0errores; lint0errores/30warnings previos; Doctor20/20; diffcheck sin errores. Bundle Android HTTP200/2469módulos/16335ms y huella77 protegidos d2b637eb2c7d3aebd9777e18126d08a14d7c5d65 intacta.
+- [x] Clave publishable local aportada y cargada por Expo; presencia/formato e inicialización comprobados sin red en la continuación final. No implica aceptación remota.
+- [ ] Entrega real en entorno autorizado; SMTP Gmail/plantilla Token reportados configurados por backend, no observados en Expo Go.
+- [ ] Verificar transición lazy PendingEmailVerification→Active en el primer login (mecanismo confirmado por el equipo).
+- [x] Contrato JSON JWT/login recibido y parser implementado; falta prueba real autorizada y contratos separados de /me.
+- [ ] Prueba física de OTP/reenvío en Expo Go.
+
+Evidencia, manejo de sesión devuelta, plantilla Confirm sign up con Token, procedimiento manual y límites del reporte en sección8 de `specs/005-aws-api-integration/https-registration-verification.md`. Backend debe confirmar Active, no se añade webhook/endpoint supuesto. No envío real probado, cuentas creadas, commits ni pushes en esta implementación. Las casillas técnicas no cierran la integración funcional.
+
+## Configuración pública real y login confirmado — continuación
+- [x] Revisar cliente OTP/reenvío/pantalla/configuración/coordinador existentes; no reconstruir autenticación.
+- [x] Registrar URL Supabase y JSON login proporcionados; sincronización lazy de Active a cargo de AWS. /me sigue sin esquema en OpenAPI.
+- [x] URL https://tabhbylbhewtehvirexn.supabase.co en .env/.env.example; AWSHTTPS intacto. Solo se comprobó presencia/formato booleano de clave: aún vacía, no se imprimió su valor.
+- [x] Parser de login y capacidades de sesión parciales: token/duración/Bearer/id/Buyer/Active antes de almacenar, User mínimo sin nombre remoto supuesto; /me siguen null.
+- [x] Pruebas:69focalizadas/4suites y290totales/23suites (244previas+46nuevas); login/storage/restauración segura/logout y regresión OTP.
+- [x] tsc0errores, lint0errores/30warnings previos, Doctor20/20, diffcheck limpio; bundleAndroidHTTP200/2469módulos/16011ms y huella81 protegidos b49d9050ef82167766813a3fff187582e58ad980 intacta.
+- [x] Configuración pública local completa e inicialización sin red comprobadas en la continuación final.
+- [ ] SMTP autorizado y recepción física de OTP.
+- [x] Contratos /auth/me y /users/me recibidos e implementados en la continuación final, restauración/perfil cubiertos con simulación.
+
+Detalle vigente en sección9 de https-registration-verification.md. Login habilitado solo para el DTO confirmado, no interpretación inventada de /me. Con JWT persistido y sin esos contratos, restauración bloqueada sin borrar el token; logout seguro conserva comportamiento. Ningún POST/reenvío real ni cambios006/AuthContext/SecureStore/dependencias. No commits/pushes.
+
+## Comprobación de clave pública local aportada — sin operaciones de correo
+- [x] Expo development carga .env: URL esperada, publishable presente/formato válido, AWSHTTPS conservado. Variables Supabase heredadas ausentes; sin .env.local. Resultado solo booleano, sin imprimir valores de claves.
+- [x] Inicializar/disponer SDK real con entorno efectivo y fetch interceptado:3/3 pruebas locales, cero intentos de red y cero logging del SDK; sin operaciones OTP/login/registro.
+- [x] Pantalla sin error de configuración con contexto sintético, OTP editable/Verificar habilitado; guarda de entrada directa y cooldown conservados, sin pulsar acciones.
+- [x] tsc0errores, lint0errores/30warnings,293/293pruebas/24suites, Doctor20/20; bundleHTTP200/2469módulos/17845ms, variables insertadas mediante comprobaciones booleanas. Sin imprimir clave ni bundle.
+- [x] Estado y manual actualizados en sección10 de https-registration-verification.md: configuración local comprobada, entrega SMTP/login físico/contratos de restauración aún pendientes.
+
+Huella127 archivos productivos/configuración/006 bd6623e723e247dbcb8af31980b0ce7c77e48156 preservada. El test local carga dotenv development y usa Jest test para evitar el timeout inicial del runner, sin cambiar lógica ni contratos. Ningún registro/reenvío/login real, JWT recibido, cambios de .env, commits o pushes.
+
+## Contratos definitivos /me — integración técnica final, pendiente recorrido real
+- [x] Registrar contratos AuthMe/UsersMe y SMTP Gmail/plantilla Token confirmados por compañero backend. SMTP no observado desde Expo Go.
+- [x] Configuración efectiva comprobada solo con booleanos: ambas URLs correctas y publishable presente/formato válido.
+- [x] DTOs/validadores /me y coherencia id/email/Buyer/Active; phone/avatarUrl null preservados, sin permisos o datos ficticios.
+- [x] Login/restauración/perfil coordinados y protección contra carreras de sesión/perfil;401 limpia JWT, red/timeout/403/5xx bloquean datos sin borrado automático.
+- [x] OTP→login con correo efímero5min sin URL, contraseña solicitada/vacía y sin auto-login; prueba StrictMode y Router real con login previo.
+- [x] Perfil privado hidratado durante login/restauración, sin bucle de refresh y con estilos/rutas intactos; invitados conservan acceso público.
+- [x]337/337pruebas/26suites (293previas+44nuevas),122focalizadas/6suites y Router1/1; tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio. Expectativas de bloqueo /me anteriores actualizadas, ninguna suite eliminada ni regresión pendiente.
+- [ ] Recorrido físico autorizado, recepción SMTP, lazy sync Active y validación final del usuario. No COMPLETADA antes de esta evidencia.
+
+SDK real/config local opt-in3/3 sin red. BundleAndroidHTTP200/2469módulos/12253ms y huella97 protegidos c65a49324aa5c17d44a1b11490ab7e1365b3d9fb intacta. No nuevas dependencias ni edición de .env; nada de catálogo/carrito/QR/pedidos ni006 modificado. Binding de datos de perfil autorizado sin restyle. Evidencia y guía completa en sección11 de https-registration-verification.md; no cuentas, correos o logins reales automáticos, commits ni pushes.
+
+## Beta temporal SOLO REGISTRO — solicitud del usuario
+- [x] Registrar incidente reportado: no llega OTP/reenvío; objetivo es confirmar creación Supabase/Mongo con backend, no saltar autenticación.
+- [ ] Bandera dev/Beta interna y protección fail-closed de producción; configuración local sin exponer claves.
+- [ ] Estado Registro recibido, acceso OTP opcional y exploración invitada; errores sin éxito falso y no retries/duplicados.
+- [ ] Diagnósticos de POST/status/validación/timeout/red sanitizados.
+- [ ] Tests y tsc/lint/Jest/Doctor; congelación de125 archivos y documentación.
+- [ ] Registro real único autorizado y evidencia Supabase Auth/MongoDB/vínculo/estado confirmada por backend.
+- [ ] Recepción OTP, login/restauración reales y validación final del usuario;005 EN PRUEBAS.
+
+## Solicitud Registro→Login y preparación Play
+- [x] Beta redirige login con correo/acuse pendiente, contraseña vacía y sin acceso automático. False mantiene OTP y true no habilita autorización de cuentas pendientes.
+- [x] Validación estructural/Unicode/longitudes en formulario y servicio, feedback en tiempo real y recomendación12 caracteres sin inventar política Supabase. Payloads peligrosos solo en mocks.
+- [x] Prueba omitida restaurada y timeout real del HttpClient probado con timers simulados: evitar esperar la promesa pendiente de fireEvent antes de resolver fetch. Sin aumentos de timeout ni tests omitidos.
+- [x] Auditoría Play/dependencias y mensaje contractual backend en security-play-readiness.md; no build/publicación. Producción bloquea permisos overlay/storage no utilizados.
+- [x] Checks completos/revisión Git/secretos y50 archivos relacionados preparados, sin .env ni artefactos; ejecución del commit local autorizado e identificación se consultan en historial/entrega final, sin push.
+- [ ] Titularidad aprobada sin pantalla OTP y recorrido físico; bloqueos de producción abiertos.
+
+Resultados vigentes: npx tsc --noEmit0errores, npm run lint0errores/30warnings previos, npm run test:ci405/405/28suites sin skipped, npx expo-doctor20/20, diffcheck limpio. npm audit28 (27moderados/1bajo), omitdev21 (20moderados/1bajo), sin fix--force/downgrades. Introspección production conserva nombre/package normal, marcadorBeta false; target36 observado en configuración RN instalada, AAB final no compilado ni firmado.
+Se solicita commit local del trabajo relacionado005 acumulado desde91799ca, revisado como conjunto y con prueba física pendiente explícita. No se incluyen .env/coverage/.expo ni cambios006 ajenos. La autorización posterior del usuario sustituye el no-commit de iteraciones previas para este conjunto; no autoriza push/release ni declaración COMPLETADA.
+Bundle Android dev finalHTTP200/2470módulos, handoff y configuración comprobados solo por booleanos; Metro detenido. Revisión staged50 archivos sin patrones de secreto ni clave publishable local; no garantía criptográfica de scanner. No prueba física, publicación ni registros automáticos.

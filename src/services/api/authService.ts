@@ -1,5 +1,5 @@
 import type { LoginRequest, RegisterRequest } from '@/types/api';
-import { assertAllowedFields, bearerToken, institutionalEmail, requiredText, requirePassword } from '@/utils/apiValidation';
+import { assertAllowedFields, bearerToken, institutionalEmail, registrationName, requirePassword } from '@/utils/apiValidation';
 
 import { httpClient } from './httpClient';
 
@@ -19,10 +19,10 @@ export const authService = {
       body: {
         email: institutionalEmail(input.email),
         password: requirePassword(input.password),
-        displayName: requiredText(input.displayName),
+        displayName: registrationName(input.displayName),
       },
-      // OpenAPI publica 200; 202 fue el contrato previo del equipo. Ambos se aceptan explícitamente.
-      expectedStatuses: [200, 202],
+      // Backend implementation returns 202; the deployed OpenAPI incorrectly says 200.
+      expectedStatuses: [202],
     });
   },
   getMe(token: string) {

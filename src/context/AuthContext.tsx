@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ApiError, errorMessage } from '@/services/api/errors';
+import { errorMessage } from '@/services/api/errors';
 import { createAuthSession } from '@/services/authSession';
 import type { UserPatch } from '@/types/api';
 import type { User, UserRole } from '@/types/models';
@@ -122,19 +122,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadProfile = useCallback(async (patch?: UserPatch): Promise<AuthResult> => {
-    const current = revision.current;
+    const current = ++revision.current;
+    setUser(null);
+    setStatus('restoring');
+    setSessionError(undefined);
     try {
       const updated = await session.refreshProfile(patch);
       if (current !== revision.current) return { success: false };
       setUser(updated);
+      setStatus('authenticated');
       return { success: true };
     } catch (error) {
       if (current === revision.current) {
+        setUser(null);
+        setStatus('blocked');
         setSessionError(errorMessage(error));
-        if (error instanceof ApiError && error.status === 401) {
-          setUser(null);
-          setStatus('blocked');
-        }
       }
       return { success: false, error: errorMessage(error) };
     }
@@ -184,4 +186,8 @@ export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth debe usarse dentro de un AuthProvider');
   return context;
+}
+
+export function useAuthOptional(): AuthContextValue | null {
+  return useContext(AuthContext) ?? null;
 }

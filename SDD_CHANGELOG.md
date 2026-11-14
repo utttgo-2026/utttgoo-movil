@@ -8,7 +8,7 @@
 - **Lenguaje**: TypeScript
 - **Navegación**: Expo Router
 - **Estado actual**: Etapa006 P0/P1/P2 y registro P3 en pruebas;11 fotos pendientes; etapa005 continúa en pruebas; catálogo/pedidos mock
-- **Backend**: /health verificado desde desarrollo; autenticación real bloqueada por HTTPS y contratos
+- **Backend**: /health HTTPS/TLS verificado desde PC; contratos login/identidad/perfil implementados, recorrido real OTP/login/restauración pendiente de Expo Go
 - **Fuente principal de UI**: Figma
 
 ---
@@ -26,8 +26,8 @@
 
 ### Bloqueos y evidencia
 
-- OpenAPI actual publica registro `200` y no define el cuerpo de respuesta de login; el cliente acepta explícitamente `200/202` en registro.
-- `decodeLogin` permanece cerrado con `BLOCKED_BY_BACKEND_LOGIN_RESPONSE_CONTRACT`; no se adivina `token`, `jwt` ni `accessToken`.
+- El código Backend devuelve registro `202`; el OpenAPI desplegado publica `200` de forma inconsistente. El cliente exige `202` y no crea sesión con el acuse.
+- `decodeLogin` valida exclusivamente `accessToken`, `expiresIn`, `tokenType: Bearer` y el objeto `user` confirmado por los DTOs Backend.
 - Validación local: TypeScript 0 errores, lint 0 errores, 205 pruebas, coverage 95.01% statements y export Android exitoso.
 
 ## Fase 005 - Demo invitado, onboarding y preparación Play Store
@@ -83,6 +83,52 @@
 ### Bloqueos
 
 `BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
+## Etapa005 — Registro→Login seguro y auditoría de preparación Play
+- Beta true en desarrollo/internal explícita ahora redirige directamente a Login tras200/202 con correo efímero/acuse pendiente y contraseña vacía; false conserva OTP original. No auto-login, bypass de Confirm email/Active ni eliminación de servicios. Cuentas nuevas pendientes siguen rechazadas por AWS: enlace/SSO aprobado es bloqueo contractual, no se inventa endpoint.
+- Validación nombre Unicode2–100/NFC/espacios y controles, email string254/local64/dominio exacto, password sin transformación con recomendación12 (política real pendiente) y techo cliente4096. Servicio valida tipos/listas blancas.429 tiene mensaje genérico, controles de consultas/rate-limit/enumeración son responsabilidad backend no auditada.
+- Reparadas pruebas Beta de timeout/doble envío, eliminado skip anterior sin debilitar el caso; se usa evento no bloqueante para resolver fetch diferido de RNTL14. app.config tiene defaults name/slug tipados y producción bloquea overlay/almacenamiento externo; flagproductionfalse sigue intacto.
+- Checks405/405/28suites,0skipped; tsc0errores, lint0errores/30warnings previos, Doctor20/20 y diffcheck limpio. npm audit28 (27moderados/1bajo), omitdev21; sin actualizaciones automáticas incompatibles. No hallazgos altos/críticos de npm en esta revisión, no significa producción aprobada.
+- Auditoría y mensaje backend en specs005/security-play-readiness.md: targetRN36 provisional vs exigencia Play36 consultada, AAB/firma/privacidad/Data safety/eliminación/cuenta de revisión/mocks pendientes. Rotación coordinada del secreto expuesto documentada sin valor. No release/build/push.
+- Usuario autoriza commit local del trabajo auth005 relacionado acumulado, incluido OTP/contratos/restauración/Beta seguro y documentación; .env y artefactos excluidos. Prueba física no realizada,005 EN PRUEBAS y publicación bloqueada.
+
+## Etapa005 — contratos definitivos e integración técnica de autenticación (2026-11-13)
+- Backend reporta SMTP Gmail y Confirm sign up con Token; no se declara recepción verificada en Expo Go. /auth/me y /users/me confirmados permiten completar validadores separados, id MongoDB coherente y autorización Buyer/Active; phone/avatarUrl string|null se preservan.
+- Login ahora valida ambos /me y su coherencia con el DTO de login antes de guardar JWT y autenticar. Restauración valida identidad/perfil desde SecureStore;401 limpia y errores temporales no borran token ni montan datos privados. AuthContext único y storage original conservados; revisiones de perfil/generación bloquean respuestas tardías y401 obsoletos.
+- OTP no autentica: Continuar al login transporta solo correo en memoria efímera, sin URL/password. Login prellenado solicita contraseña; prueba Router real con login previo comprueba que no reutiliza contraseña ni autoinicia sesión. AWS ejecuta lazy sync, Expo no modifica MongoDB ni inventa activación/refresh.
+- Perfil comprador usa datos validados, nullable avatar y mismo layout; se elimina refresco por remonte que causaría bucle de validación. Sin cambios de catálogo/categorías/imágenes/carrito/QR/pedidos, navegación o SDD006;97 archivos protegidos intactos.
+- Checks:337/337pruebas/26suites, tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio. SDK/config local3/3 sin red y bundleAndroidHTTP200/2469módulos/12253ms. Conservadas suites anteriores, adaptadas expectativas del bloqueo /me ya resuelto; sin regresiones pendientes.
+- Guía manual completa en SDD005 sección11 distingue restauración con JWT de reinicio tras logout. Etapa005 EN PRUEBAS hasta validación física del usuario; no operaciones reales automáticas, claves/tokens en logs, commits ni pushes.
+
+## Etapa005 — comprobación de clave pública local sin operaciones de correo
+- Expo development carga .env con URL correcta y publishable presente/formato válido; AWSHTTPS intacto, sin overrides heredados ni .env.local. Solo resultados booleanos, sin imprimir/copiar claves o tokens. No se modificó .env.
+- Nuevo test de inicialización: SDK real initialize/dispose con entorno efectivo local, cero intentos de red/cero logging; pantalla real sin bloqueo de configuración con contexto sintético. Entrada directa sin registro y cooldown siguen activos. No acciones reales de registro/verifyOtp/resend/login.
+- Opt-in local3/3; suite estándar293/293/24suites, tsc0errores, lint0errores/30warnings, Doctor20/20. BundleAndroidHTTP200/2469módulos/17845ms; clave insertada comprobada solo por booleano en memoria, sin imprimir/guardar manualmente bundle. Metro detenido.
+-127 archivos productivos/configuración/006 mantienen huella bd6623e723e247dbcb8af31980b0ce7c77e48156. Solo tests/SDD; lógica y contratos validados conservados. Configuración local no equivale a aceptación remota, entrega SMTP, login real o restauración; esos pendientes siguen abiertos en005 EN PRUEBAS. Sin commits/pushes.
+
+## Etapa005 — URL Supabase real y contrato login confirmado (sin commit/push)
+- Reutilizados cliente/pantalla OTP/reenvío. URL pública del proyecto configurada en .env y ejemplo; campo de clave local conservado y aún vacío en la comprobación, sin imprimir valores. AWSHTTPS sin cambios ni nuevas dependencias.
+- sessionContract implementa parser runtime del DTO accessToken/expiresIn/tokenType/user.id/roles/accountStatus confirmado por el equipo. Rechaza token inválido, duración no positiva/entera, tipo distinto de Bearer, identidad incompleta, rol no acordado y estado no Active antes de guardar JWT.
+- Login usa identidad mínima recibida y conserva AuthContext/SecureStore; no inventa nombre ni campos de perfil. AWS realiza lazy sync a Active durante login; Expo no escribe MongoDB ni llama endpoints nuevos. OTP Supabase no crea sesión AWS.
+- /auth/me y /users/me siguen sin esquemas confirmados: capacidades separadas null, restauración/perfil fail-closed antes de llamadas, sin borrar token por falta de contrato. Logout local probado; no declarar restauración real terminada desde fixtures.
+- Checks: **290/290pruebas,23suites**,69focalizadas/4suites; tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio; bundleAndroidHTTP200/2469módulos/16011ms.81 archivos protegidos intactos.
+- Pendientes: clave publishable local, SMTP, prueba física OTP/login/lazy sync y JSON /me para restauración/perfil. No registros ni envíos reales en pruebas, commits/pushes o cambios006. Evidencia y manual en sección9 de SDD005.
+
+## Etapa005 — implementación Supabase OTP autorizada (sin commit/push)
+- Contrato confirmado por el equipo: AWS es el único registro, crea identidad Supabase+perfil MongoDB Buyer/PendingEmailVerification vinculado al sub; Expo verifica email OTP y reenvía signup. Backend exige confirmación y Active antes de login, cuyo JSON/JWT real sigue pendiente.
+- Añadidos supabase-js2.119.0 y react-native-url-polyfill4.0.0,10 paquetes en total; sin otras versiones alteradas. .env/.env.example incluyen URL/publishable key públicas vacías hasta entrega del proyecto usado por AWS; AWSHTTPS intacto.
+- Fachada verify/resend con cliente efímero: persistSessionfalse/autoRefreshfalse/detectSessionInUrlfalse/debugfalse, initialize y dispose. Sesión devuelta descartada, sin signOut ni escrituras nativas/AWS, no signUp/signInWithOtp.
+- Correo reciente solo en memoria tras registro aceptado; no parámetro URL. Pantalla existente habilita OTP6dígitos, verificar, feedback/loading accesible, guardas de concurrencia y reenvío por deadline60s con429/Retry-After. OTP y tokens no se loguean ni persisten. Confirmación no activa MongoDB ni crea sesión; botón explícito al login.
+- Verificación: **244pruebas/21suites**, tsc0errores, lint0errores/30warnings previos, Doctor20/20; Metro Android HTTP200/2469módulos/16335ms. Huella77 archivos protegidos intacta. Etapa006, AuthContext, SecureStore y contrato JWT sin cambios.
+- Pendientes separados: valores públicos, SMTP/entorno autorizado y entrega real, mecanismo backend de transición a Active, JSON JWT y prueba física OTP en ExpoGo. Manual actualizado en SDD005; no afirmar entrega SMTP ni cierre de autenticación por mocks.
+
+## Etapa005 — corrección puntual HTTPS/registro (2026-11-12, sin commit/push)
+- .env local ya contenía https://3.129.142.54.nip.io al iniciar; sin .env.local/variantes ni override heredado. Ejemplo actualizado y Expo development/production/test confirmados con el mismo origen; config.ts mantiene acceso estático único sin fallbackHTTP. Bundle completo de src/app contiene el origenHTTPS y no la IPHTTP antigua.
+- Health HTTPS200 Healthy (MongoDB/Redis Healthy), TLSv1.3 autorizado, certificado Let's Encrypt YE1/CN-SAN coincidente, válido hasta2027-02-10UTC, sin desactivar validación. HEAD/OPTIONS registro405 AllowPOST, GET auth/me/users/me401 anónimos, sin Location. No POST automático ni cuentas reales. POST sin downgrade requiere confirmación manual/backend.
+- OpenAPI confirma email/password/displayName y respuesta200 sin esquema; se admite200 junto al202 anterior sin autenticar, persistirJWT ni afirmar correo verificado/altaMongoDB. servers HTTP en OpenAPI se documenta como inconsistencia backend, no se consume como origen runtime.
+- [aws-register] solo __DEV__: formulario/despacho/iniciofetch/respuesta/status/fallo clasificado. Proyección de campos permitidos, sin datos personales, contraseñas, cuerpos, headers, tokens ni error crudo. Mismo formulario, navegación, guardas HTTPS, AuthContext y SecureStore.
+- Tests focalizados80/80,6suites; total193/193,17suites; tsc0errores, lint0errores/30warnings existentes, Doctor20/20. Metro Android root explícito src/app HTTP200/2414módulos/15887ms, proceso detenido; no prueba física.
+- SDD005 y procedimiento manual con cuenta institucional autorizada/backend en `specs/005-aws-api-integration/https-registration-verification.md`. Etapa005 EN PRUEBAS; faltan persistencia MongoDB, semántica de respuesta, errores/límites y contratos de verificación/JWT/roles/perfil. Etapa006 y dependencias intactas.
+
 ## Preparación de publicación HRDCORE — Expo58.0.25 (2026-11-12)
 - Usuario autoriza commit/push de los cambios acumulados005/006 y, tras detectar bloqueo real de CI, el parche adicional Expo58.0.24→58.0.25. Solo cambia ese rango y la entrada Expo del lockfile; otras dependencias directas/transitivas intactas respecto al estado P2/P3.
 - Verificación repetida: tsc0errores, lint0errores/30warnings,178pruebas/15suites y **Doctor20/20**. Bundle Android HTTP200/1402módulos/12564ms, sin teléfono. Se resuelve el19/20 registrado en la sección histórica P2/P3, no los bloqueos funcionales005 ni las fotos/pruebas físicas006.

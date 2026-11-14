@@ -1,37 +1,27 @@
 {
-  "cli": {
-    "version": ">= 5.0.0",
-    "appVersionSource": "remote"
-  },
+  "cli": { "version": ">= 5.0.0", "appVersionSource": "remote" },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": {
-        "gradleCommand": ":app:assembleDebug"
-      }
+      "android": { "gradleCommand": ":app:assembleDebug" }
     },
     "preview": {
       "distribution": "internal",
-      "android": {
-        "buildType": "apk",
-        "gradleCommand": ":app:assembleRelease"
-      },
-      "ios": {
-        "simulator": true
-      }
+      "android": { "buildType": "apk", "gradleCommand": ":app:assembleRelease" },
+      "ios": { "simulator": true }
+    },
+    "beta-registration": {
+      "extends": "preview",
+      "distribution": "internal",
+      "env": { "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "true" }
     },
     "production": {
       "autoIncrement": true,
-      "android": {
-        "buildType": "app-bundle"
-      },
-      "ios": {
-        "simulator": false
-      }
+      "env": { "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "false" },
+      "android": { "buildType": "app-bundle" },
+      "ios": { "simulator": false }
     }
   },
-  "submit": {
-    "production": {}
-  }
+  "submit": { "production": {} }
 }

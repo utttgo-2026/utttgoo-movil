@@ -1,92 +1,97 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
-import { AppButton, AppHeader, AppText, Screen, Surface } from '@/components';
-import { colors, radii, spacing } from '@/theme';
+import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
+import { usePendingRegistration } from '@/hooks/usePendingRegistration';
 import { useAuth } from '@/context/AuthContext';
+import { emailConfirmation } from '@/services/emailConfirmation';
+import { pendingRegistration } from '@/services/pendingRegistration';
+import { supabaseConfigurationMessage } from '@/services/supabase/config';
+import { VerificationError, verificationError } from '@/services/supabase/verificationErrors';
+import { colors, spacing } from '@/theme';
 
 export default function VerifyEmailScreen() {
+  const flow = usePendingRegistration();
+  return <VerificationForm key={flow.pending?.id ?? 'no-registration'} {...flow} />;
+}
+
+function VerificationForm({ pending, resendSeconds, blockedSeconds }: ReturnType<typeof usePendingRegistration>) {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email?: string }>();
-  const registeredEmail = typeof email === 'string' ? email : 'tu correo institucional';
-  const { verifyEmail, resendEmailCode } = useAuth();
-  const [otp, setOtp] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+  let auth: ReturnType<typeof useAuth> | null = null;
+  try { auth = useAuth(); } catch { /* Isolated OTP screens may render without the provider. */ }
+  const [token, setToken] = useState('');
+  const [verifiedWithoutAuth, setVerifiedWithoutAuth] = useState(false);
   const [error, setError] = useState<string>();
-  const [feedback, setFeedback] = useState<string>();
+  const [notice, setNotice] = useState<string>();
+  const [operation, setOperation] = useState<'verify' | 'resend' | null>(null);
+  const submitting = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const configurationError = supabaseConfigurationMessage();
+  const busy = Boolean(pending?.busy) || operation !== null;
+  const unavailable = !pending || Boolean(configurationError) || busy || Boolean(pending.verified);
 
-  useEffect(() => {
-    if (!cooldown) return undefined;
-    const timer = setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
-
-  const verify = async () => {
-    setError(undefined);
-    if (!/^\d{6}$/.test(otp)) { setError('Ingresa los seis dígitos del código.'); return; }
-    setLoading(true);
+  const perform = async (action: 'verify' | 'resend') => {
+    if (submitting.current || unavailable || blockedSeconds > 0 || (action === 'resend' && resendSeconds > 0)) return;
+    setError(undefined); setNotice(undefined);
+    if (action === 'verify' && !/^[0-9]{6}$/.test(token)) { setError(new VerificationError('invalid_code').message); return; }
+    if (!pending) return;
+    submitting.current = true; setOperation(action);
     try {
-      const result = await verifyEmail(registeredEmail, otp);
-      if (result.success) router.push('/buyer');
-      else setError(result.error);
-    } finally { setLoading(false); }
-  };
-
-  const resend = async () => {
-    if (resending || cooldown > 0) return;
-    setError(undefined); setFeedback(undefined); setResending(true);
-    try {
-      const result = await resendEmailCode(registeredEmail);
-      if (result.success) { setFeedback('Código reenviado. Revisa tu correo institucional.'); setCooldown(30); }
-      else setError(result.error);
-    } finally { setResending(false); }
+      if (action === 'verify') {
+        await emailConfirmation.verify(pending.id, token);
+          const credentials = pendingRegistration.getVerifiedCredentials(pending.id);
+          if (!auth || !credentials) {
+            pendingRegistration.prepareLoginHint(pending.id);
+            pendingRegistration.clearPassword();
+            if (mounted.current) setVerifiedWithoutAuth(true);
+          } else {
+            const result = await auth.login(credentials.email, credentials.password);
+            pendingRegistration.clearPassword();
+            if (!result.success) throw new VerificationError('provider');
+            pendingRegistration.clear(pending.id);
+            router.push('/buyer');
+        }
+      } else await emailConfirmation.resend(pending.id);
+      if (mounted.current) { setToken(''); if (action === 'resend') setNotice('Solicitud de reenvío aceptada por Supabase. Revisa tu correo.'); }
+    } catch (cause) {
+      if (mounted.current) setError(verificationError(cause).message);
+    } finally {
+      if (mounted.current) { if (action === 'verify') setToken(''); setOperation(null); }
+      submitting.current = false;
+    }
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
-      <View style={styles.content}>
-        <AppHeader title="Confirmar correo" />
-        <View style={styles.titleBlock}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="mail-open-outline" size={30} color={colors.primary} />
-          </View>
-          <AppText variant="title">Confirma tu correo</AppText>
-          <AppText variant="body" color={colors.textMuted} align="center">
-             Enviamos un código de seis dígitos a tu correo institucional.
-          </AppText>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Verificar correo" />}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboardAvoiding}>
+        <View style={styles.content}>
+          <AppText variant="title" style={styles.title}>Confirma tu correo</AppText>
+          <AppText variant="body" color={colors.textMuted} style={styles.subtitle}>Introduce el código de seis dígitos del correo de confirmación de tu registro.</AppText>
+          <Surface style={styles.card} bordered>
+            <AppInput label="Correo institucional" leftIcon="mail-outline" autoCapitalize="none" autoCorrect={false} keyboardType="email-address" editable={false} value={pending?.email ?? ''} accessibilityLabel="Correo del registro reciente" placeholder="matricula@uttt.edu.mx" />
+            <AppInput label="Token de verificación" leftIcon="key-outline" keyboardType="number-pad" inputMode="numeric" autoComplete="one-time-code" textContentType="oneTimeCode" autoCorrect={false} autoCapitalize="none" accessibilityLabel="Código OTP de seis dígitos" maxLength={6} editable={!unavailable} value={token} onChangeText={(value) => { setToken(value.replace(/\D/g, '')); setError(undefined); }} placeholder="000000" onSubmitEditing={() => { void perform('verify'); }} />
+            {pending?.verified ? <AppText accessibilityLiveRegion="polite" color={colors.success}>Correo confirmado en Supabase. Iniciando sesión con AWS...</AppText> : null}
+             <AppButton label={verifiedWithoutAuth ? 'Continuar al login' : 'Verificar código'} variant="primary" onPress={verifiedWithoutAuth ? () => { const current = pendingRegistration.read(); if (current) pendingRegistration.clear(current.id); router.push('/login'); } : () => { void perform('verify'); }} loading={operation === 'verify'} disabled={verifiedWithoutAuth ? false : unavailable || blockedSeconds > 0} style={styles.verifyButton} />
+          </Surface>
+          {!pending ? <View style={styles.card}><AppText accessibilityRole="alert">No hay un registro reciente disponible en esta sesión. El correo no se recupera desde enlaces ni parámetros de URL.</AppText><AppButton label="Volver al registro" variant="outline" onPress={() => router.push('/register')} /></View> : configurationError && !pending.verified ? <AppText accessibilityRole="alert" color={colors.danger}>{configurationError}</AppText> : null}
+          {error ? <AppText accessibilityRole="alert" accessibilityLiveRegion="polite" variant="caption" color={colors.danger}>{error}</AppText> : null}
+          {notice ? <AppText accessibilityLiveRegion="polite" variant="caption">{notice}</AppText> : null}
+          {blockedSeconds > 0 ? <AppText>Podrás intentarlo de nuevo en {blockedSeconds} s.</AppText> : null}
+          <View style={styles.resendRow}><AppText variant="body" color={colors.textMuted}>¿No recibiste el correo?</AppText><AppButton label={resendSeconds > 0 ? `Reenviar token (${resendSeconds} s)` : 'Reenviar token'} variant="outline" onPress={() => { void perform('resend'); }} loading={operation === 'resend'} disabled={unavailable || resendSeconds > 0 || blockedSeconds > 0} fullWidth={false} /></View>
         </View>
-        <Surface style={styles.card} bordered>
-          <AppText variant="label" color={colors.textMuted}>Correo utilizado</AppText>
-          <AppText variant="subtitle" style={styles.email}>{registeredEmail}</AppText>
-           <TextInput accessibilityLabel="Código OTP" keyboardType="number-pad" maxLength={6} value={otp}
-             onChangeText={(value) => { setOtp(value.replace(/\D/g, '')); setError(undefined); }}
-             editable={!loading} placeholder="000000" style={styles.otpInput} />
-           {error ? <AppText accessibilityLiveRegion="polite" variant="caption" color={colors.danger}>{error}</AppText> : null}
-           {feedback ? <AppText accessibilityLiveRegion="polite" variant="caption" color={colors.success}>{feedback}</AppText> : null}
-         </Surface>
-         <AppButton label="Verificar y continuar" onPress={() => { void verify(); }} loading={loading} disabled={loading || otp.length !== 6} style={styles.button} />
-         <AppButton label={cooldown ? `Reenviar código (${cooldown}s)` : 'Reenviar código'} variant="ghost" onPress={() => { void resend(); }} loading={resending} disabled={resending || cooldown > 0} />
-        <AppText variant="caption" color={colors.textSubtle} align="center" style={styles.resendNote}>
-           Revisa spam si no aparece. El código se envía desde Supabase.
-        </AppText>
-      </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, paddingHorizontal: spacing.lg, gap: spacing.xl },
-  titleBlock: { alignItems: 'center', gap: spacing.md, marginTop: spacing.xl },
-  iconCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
-  card: { gap: spacing.sm, marginTop: spacing.md },
-  email: { color: colors.primary },
-  notice: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, backgroundColor: colors.infoSoft, borderRadius: radii.md, padding: spacing.md, marginTop: spacing.md },
-  noticeText: { flex: 1 },
-  otpInput: { borderWidth: 1, borderColor: colors.border, borderRadius: radii.md, padding: spacing.md, fontSize: 24, letterSpacing: 8, textAlign: 'center', color: colors.text },
-  button: { marginTop: spacing.md },
-  resendNote: { marginTop: spacing.sm },
+  keyboardAvoiding: { flex: 1 },
+  content: { flex: 1, gap: spacing.xl, justifyContent: 'flex-start' },
+  title: { marginTop: spacing.lg },
+  subtitle: { marginTop: spacing.xs },
+  card: { gap: spacing.md },
+  verifyButton: { marginTop: spacing.xl },
+  resendRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.md },
 });

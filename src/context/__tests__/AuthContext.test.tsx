@@ -109,4 +109,31 @@ describe('AuthContext como única autoridad de sesión', () => {
     expect(result.current.user).toBeNull();
     expect(result.current.status).toBe('blocked');
   });
+
+  test('refrescar oculta datos hasta validación; un fallo temporal no conserva información privada visible', async () => {
+    mockSession.restore.mockResolvedValueOnce(user);
+    let fail!: (error: Error) => void;
+    mockSession.refreshProfile.mockImplementationOnce(() => new Promise((_resolve, reject) => { fail = reject; }));
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    let refreshing!: ReturnType<typeof result.current.refreshProfile>;
+    await act(async () => { refreshing = result.current.refreshProfile(); });
+    expect(result.current.user).toBeNull(); expect(result.current.status).toBe('restoring');
+    await act(async () => { fail(new ApiError('network', 'Synthetic network error')); await refreshing; });
+    expect(result.current.user).toBeNull(); expect(result.current.status).toBe('blocked');
+    expect(mockSession.logout).not.toHaveBeenCalled();
+  });
+
+  test('último refresco prevalece y una respuesta anterior no repone un perfil viejo', async () => {
+    mockSession.restore.mockResolvedValueOnce(user);
+    let finishOld!: (value: User) => void;
+    mockSession.refreshProfile.mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+      .mockResolvedValueOnce({ ...user, fullName: 'Latest fixture' });
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    let old!: ReturnType<typeof result.current.refreshProfile>;
+    await act(async () => { old = result.current.refreshProfile(); });
+    await act(async () => { await result.current.refreshProfile(); });
+    await act(async () => { finishOld({ ...user, fullName: 'Old fixture' }); expect((await old).success).toBe(false); });
+    expect(result.current.user?.fullName).toBe('Latest fixture');
+    expect(result.current.isAuthenticated).toBe(true);
+  });
 });

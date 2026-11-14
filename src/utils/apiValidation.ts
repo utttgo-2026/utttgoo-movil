@@ -1,13 +1,27 @@
 import { ApiError } from '@/services/api/errors';
 import type { AdminUsersQuery, SellerActivationRequest, SellerPatch, UserPatch } from '@/types/api';
 
-export function institutionalEmail(value: string): string {
+export function institutionalEmail(value: unknown): string {
+  if (typeof value !== 'string' || value.length > 254 || /[\u0000-\u001f\u007f]/.test(value)) {
+    throw new ApiError('validation', 'Utiliza un correo institucional válido @uttt.edu.mx (máximo 254 caracteres).');
+  }
   const email = value.trim().toLowerCase();
   if (!/^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@uttt\.edu\.mx$/.test(email) ||
-      email.startsWith('.') || email.includes('..') || email.includes('.@')) {
+      email.split('@')[0].length > 64 || email.startsWith('.') || email.includes('..') || email.includes('.@')) {
     throw new ApiError('validation', 'Utiliza un correo institucional válido @uttt.edu.mx.');
   }
   return email;
+}
+
+export function registrationName(value: unknown): string {
+  if (typeof value !== 'string' || value.length > 400 || /[\p{Cc}\p{Cf}]/u.test(value)) {
+    throw new ApiError('validation', 'Ingresa un nombre de 2 a 100 caracteres sin caracteres de control.');
+  }
+  const name = value.normalize('NFC').replace(/\s+/gu, ' ').trim();
+  if ([...name].length < 2 || [...name].length > 100 || !/^[\p{L}\p{M} .’'\p{Pd}]+$/u.test(name) || !/\p{L}/u.test(name)) {
+    throw new ApiError('validation', 'Ingresa un nombre de 2 a 100 caracteres: letras, espacios, apóstrofos, puntos o guiones.');
+  }
+  return name;
 }
 
 export function requiredText(value: unknown): string {
@@ -22,6 +36,7 @@ export function requirePassword(value: unknown): string {
   if (typeof value !== 'string' || !value.trim()) {
     throw new ApiError('validation', 'Ingresa tu contraseña.');
   }
+  if (value.length > 4096) throw new ApiError('validation', 'La contraseña supera el límite de 4096 caracteres de la solicitud.');
   return value;
 }
 

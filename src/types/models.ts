@@ -5,8 +5,9 @@ export interface User {
   role: UserRole;
   fullName: string;
   email: string;
-  phone?: string;
-  avatar?: string;
+  phone?: string | null;
+  avatar?: string | null;
+  accountStatus?: 'Active';
   studentId?: string;
   career?: string;
   isSellerActive?: boolean;
