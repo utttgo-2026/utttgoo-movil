@@ -1,0 +1,99 @@
+name: Build Android Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS Build profile'
+        type: choice
+        required: true
+        default: 'preview'
+        options:
+          - preview
+          - development
+  push:
+    branches: [HRDCORE]
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Build Android Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Configure EAS
+        run: |
+          echo "Configuring EAS..."
+          # EAS project ID should be configured in eas.json or via EXPO_TOKEN
+          # If project is not linked, this will fail with instructions
+
+      - name: Build Android Preview
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "Building Android preview..."
+          # This will work once the project is linked to EAS (eas build:configure)
+          # eas build --platform android --profile preview --non-interactive
+          echo "EAS build would run here when project is linked to Expo Services"
+          echo "Current status: Project needs to be linked to Expo Services via 'eas build:configure'"
+
+      - name: Build Status
+        run: |
+          echo "=== Build Android Preview Status ==="
+          echo "Status: Configuration ready"
+          echo "Next step: Run 'eas build:configure' locally to link project to Expo Services"
+          echo "Then push to trigger build or use workflow_dispatch"
+          echo "Profile: preview"
+          echo "Platform: android"
+
+  # TODO: Descomentar cuando el proyecto esté vinculado a Expo Services
+  # - name: Build Android Preview
+  #   env:
+  #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+  #   run: eas build --platform android --profile preview --non-interactive --wait
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info
+          path: |
+            eas.json
+            app.json
+          retention-days: 7
+
+  notify:
+    name: Notify Build Status
+    needs: build-android
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Build Result
+        run: |
+          echo "Build Android Preview: ${{ needs.build-android.result }}"
+          if [[ "${{ needs.build-android.result }}" == "success" ]]; then
+            echo "✅ Build preview listo"
+          else
+            echo "❌ Build falló - revisar logs"
+          fi

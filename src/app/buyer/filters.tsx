@@ -1,95 +1,65 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppButton, AppHeader, AppText, Badge, Screen, SectionHeader, Surface } from '@/components';
-import { colors, radii, spacing } from '@/theme';
-import { mockFoods } from '@/data/mock';
+import { AppButton, AppHeader, AppInput, AppText, Screen } from '@/components/ui';
+import { FilterChip } from '@/components/catalog/FilterChip';
+import { mockCategories } from '@/data/mock';
+import { catalogRoute, readCatalogSelection, singleParam, type CatalogDestination, type CatalogParams } from '@/utils/catalog';
+import { colors, layout, spacing } from '@/theme';
 
 export default function FiltersScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<CatalogParams>();
+  const source = singleParam(params.origin);
+  const origin: CatalogDestination = source === '/buyer/category' || source === '/buyer/available-now' ? source : '/buyer/search';
+  const [selection, setSelection] = useState(() => readCatalogSelection(params));
+  const [price, setPrice] = useState(selection.maxPrice === undefined ? '' : String(selection.maxPrice));
+  const [error, setError] = useState<string>();
 
-  const handleApply = () => {
-    router.push('/buyer/available-now' as any);
+  const apply = () => {
+    const maxPrice = price.trim() ? Number(price) : undefined;
+    if (maxPrice !== undefined && (!Number.isFinite(maxPrice) || maxPrice < 0)) {
+      setError('Ingresa un precio máximo válido.');
+      return;
+    }
+    // Cierra filtros hacia su origen, conserva categoría/query y evita push de otra lista.
+    router.dismissTo(catalogRoute(origin, {
+      ...selection, maxPrice, availability: origin === '/buyer/available-now' ? 'available' : selection.availability,
+    }));
+  };
+
+  const clear = () => {
+    setSelection({ query: '', availability: origin === '/buyer/available-now' ? 'available' : 'all', sort: 'rating', categoryId: origin === '/buyer/category' ? selection.categoryId : undefined });
+    setPrice('');
+    setError(undefined);
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
-      <AppHeader title="Filtros" showBack />
-
+    <Screen padded={false} scroll>
+      <AppHeader title="Filtros" />
       <View style={styles.content}>
-        <Surface style={styles.filterCard} bordered>
-          <SectionHeader title="Disponibilidad" />
-
-          <View style={styles.filterOption}>
-            <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
-            <AppText variant="body">Disponible ahora</AppText>
-          </View>
-          <View style={styles.filterOption}>
-            <Ionicons name="stop-circle-outline" size={20} color={colors.danger} />
-            <AppText variant="body">Agotado</AppText>
-          </View>
-
-          <SectionHeader title="Rango de precios" />
-
-          <View style={styles.priceRange}>
-            <AppText variant="caption" color={colors.textMuted}>
-              $20 - $150
-            </AppText>
-          </View>
-
-          <SectionHeader title="Tiempo de preparación" />
-
-          <View style={styles.filterOption}>
-            <Ionicons name="flash-outline" size={20} color={colors.warning} />
-            <AppText variant="body">Rápido (menos de 15 min)</AppText>
-          </View>
-          <View style={styles.filterOption}>
-            <Ionicons name="time-outline" size={20} color={colors.info} />
-            <AppText variant="body">Estándar (15-30 min)</AppText>
-          </View>
-        </Surface>
-
-        <View style={styles.actions}>
-          <AppButton
-            label="Limpiar filtros"
-            variant="outline"
-            onPress={() => {}}
-            style={styles.clearButton}
-          />
-          <AppButton
-            label="Aplicar filtros"
-            variant="primary"
-            onPress={handleApply}
-            style={styles.applyButton}
-          />
+        <AppText variant="subtitle">Disponibilidad</AppText>
+        <View style={styles.row}>
+          <FilterChip label="Disponible ahora" selected={selection.availability === 'available'} onPress={() => setSelection({ ...selection, availability: 'available' })} />
+          {origin !== '/buyer/available-now' ? <>
+            <FilterChip label="Todas" selected={selection.availability === 'all'} onPress={() => setSelection({ ...selection, availability: 'all' })} />
+            <FilterChip label="Mostrar agotados" selected={selection.availability === 'sold-out'} onPress={() => setSelection({ ...selection, availability: 'sold-out' })} />
+          </> : null}
         </View>
+        <AppText variant="subtitle">Categoría</AppText>
+        <View style={styles.row}>
+          {origin !== '/buyer/category' ? <FilterChip label="Todas las categorías" selected={!selection.categoryId} onPress={() => setSelection({ ...selection, categoryId: undefined })} /> : null}
+          {mockCategories.map((category) => <FilterChip key={category.id} label={category.name} selected={selection.categoryId === category.id}
+            onPress={() => setSelection({ ...selection, categoryId: category.id })} />)}
+        </View>
+        <AppInput label="Precio máximo" keyboardType="decimal-pad" value={price} onChangeText={(value) => { setPrice(value); setError(undefined); }} placeholder="Sin límite" />
+        {error ? <AppText color={colors.danger}>{error}</AppText> : null}
+        <AppButton label="Limpiar filtros" variant="outline" onPress={clear} />
+        <AppButton label="Aplicar filtros" onPress={apply} />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    gap: spacing.xl,
-    paddingBottom: spacing.xxl,
-  },
-  filterCard: {
-    gap: spacing.md,
-  },
-  filterOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  priceRange: {
-    paddingVertical: spacing.sm,
-  },
-  actions: {
-    gap: spacing.md,
-  },
-  clearButton: {},
-  applyButton: {},
-});
+const styles = StyleSheet.create({ content: { padding: layout.screenPadding, gap: spacing.lg }, row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm } });

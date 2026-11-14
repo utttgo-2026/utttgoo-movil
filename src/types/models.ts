@@ -5,8 +5,9 @@ export interface User {
   role: UserRole;
   fullName: string;
   email: string;
-  phone?: string;
-  avatar?: string;
+  phone?: string | null;
+  avatar?: string | null;
+  accountStatus?: 'Active';
   studentId?: string;
   career?: string;
   isSellerActive?: boolean;
@@ -75,7 +76,8 @@ export interface Order {
   pickupAt?: string;
   pickupLocation: string;
   notes?: string;
-  paymentMethod: string;
+  paymentMethod: 'cash';
+  qrPayload?: string;
   rated?: boolean;
 }
 

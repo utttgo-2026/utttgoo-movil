@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BrandLogo, Screen } from '@/components';
+import { AppText, BrandLogo, Screen } from '@/components';
 import { colors, radii, spacing } from '@/theme';
 
 export default function SplashScreen() {
@@ -23,9 +23,7 @@ export default function SplashScreen() {
         <View style={styles.divider} />
       </View>
       <View style={styles.university}>
-        <View style={styles.universityTextContainer}>
-          <View style={styles.universityLine} />
-        </View>
+        <AppText variant="caption" align="center">Universidad Tecnológica de Tula-Tepeji</AppText>
       </View>
     </Screen>
   );
@@ -34,6 +32,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },

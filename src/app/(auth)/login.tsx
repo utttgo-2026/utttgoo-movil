@@ -1,48 +1,59 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import { colors, radii, spacing } from '@/theme';
+import { useApiHealth } from '@/hooks/useApiHealth';
+import { colors, spacing } from '@/theme';
+import { pendingRegistration } from '@/services/pendingRegistration';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const { login, status, sessionError } = useAuth();
+  const health = useApiHealth();
+  const [email, setEmail] = useState(() => pendingRegistration.getLoginEmailHint() ?? '');
+  const [prefilledEmail] = useState(email);
+  const [registrationReceived] = useState(() => pendingRegistration.hasRegistrationReceipt());
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const submitting = useRef(false);
+  useEffect(() => {
+    if (prefilledEmail) pendingRegistration.clearLoginEmailHint(prefilledEmail);
+  }, [prefilledEmail]);
 
   const handleLogin = async () => {
+    if (submitting.current || status === 'restoring') return;
     setError(undefined);
     if (!email.trim() || !password) {
       setError('Ingresa tu correo institucional y contraseña.');
       return;
     }
+    submitting.current = true;
     setLoading(true);
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push('/buyer' as any);
+        router.push('/buyer');
       } else {
         setError(result.error ?? 'No se pudo iniciar sesión.');
       }
     } finally {
+      setPassword('');
       setLoading(false);
+      submitting.current = false;
     }
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Acceso UTTT" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Acceso UTTT" showBack={false} />
-
           <AppText variant="title" style={styles.title}>
             ¿Qué gusto verte
           </AppText>
@@ -51,6 +62,9 @@ export default function LoginScreen() {
           </AppText>
 
           <Surface style={styles.card} bordered>
+            {registrationReceived ? <AppText accessibilityLiveRegion="polite">
+              Registro recibido por AWS. Tu cuenta puede seguir pendiente de verificación; solo podrás entrar cuando el servidor autorice el acceso.
+            </AppText> : null}
             <AppInput
               label="Correo institucional"
               leftIcon="mail-outline"
@@ -60,7 +74,7 @@ export default function LoginScreen() {
               value={email}
               onChangeText={setEmail}
               error={error}
-              placeholder="20230184@utt.edu.mx"
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppInput
               label="Contraseña"
@@ -84,9 +98,15 @@ export default function LoginScreen() {
               variant="primary"
               onPress={handleLogin}
               loading={loading}
+              disabled={status === 'restoring'}
               style={styles.loginButton}
             />
           </Surface>
+          {registrationReceived ? <AppButton label="Verificar correo (opcional)" variant="ghost" onPress={() => router.push('/verify-email')} /> : null}
+
+          {sessionError && !error ? (
+            <AppText variant="caption" color={colors.danger}>{sessionError}</AppText>
+          ) : null}
 
           <Surface style={styles.infoCard} bordered={false} backgroundColor={colors.surfaceBlue}>
             <View style={styles.infoRow}>
@@ -98,6 +118,23 @@ export default function LoginScreen() {
                 </AppText>
               </View>
             </View>
+            {__DEV__ ? (
+              <>
+                <AppButton
+                  label="Comprobar conexión"
+                  variant="ghost"
+                  size="sm"
+                  loading={health.loading}
+                  onPress={() => { void health.check(); }}
+                />
+                {health.response ? (
+                  <AppText variant="caption" color={colors.textMuted}>
+                    HTTP {health.response.status} · API: {health.response.data.status} · MongoDB: {health.response.data.checks.mongodb} · Redis: {health.response.data.checks.redis}
+                  </AppText>
+                ) : null}
+                {health.error ? <AppText variant="caption" color={colors.danger}>{health.error}</AppText> : null}
+              </>
+            ) : null}
           </Surface>
 
           <View style={styles.signupRow}>
@@ -123,7 +160,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },
@@ -155,6 +191,7 @@ const styles = StyleSheet.create({
   },
   signupRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,

@@ -9,6 +9,7 @@ import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
 import { mockFoods } from '@/data/mock';
 import type { FoodItem } from '@/types/models';
+import { FoodImage } from '@/components/catalog/FoodImage';
 
 export default function FoodDetailScreen() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function FoodDetailScreen() {
   if (!food) {
     return (
       <Screen backgroundColor={colors.background} padded>
+        <AppHeader title="Detalle no disponible" backFallback="/buyer" />
         <AppText variant="title" align="center">Alimento no encontrado</AppText>
       </Screen>
     );
@@ -28,7 +30,7 @@ export default function FoodDetailScreen() {
 
   const handleAddToCart = () => {
     addItem(food, quantity);
-    router.push('/buyer/order-data' as any);
+    router.push('/buyer/order-data');
   };
 
   const handleFavorite = () => {
@@ -41,7 +43,7 @@ export default function FoodDetailScreen() {
 
       <View style={styles.content}>
         <View style={styles.imageContainer}>
-          <Ionicons name="restaurant-outline" size={48} color={colors.textMuted} />
+          <FoodImage foodId={food.id} name={food.name} variant="detail" style={styles.image} />
           {food.isFavorite ? (
             <View style={styles.favoriteBadge}>
               <Ionicons name="heart" size={24} color={colors.danger} />
@@ -49,7 +51,7 @@ export default function FoodDetailScreen() {
           ) : null}
         </View>
 
-        <AppText variant="display">{food.name}</AppText>
+        <AppText variant="title">{food.name}</AppText>
         <AppText variant="bodyStrong">{food.sellerName || 'Vendedor'}</AppText>
         <AppText variant="caption" color={colors.textMuted}>
           {food.prepTimeMinutes} min • {food.tags.join(' • ')}
@@ -117,12 +119,13 @@ export default function FoodDetailScreen() {
 
 const styles = StyleSheet.create({
   content: {
+    paddingHorizontal: layout.screenPadding,
     gap: spacing.lg,
     paddingBottom: spacing.xxl,
   },
   imageContainer: {
     width: '100%',
-    height: 240,
+    aspectRatio: 1.6,
     backgroundColor: colors.surfaceMuted,
     borderRadius: radii.xxl,
     alignItems: 'center',
@@ -130,6 +133,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: spacing.lg,
   },
+  image: { width: '100%', borderRadius: radii.xxl },
   favoriteBadge: {
     position: 'absolute',
     top: spacing.md,
@@ -146,11 +150,15 @@ const styles = StyleSheet.create({
   },
   stockRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   quantityRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -165,6 +173,8 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     justifyContent: 'space-between',
     alignItems: 'center',
   },
