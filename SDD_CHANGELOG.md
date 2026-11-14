@@ -26,6 +26,13 @@
 - Se mantiene prohibido incluir `service_role`, claves secretas, JWT signing secrets, SMTP passwords o Gmail passwords en el cliente móvil.
 - El APK Preview `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` queda como evidencia técnica no funcional por haber sido generado con el ambiente vacío.
 
+### Evidencia de build
+
+- CI `43638411063` y Security `43638411132` pasaron correctamente.
+- Workflow Preview `43638662372` pasó gates, validó las tres variables por nombre y terminó correctamente.
+- EAS Build `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, perfil `preview`, APK interno, commit `6b407e8`.
+- Estado: `PREVIEW_BUILD_READY_FOR_PHYSICAL_TEST`. Production AAB, `eas submit` y Google Play permanecen bloqueados.
+
 ### Seguridad pendiente
 
 La rotación/revocación del Supabase JWT signing secret expuesto corresponde al equipo Backend/Supabase según la estrategia activa de signing keys. No se realiza desde este repositorio móvil.
