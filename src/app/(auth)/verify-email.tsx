@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { usePendingRegistration } from '@/hooks/usePendingRegistration';
-import { useAuth } from '@/context/AuthContext';
+import { useAuthOptional as useAuth } from '@/context/AuthContext';
 import { emailConfirmation } from '@/services/emailConfirmation';
 import { pendingRegistration } from '@/services/pendingRegistration';
 import { supabaseConfigurationMessage } from '@/services/supabase/config';
@@ -18,8 +18,7 @@ export default function VerifyEmailScreen() {
 
 function VerificationForm({ pending, resendSeconds, blockedSeconds }: ReturnType<typeof usePendingRegistration>) {
   const router = useRouter();
-  let auth: ReturnType<typeof useAuth> | null = null;
-  try { auth = useAuth(); } catch { /* Isolated OTP screens may render without the provider. */ }
+  const auth = useAuth();
   const [token, setToken] = useState('');
   const [verifiedWithoutAuth, setVerifiedWithoutAuth] = useState(false);
   const [error, setError] = useState<string>();

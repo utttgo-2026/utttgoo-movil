@@ -15,7 +15,7 @@ jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('@/hooks/useApiHealth', () => ({ useApiHealth: () => ({ loading: false, check: jest.fn() }) }));
 const mockLogin = jest.fn();
 const mockRegister = jest.fn();
-jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ login: mockLogin, register: mockRegister, status: 'anonymous' }) }));
+jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ login: mockLogin, register: mockRegister, status: 'anonymous' }), useAuthOptional: () => ({ login: mockLogin, register: mockRegister, status: 'anonymous' }) }));
 jest.mock('../supabase/verificationClient', () => ({ verificationClient: { verify: async () => {}, resend: jest.fn() } }));
 
 describe('Router real en memoria: handoff OTP a un nuevo login', () => {
