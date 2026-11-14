@@ -1,0 +1,95 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22.13.1'
+
+jobs:
+  gates:
+    name: Release Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Validate Production EAS environment
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -o pipefail
+          npx eas-cli@latest env:list --environment production --format short | node -e '
+            let output = "";
+            process.stdin.on("data", chunk => { output += chunk; });
+            process.stdin.on("end", () => {
+              const required = [
+                "EXPO_PUBLIC_API_BASE_URL",
+                "EXPO_PUBLIC_SUPABASE_URL",
+                "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+              ];
+              const missing = required.filter(name => !output.includes(name));
+              if (missing.length > 0) {
+                console.error("BLOCKED_PRODUCTION_ENV_REQUIRED");
+                console.error("Missing variable names: " + missing.join(", "));
+                process.exitCode = 1;
+                return;
+              }
+              console.log("Production EAS environment variables: " + required.length + "/" + required.length);
+            });
+          '
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:coverage
+      - run: npx expo-doctor
+      - name: Validate release configuration
+        run: |
+          grep -q 'mx.edu.utt.uttgo' app.json
+          grep -q 'app-bundle' eas.json
+          grep -q '"environment": "production"' eas.json
+          grep -q 'Backend Production HTTPS: `RESOLVED`' docs/evidencias/ci-cd/release-gate.md
+      - name: Export Android bundle
+        run: npx expo export --platform android --clear
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Check whitespace
+        run: git diff --check
+
+  build:
+    name: Production AAB
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Validate EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN"
+      - name: Build Android App Bundle
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile production --non-interactive --wait
