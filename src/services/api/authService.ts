@@ -1,5 +1,5 @@
 import type { LoginRequest, RegisterRequest } from '@/types/api';
-import { assertAllowedFields, bearerToken, institutionalEmail, requiredText, requirePassword } from '@/utils/apiValidation';
+import { assertAllowedFields, bearerToken, institutionalEmail, registrationName, requirePassword } from '@/utils/apiValidation';
 
 import { httpClient } from './httpClient';
 
@@ -19,9 +19,10 @@ export const authService = {
       body: {
         email: institutionalEmail(input.email),
         password: requirePassword(input.password),
-        displayName: requiredText(input.displayName),
+        displayName: registrationName(input.displayName),
       },
-      expectedStatuses: [202],
+      // Current OpenAPI documents200; retain the previously agreed202 without inferring a session.
+      expectedStatuses: [200, 202],
     });
   },
   getMe(token: string) {

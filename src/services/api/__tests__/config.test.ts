@@ -10,6 +10,7 @@ describe('Configuración API', () => {
   test.each([
     [' https://api.example.test/ ', 'https://api.example.test'],
     ['http://api.example.test:8080', 'http://api.example.test:8080'],
+    ['https://3.129.142.54.nip.io', 'https://3.129.142.54.nip.io'],
   ])('normaliza %s', (input, expected) => {
     expect(parseApiBaseUrl(input)).toBe(expected);
   });
@@ -23,5 +24,10 @@ describe('Configuración API', () => {
   test('lee la variable centralizada', () => {
     process.env.EXPO_PUBLIC_API_BASE_URL = 'https://configured.example.test';
     expect(getApiBaseUrl()).toBe('https://configured.example.test');
+  });
+
+  test('sin variable no vuelve silenciosamente a la IP HTTP anterior', () => {
+    delete process.env.EXPO_PUBLIC_API_BASE_URL;
+    expect(() => getApiBaseUrl()).toThrow(expect.objectContaining({ kind: 'configuration' }));
   });
 });

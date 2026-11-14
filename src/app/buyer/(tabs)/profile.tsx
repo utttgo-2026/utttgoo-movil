@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Avatar, Screen, Surface } from '@/components';
@@ -10,16 +10,12 @@ import { RequireSession } from '@/components/navigation/RequireSession';
 
 function ProfileContent() {
   const router = useRouter();
-  const { user, logout, isAuthenticated, refreshProfile, sessionError } = useAuth();
+  const { user, logout, sessionError } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string>();
 
-  useEffect(() => {
-    if (isAuthenticated) void refreshProfile();
-  }, [isAuthenticated, refreshProfile]);
-
   const handleEditProfile = () => {
-    Alert.alert('Editar perfil', 'El servicio de actualización está preparado. Su conexión requiere HTTPS y el contrato JSON de perfil.');
+    Alert.alert('Editar perfil', 'Los datos del perfil ya se consultan en AWS. La pantalla de edición aún no está implementada.');
   };
 
   const handleLogout = async () => {
@@ -37,7 +33,7 @@ function ProfileContent() {
 
       <View style={styles.content}>
         <View style={styles.profileHeader}>
-          <Avatar name={user?.fullName || 'Usuario'} uri={user?.avatar} size={88} />
+          <Avatar name={user?.fullName || 'Usuario'} uri={user?.avatar ?? undefined} size={88} />
           <View style={styles.profileInfo}>
             <AppText variant="title">{user?.fullName ?? 'Invitado'}</AppText>
             <AppText variant="body" color={colors.textMuted}>{user?.email}</AppText>

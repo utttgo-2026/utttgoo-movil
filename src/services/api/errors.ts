@@ -31,6 +31,7 @@ export function httpErrorMessage(status: number): string {
     case 403: return 'No tienes permisos para realizar esta acción.';
     case 404: return 'No se encontró el recurso solicitado.';
     case 422: return 'El servidor no pudo procesar los datos. Revisa el correo institucional y los campos.';
+    case 429: return 'Se alcanzó el límite de intentos. Espera antes de intentarlo de nuevo.';
     default: return status >= 500
       ? 'El servidor presentó un error. Intenta más tarde.'
       : 'No se pudo completar la solicitud.';

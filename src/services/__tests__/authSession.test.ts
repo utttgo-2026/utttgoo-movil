@@ -115,8 +115,9 @@ describe('Coordinador de sesión única', () => {
     expect(deps.storage.clear).toHaveBeenCalledTimes(1);
   });
 
-  test('registro 202 no guarda token ni inicia sesión', async () => {
+  test.each([200, 202])('registro %s no guarda token ni inicia sesión', async (status) => {
     const { deps, session } = fixture();
+    deps.auth.register.mockResolvedValueOnce(response({ fixture: true }, status));
     await session.register('Fixture', user.email, 'synthetic-password');
     expect(deps.auth.register).toHaveBeenCalledTimes(1);
     expect(deps.storage.save).not.toHaveBeenCalled();
@@ -180,5 +181,37 @@ describe('Coordinador de sesión única', () => {
     await expect(session.refreshProfile()).rejects.toMatchObject({ status: 401 });
     expect(deps.storage.clear).toHaveBeenCalledTimes(1);
     await expect(session.refreshProfile()).rejects.toMatchObject({ kind: 'unauthenticated' });
+  });
+
+  test('respuesta401 de perfil obsoleto no borra la sesión ya validada por una solicitud posterior', async () => {
+    const { deps, session } = fixture();
+    await session.login(user.email, 'synthetic-password');
+    let failOld!: (error: Error) => void;
+    deps.users.getMe.mockImplementationOnce(() => new Promise<ApiResponse>((_resolve, reject) => { failOld = reject; }));
+    const old = session.refreshProfile();
+    const oldResult = expect(old).rejects.toMatchObject({ kind: 'cancelled' });
+    await Promise.resolve();
+    expect(deps.users.getMe).toHaveBeenCalledTimes(2);
+    expect(await session.refreshProfile()).toEqual(user);
+    failOld(new ApiError('http', 'Synthetic late401', 401));
+    await oldResult;
+    expect(deps.storage.clear).not.toHaveBeenCalled();
+    expect(await session.refreshProfile()).toEqual(user);
+  });
+
+  test('perfil pendiente después de logout y otro login no reemplaza identidad ni borra JWT nuevo', async () => {
+    const { deps, session } = fixture();
+    await session.login(user.email, 'synthetic-password');
+    let failOld!: (error: Error) => void;
+    deps.users.getMe.mockImplementationOnce(() => new Promise<ApiResponse>((_resolve, reject) => { failOld = reject; }));
+    const old = session.refreshProfile();
+    const oldResult = expect(old).rejects.toMatchObject({ kind: 'cancelled' });
+    await Promise.resolve();
+    await session.logout();
+    await session.login(user.email, 'synthetic-password');
+    failOld(new ApiError('http', 'Synthetic late401', 401));
+    await oldResult;
+    expect(deps.storage.clear).toHaveBeenCalledTimes(1);
+    expect(await session.refreshProfile()).toEqual(user);
   });
 });

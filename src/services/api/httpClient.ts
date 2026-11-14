@@ -2,6 +2,7 @@ import type { ApiResponse, JsonValue } from '@/types/api';
 
 import { getApiBaseUrl, parseApiBaseUrl } from './config';
 import { ApiError, httpErrorMessage } from './errors';
+import { registrationDiagnostic } from './registrationDiagnostics';
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH';
@@ -69,6 +70,8 @@ export class HttpClient {
       controller.abort();
     }, timeoutMs);
     try {
+      const registration = path === '/api/v1/auth/register' && method === 'POST';
+      if (registration) registrationDiagnostic({ event: 'request_start', origin: baseUrl });
       const response = await (this.options.fetch ?? fetch)(url.toString(), {
         method,
         headers,
@@ -78,6 +81,8 @@ export class HttpClient {
         redirect: 'error',
         credentials: 'omit',
       });
+      // Capture the actual status even when parsing or expected-status checks later fail.
+      if (registration) registrationDiagnostic({ event: 'response', status: response.status });
       const text = await response.text();
       if (timedOut) throw new ApiError('timeout', 'El servidor tardó demasiado en responder.');
       let data: unknown = null;

@@ -1,4 +1,4 @@
-/** Solo contratos de solicitudes documentadas. Las respuestas aún no conocidas son unknown. */
+/** Contratos confirmados. Las respuestas aún no conocidas permanecen unknown. */
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface ApiResponse<T = unknown> {
@@ -15,6 +15,26 @@ export interface HealthResponse {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+/** Only Buyer is confirmed for this iteration; no inferred role priority/permissions. */
+export type AwsRoles = ['Buyer'];
+
+export interface AuthMeResponse {
+  id: string;
+  email: string;
+  displayName: string;
+  roles: AwsRoles;
+  accountStatus: 'Active';
+}
+
+export interface UserProfileResponse {
+  id: string;
+  displayName: string;
+  email: string;
+  phone: string | null;
+  avatarUrl: string | null;
+  roles: AwsRoles;
 }
 
 export interface RegisterRequest extends LoginRequest {

@@ -20,7 +20,17 @@
         "simulator": true
       }
     },
+    "beta-registration": {
+      "extends": "preview",
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "true"
+      }
+    },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "false"
+      },
       "android": {
         "buildType": "app-bundle"
       },
