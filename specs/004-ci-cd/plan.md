@@ -23,6 +23,14 @@ Tasks: `specs/004-ci-cd/tasks.md`
 - `extra.eas.projectId` no se inventa: permanece pendiente de vinculación real.
 - Google Play se carga manualmente hasta contar con autorización, service account y prueba previa.
 
+## Fase 7 - EAS Preview Environment Gate
+
+1. Mantener las tres variables públicas requeridas en el ambiente EAS `preview`, usando únicamente la publishable key de Supabase para cliente móvil.
+2. Mantener `.env.example` con placeholders vacíos; los valores reales no se versionan.
+3. Validar nombres de variables EAS en el workflow antes de `eas build`, sin imprimir valores, JSON completo ni artifacts.
+4. Fallar cerrado cuando falte `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SUPABASE_URL` o `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+5. Mantener Production separado; no generar AAB ni ejecutar `eas submit` en esta fase.
+
 ## Validación
 
 `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:coverage`, `npm run doctor` y validación YAML/EAS. Los builds EAS y smoke tests externos quedan sujetos a credenciales e infraestructura.

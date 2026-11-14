@@ -37,3 +37,18 @@ Preparar el repositorio móvil para SDD, calidad automatizada, DevSecOps, builds
 4. Production rechaza configuraciones HTTP con `BLOCKED_BY_BACKEND_HTTPS`.
 5. Preview y Production no se declaran operativos sin `EXPO_TOKEN`, `projectId` y primer build EAS exitoso.
 6. No se agregan secretos al repositorio.
+
+## Requisitos EAS Preview - Entorno y Seguridad
+
+- **REQ-EAS-ENV-001**: Preview requiere `EXPO_PUBLIC_API_BASE_URL`.
+- **REQ-EAS-ENV-002**: Preview requiere `EXPO_PUBLIC_SUPABASE_URL`.
+- **REQ-EAS-ENV-003**: Preview requiere `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- **REQ-EAS-ENV-004**: El Preview Build falla antes de `eas build` si falta una variable requerida.
+- **REQ-EAS-ENV-005**: CI valida nombres de variables sin imprimir valores ni guardar el ambiente como artifact.
+- **REQ-EAS-ENV-006**: `service_role`, claves secretas y el JWT signing secret están prohibidos en el cliente móvil.
+- **REQ-EAS-ENV-007**: `.env` permanece ignorado y no versionado.
+- **REQ-EAS-ENV-008**: Production mantiene su configuración independiente y no forma parte de esta tarea.
+
+El ambiente EAS Preview debe estar configurado antes de un build funcional. Un APK generado con el ambiente vacío es evidencia técnica de EAS, pero no evidencia funcional de autenticación/OTP.
+
+La rotación/revocación de cualquier Supabase JWT signing secret expuesto corresponde al equipo Backend/Supabase según la estrategia activa de signing keys; este repositorio móvil no realiza esa rotación ni conserva el secreto.

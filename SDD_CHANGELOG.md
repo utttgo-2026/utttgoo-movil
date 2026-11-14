@@ -15,6 +15,21 @@
 
 # Historial de cambios
 
+## EAS Preview Environment Gate (2026-11-14)
+
+### Cambios
+
+- Se documentaron `REQ-EAS-ENV-001` a `REQ-EAS-ENV-008` dentro de la fase vigente `004-ci-cd`.
+- El perfil EAS `preview` declara explícitamente el ambiente `preview`.
+- `.env.example` conserva placeholders vacíos y `.env` continúa ignorado/no versionado.
+- El ambiente EAS Preview autorizado contiene las tres variables públicas requeridas; sus valores no se incorporan al repositorio.
+- Se mantiene prohibido incluir `service_role`, claves secretas, JWT signing secrets, SMTP passwords o Gmail passwords en el cliente móvil.
+- El APK Preview `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` queda como evidencia técnica no funcional por haber sido generado con el ambiente vacío.
+
+### Seguridad pendiente
+
+La rotación/revocación del Supabase JWT signing secret expuesto corresponde al equipo Backend/Supabase según la estrategia activa de signing keys. No se realiza desde este repositorio móvil.
+
 ## OTP Supabase y activación lazy (2026-11-13)
 
 ### Cambios

@@ -59,6 +59,31 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: test -n "$EXPO_TOKEN"
+      - name: Validate EAS Preview environment
+        if: inputs.profile == 'preview'
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx eas-cli@latest env:list --environment preview --format short | node -e '
+          let input = "";
+          process.stdin.setEncoding("utf8");
+          process.stdin.on("data", (chunk) => { input += chunk; });
+          process.stdin.on("end", () => {
+            const required = [
+              "EXPO_PUBLIC_API_BASE_URL",
+              "EXPO_PUBLIC_SUPABASE_URL",
+              "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+            ];
+            const names = new Set(input.split(/\r?\n/).map((line) => line.split("=", 1)[0].trim()));
+            for (const name of required) {
+              if (!names.has(name)) {
+                console.error("Missing required EAS Preview environment variable: " + name);
+                process.exitCode = 1;
+              }
+            }
+          });
+          '
       - run: npx eas-cli@latest --version
       - name: Build Android with EAS
         env:

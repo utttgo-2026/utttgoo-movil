@@ -27,6 +27,16 @@
 - [ ] Documentar URL real de Landing (`PENDING_LANDING_URL_DOCUMENTATION`).
 - [ ] Añadir acceso legal desde la app mediante spec funcional.
 
+### Fase 7: EAS Preview Environment Gate
+- [x] Documentar REQ-EAS-ENV-001 a REQ-EAS-ENV-008 sin crear una fase SDD paralela.
+- [x] Sanitizar `.env.example` y conservar `.env` ignorado/no versionado.
+- [x] Declarar explícitamente el ambiente `preview` en el perfil EAS Preview.
+- [x] Configurar y verificar las tres variables públicas requeridas en EAS Preview sin incluir sus valores en Git.
+- [x] Agregar gate seguro de nombres de variables antes de `eas build`.
+- [ ] Ejecutar validaciones locales, CI/Security y un nuevo Preview Build con ambiente configurado.
+
+El APK Preview anterior `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` no es candidato funcional final porque fue generado con el ambiente Preview vacío.
+
 ## Deuda no modificada
 
 Carrito, favoritos, horarios y menús legacy permanecen registrados como deuda técnica y no se alteran en esta fase.
