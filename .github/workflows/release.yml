@@ -27,6 +27,30 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - name: Validate Production EAS environment
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -o pipefail
+          npx eas-cli@latest env:list --environment production --format short | node -e '
+            let output = "";
+            process.stdin.on("data", chunk => { output += chunk; });
+            process.stdin.on("end", () => {
+              const required = [
+                "EXPO_PUBLIC_API_BASE_URL",
+                "EXPO_PUBLIC_SUPABASE_URL",
+                "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+              ];
+              const missing = required.filter(name => !output.includes(name));
+              if (missing.length > 0) {
+                console.error("BLOCKED_PRODUCTION_ENV_REQUIRED");
+                console.error("Missing variable names: " + missing.join(", "));
+                process.exitCode = 1;
+                return;
+              }
+              console.log("Production EAS environment variables: " + required.length + "/" + required.length);
+            });
+          '
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
@@ -37,7 +61,14 @@ jobs:
         run: |
           grep -q 'mx.edu.utt.uttgo' app.json
           grep -q 'app-bundle' eas.json
+          grep -q '"environment": "production"' eas.json
           grep -q 'Backend Production HTTPS: `RESOLVED`' docs/evidencias/ci-cd/release-gate.md
+      - name: Export Android bundle
+        run: npx expo export --platform android --clear
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Check whitespace
+        run: git diff --check
 
   build:
     name: Production AAB

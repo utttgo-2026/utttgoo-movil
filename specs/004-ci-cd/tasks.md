@@ -35,7 +35,16 @@
 - [x] Agregar gate seguro de nombres de variables antes de `eas build`.
 - [x] Ejecutar validaciones locales, CI/Security y un nuevo Preview Build con ambiente configurado.
 
-El APK Preview anterior `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` no es candidato funcional final porque fue generado con el ambiente Preview vacío. El nuevo build `5b4b0280-71e0-44f9-9a84-87b5062dd84a` corresponde al commit `6b407e8` y queda listo para prueba física.
+### Fase 8: Production AAB Gate
+- [x] Registrar Preview físico aprobado y transición a `READY_FOR_CLOSED_TEST_BUILD`.
+- [x] Declarar explícitamente `environment: production` en el perfil EAS Production.
+- [x] Documentar PROD-EAS-001 a PROD-EAS-008 en la fase SDD vigente.
+- [x] Agregar gate seguro para las tres variables públicas EAS Production antes del build.
+- [x] Mantener Production como AAB, sin `eas submit`, con destino inicial Closed Testing.
+- [ ] Ejecutar validaciones finales, CI/Security y Production Release.
+- [ ] Confirmar EAS Production Build `FINISHED` y artefacto `.aab`.
+
+El APK Preview anterior `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` no es candidato funcional final porque fue generado con el ambiente Preview vacío. El nuevo build `5b4b0280-71e0-44f9-9a84-87b5062dd84a` corresponde al commit `6b407e8` y superó la prueba física: `PREVIEW_PHYSICAL_TEST_PASSED`.
 
 ## Deuda no modificada
 

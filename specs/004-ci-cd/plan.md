@@ -31,6 +31,14 @@ Tasks: `specs/004-ci-cd/tasks.md`
 4. Fallar cerrado cuando falte `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_SUPABASE_URL` o `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 5. Mantener Production separado; no generar AAB ni ejecutar `eas submit` en esta fase.
 
+## Fase 8 - EAS Production AAB Gate
+
+1. Declarar `environment: production` en el perfil EAS Production y conservar `autoIncrement`, versionado remoto y `android.buildType: app-bundle`.
+2. Validar antes de `eas build` la presencia por nombre de las tres variables públicas Production, sin imprimir valores ni crear artifacts sensibles.
+3. Ejecutar gates de typecheck, lint, tests, coverage, Expo Doctor, export Android, npm audit y whitespace antes del build.
+4. Ejecutar Production únicamente con CI y Security verdes, usando `--profile production` y sin `eas submit`.
+5. Entregar el AAB para carga manual en Google Play Closed Testing.
+
 ## Validación
 
 `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:coverage`, `npm run doctor` y validación YAML/EAS. Los builds EAS y smoke tests externos quedan sujetos a credenciales e infraestructura.

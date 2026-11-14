@@ -15,6 +15,14 @@
 
 # Historial de cambios
 
+## EAS Production AAB Gate (2026-11-14)
+
+- Se registra `PREVIEW_PHYSICAL_TEST_PASSED` para el build EAS `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, commit validado `6b407e8`.
+- Se prepara la transición `READY_FOR_CLOSED_TEST_BUILD` dentro de la fase vigente `004-ci-cd`.
+- Se agregan `PROD-EAS-001` a `PROD-EAS-008` para variables Production, gate previo, AAB, ausencia de `eas submit` y destino Closed Testing.
+- El perfil EAS `production` declara explícitamente `environment: production` y conserva `autoIncrement`, versionado remoto y `app-bundle`.
+- El workflow Production valida las tres variables públicas por nombre antes de ejecutar EAS, sin imprimir valores ni guardarlos como artifacts.
+
 ## EAS Preview Environment Gate (2026-11-14)
 
 ### Cambios

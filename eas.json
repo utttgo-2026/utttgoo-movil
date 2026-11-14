@@ -18,6 +18,7 @@
       "env": { "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "true" }
     },
     "production": {
+      "environment": "production",
       "autoIncrement": true,
       "env": { "EXPO_PUBLIC_BETA_REGISTRATION_ONLY": "false" },
       "android": { "buildType": "app-bundle" },

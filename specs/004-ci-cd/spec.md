@@ -47,8 +47,21 @@ Preparar el repositorio móvil para SDD, calidad automatizada, DevSecOps, builds
 - **REQ-EAS-ENV-005**: CI valida nombres de variables sin imprimir valores ni guardar el ambiente como artifact.
 - **REQ-EAS-ENV-006**: `service_role`, claves secretas y el JWT signing secret están prohibidos en el cliente móvil.
 - **REQ-EAS-ENV-007**: `.env` permanece ignorado y no versionado.
-- **REQ-EAS-ENV-008**: Production mantiene su configuración independiente y no forma parte de esta tarea.
+- **REQ-EAS-ENV-008**: Production mantiene su configuración independiente de Preview y se valida mediante sus propios gates.
 
 El ambiente EAS Preview debe estar configurado antes de un build funcional. Un APK generado con el ambiente vacío es evidencia técnica de EAS, pero no evidencia funcional de autenticación/OTP.
 
 La rotación/revocación de cualquier Supabase JWT signing secret expuesto corresponde al equipo Backend/Supabase según la estrategia activa de signing keys; este repositorio móvil no realiza esa rotación ni conserva el secreto.
+
+## Requisitos EAS Production - AAB y Closed Testing
+
+- **PROD-EAS-001**: Production requiere `EXPO_PUBLIC_API_BASE_URL`.
+- **PROD-EAS-002**: Production requiere `EXPO_PUBLIC_SUPABASE_URL`.
+- **PROD-EAS-003**: Production requiere `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- **PROD-EAS-004**: El Production Build falla antes de EAS si falta una variable requerida.
+- **PROD-EAS-005**: El gate valida nombres sin imprimir valores ni guardar resultados sensibles como artifacts.
+- **PROD-EAS-006**: Android Production genera un AAB mediante `android.buildType: app-bundle`.
+- **PROD-EAS-007**: El workflow no ejecuta `eas submit` automáticamente.
+- **PROD-EAS-008**: El destino inicial del AAB es Google Play Closed Testing mediante carga manual.
+
+El estado Preview aprobado es `PREVIEW_PHYSICAL_TEST_PASSED`; el release Production queda preparado para `READY_FOR_CLOSED_TEST_BUILD` después de que CI/Security estén verdes y se confirme el AAB terminado.

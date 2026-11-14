@@ -3,9 +3,9 @@
 Estado de auditoría inicial:
 
 - Package Android: `COMPLETADO`, `mx.edu.utt.uttgo`.
-- AAB Production: `BLOCKED_BY_FIRST_EAS_BUILD`.
-- Project ID EAS: configurado en `app.json`; pendiente validación con EAS CLI.
-- `EXPO_TOKEN`: pendiente validar autenticación local/CI.
+- AAB Production: `READY_FOR_CLOSED_TEST_BUILD`, pendiente de ejecutar el release Production.
+- Project ID EAS: configurado y usado por el proyecto `@utttgoo/uttgoo`.
+- `EXPO_TOKEN`: validado en CI para el Preview y requerido por el release Production.
 - Backend Production HTTPS: `RESOLVED`, verificado el 2026-11-12 mediante TLS válido, `GET /health` `200` y OpenAPI accesible.
 - Política de privacidad: `PENDIENTE`, debe exponerse desde la aplicación mediante una spec funcional.
 - Landing Netlify: `PENDING_LANDING_URL_DOCUMENTATION`.
@@ -15,8 +15,9 @@ Estado de auditoría inicial:
 - Expo Doctor: `20/20` checks passed.
 - EAS project info: `@utttgoo/uttgoo`, project ID `52014672-c800-4cf6-af6a-330cb13986e8`.
 - `punycode`: `NON_BLOCKING_EAS_WARNING`; Node trace apunta a `whatwg-url` dentro de EAS CLI (`C:\Users\Valeria\AppData\Local\npm-cache\_npx\...`), no a código UTTT-GO.
-- Preview EAS anterior: `PENDIENTE`, en cola; Build ID `fee81d7d-abef-4b8f-b255-c1d6c09b2ec5`.
-- Preview EAS trazable al commit actual: `PENDIENTE`, en cola; Build ID `3eadc96f-4954-43f0-9b24-723f7f234e6f`.
-- Commit de cambios: `0a004e7`.
+- Preview físico: `PREVIEW_PHYSICAL_TEST_PASSED`; Build ID `5b4b0280-71e0-44f9-9a84-87b5062dd84a`; commit validado `6b407e8`.
+- Production EAS environment: `3/3` nombres requeridos confirmados sin imprimir valores.
+- Production gate: `PROD-EAS-001` a `PROD-EAS-008`; no se ejecuta `eas submit`.
+- Destino inicial: Google Play Closed Testing mediante carga manual del AAB.
 
-El release Production sigue siendo manual y requiere validación física del Preview, configuración de `EXPO_TOKEN` y los gates restantes.
+El release Production sigue siendo manual y requiere CI/Security verdes, ejecución del workflow y confirmación del AAB `FINISHED`.
