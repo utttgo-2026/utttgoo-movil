@@ -4,7 +4,7 @@
 - **Spec**: 002-autenticacion
 - **Versión**: 1.0
 - **Fecha**: 2025-11-05
-- **Estado**: COMPLETADO
+- **Estado**: EN IMPLEMENTACION — extension OTP Supabase
 
 ---
 
@@ -160,3 +160,12 @@ Implementar el flujo completo de autenticación local con persistencia, incluyen
 - `CONSTITUTION.md` (navegación, persistencia)
 - `SDD_CHANGELOG.md` (historial correcciones)
 - `ANALISIS_FIGMA.md` (UI-001 a UI-005 + Verificación)
+
+## 6. Implementación OTP
+
+1. Instalar `@supabase/supabase-js` sin actualizar Expo.
+2. Centralizar el cliente Supabase con variables públicas y sesión Supabase no persistente.
+3. Mantener el password en memoria dentro de `AuthContext` hasta terminar login Backend.
+4. Verificar y reenviar OTP con los tipos oficiales `signup`.
+5. Decodificar `/auth/me` y `/users/me` con DTOs separados y mapear roles explícitamente.
+6. No habilitar el decoder JWT hasta confirmar el cuerpo real de `/auth/login`.

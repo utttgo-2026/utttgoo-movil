@@ -15,6 +15,21 @@
 
 # Historial de cambios
 
+## OTP Supabase y activación lazy (2026-11-13)
+
+### Cambios
+
+- Registro móvil mediante `POST /api/v1/auth/register` y pantalla OTP con `verifyOtp`/`resend` oficiales de Supabase.
+- OTP válido dispara inmediatamente el login Backend; la contraseña solo vive en memoria y el JWT se guarda únicamente en SecureStore.
+- Decodificación runtime separada para `/api/v1/auth/me` y `/api/v1/users/me`, con roles `Buyer`/`Seller`/`Admin` validados explícitamente.
+- Variables públicas `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; nunca se incluyen secretos SMTP o `service_role`.
+
+### Bloqueos y evidencia
+
+- OpenAPI actual publica registro `200` y no define el cuerpo de respuesta de login; el cliente acepta explícitamente `200/202` en registro.
+- `decodeLogin` permanece cerrado con `BLOCKED_BY_BACKEND_LOGIN_RESPONSE_CONTRACT`; no se adivina `token`, `jwt` ni `accessToken`.
+- Validación local: TypeScript 0 errores, lint 0 errores, 205 pruebas, coverage 95.01% statements y export Android exitoso.
+
 ## Fase 005 - Demo invitado, onboarding y preparación Play Store
 
 ### Estado

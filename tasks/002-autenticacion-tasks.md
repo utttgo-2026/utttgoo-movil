@@ -55,4 +55,26 @@
 ---
 
 ## Estado General
-**COMPLETADO** — 2025-11-05
+**EN IMPLEMENTACION** — extension OTP Supabase
+
+## Fase 6: OTP Supabase y activación lazy
+
+- [x] Instalar y configurar cliente Supabase público.
+- [x] Registro Backend -> pantalla OTP sin autenticar.
+- [x] `verifyOtp` oficial con `type: 'signup'`.
+- [x] Reenvío oficial con cooldown y bloqueo de envíos simultáneos.
+- [x] Login Backend inmediato conservando password únicamente en memoria.
+- [x] Decoders separados para `auth/me` y `users/me`.
+- [x] Mapeo explícito de roles y rechazo de roles desconocidos.
+- [x] Pruebas OTP, restore 401, SecureStore y password no persistido.
+- [ ] Confirmar respuesta real de login antes de activar `decodeLogin` (BLOCKED_BY_BACKEND_LOGIN_RESPONSE_CONTRACT).
+
+## Prueba E2E manual pendiente
+
+1. Abrir app y completar Splash -> Demo 1 -> Demo 2.
+2. Crear cuenta con un correo `@uttt.edu.mx` autorizado.
+3. Confirmar registro Backend y recibir OTP de seis dígitos por SMTP de Supabase.
+4. Introducir OTP, verificar y observar el login Backend inmediato.
+5. Confirmar JWT en SecureStore, `/auth/me` con `Active`, `/users/me` y entrada al catálogo.
+
+No crear cuentas masivamente ni automatizar el envío de OTP reales.

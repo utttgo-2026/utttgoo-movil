@@ -14,7 +14,6 @@ export interface User {
   rating?: number;
   reviewCount?: number;
   joinedAt?: string;
-  password?: string;
 }
 
 export interface FoodCategory {

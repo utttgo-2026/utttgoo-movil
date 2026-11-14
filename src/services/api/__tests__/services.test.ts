@@ -20,7 +20,7 @@ describe('Servicios: construcción de solicitudes documentadas', () => {
     });
     await authService.register({ ...input, displayName: ' Fixture ' });
     expect(request).toHaveBeenLastCalledWith('/api/v1/auth/register', {
-      method: 'POST', body: { email: 'fixture@uttt.edu.mx', password: input.password, displayName: 'Fixture' }, expectedStatuses: [202],
+      method: 'POST', body: { email: 'fixture@uttt.edu.mx', password: input.password, displayName: 'Fixture' }, expectedStatuses: [200, 202],
     });
   });
 

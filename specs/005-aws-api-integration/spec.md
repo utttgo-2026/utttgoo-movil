@@ -44,8 +44,11 @@ Conectar progresivamente el cliente Expo SDK 58 con la API AWS usando fetch, Typ
 ## 4. Dependencias y bloqueos
 - HTTPS y certificado válidos: no enviar credenciales ni JWT mientras la URL configurada sea HTTP.
 - Falta JSON real/OpenAPI: login (ubicación del JWT), identidad/roles, perfiles, vendedores, paginación y errores. No activar adaptadores de sesión sin contrato verificado.
-- Supabase: falta flujo de verificación, callbacks, reenvío y relación con AWS; el backend no genera OTP.
+- Supabase OTP: el cliente implementa `verifyOtp` y `resend` sin informar al Backend; la sincronización ocurre en el primer login Backend posterior. OpenAPI no declara endpoints OTP.
 - Faltan límites de longitud, formato de phone y política de contraseña. Validación local estructural solamente; no afirmar validación completa de formatos/límites.
+- OpenAPI actual publica `register` como 200, mientras el contrato de equipo había indicado 202; el cliente mantiene la discrepancia documentada y no la resuelve inventando un status.
+- OpenAPI actual no documenta el envelope/campo del JWT de login. El decoder permanece bloqueado hasta contar con respuesta real autorizada.
+- La consulta de `https://3.129.142.54.nip.io/openapi/v1.json` del 2026-11-13 confirmó que `register` publica 200, pero no define schemas de respuesta para login, `auth/me` ni `users/me`; por ello `decodeLogin` permanece bloqueado con `BLOCKED_BY_BACKEND_LOGIN_RESPONSE_CONTRACT`.
 - Falta contrato de recuperación y refresh; no implementar endpoints supuestos.
 - Expo Go físico: no marcar integración COMPLETADA hasta prueba manual y flujos HTTPS reales.
 

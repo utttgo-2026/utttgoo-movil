@@ -5,7 +5,7 @@
 - **Nombre**: Flujo de Autenticación
 - **Versión**: 1.0
 - **Fecha**: 2025-11-05
-- **Estado**: COMPLETADO
+- **Estado**: EN IMPLEMENTACION — OTP Supabase y login lazy Backend
 
 ---
 
@@ -182,3 +182,14 @@ Splash (/)
 - `MAPA_NAVEGACION.md` (flujos auth)
 - `SDD_CHANGELOG.md` (historial correcciones)
 - `CONSTITUTION.md` (principios navegación, persistencia)
+
+## 9. Extension OTP Supabase
+
+- Registro canónico: `POST /api/v1/auth/register`; no crea sesión móvil.
+- Supabase envía un OTP de seis dígitos mediante la plantilla `Confirm sign up`.
+- La aplicación usa `supabase.auth.verifyOtp({ email, token, type: 'signup' })`.
+- El reenvío usa `supabase.auth.resend({ type: 'signup', email })`; no existe endpoint Backend OTP.
+- Después de verificar OTP, el móvil ejecuta inmediatamente el login Backend para activar de forma lazy la cuenta `PendingEmailVerification -> Active` y obtener el JWT.
+- La contraseña permanece solamente en memoria durante Registro -> OTP -> Login y nunca se guarda en SecureStore, AsyncStorage, URL o logs.
+- El JWT Backend es el único token persistido, mediante SecureStore.
+- `/api/v1/auth/me` y `/api/v1/users/me` se decodifican como contratos separados.

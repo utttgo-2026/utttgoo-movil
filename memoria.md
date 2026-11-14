@@ -224,3 +224,16 @@ Login y Registro; no se encontró un redirect de autenticación que omita el onb
 - La sincronización terminó en el commit de integración `4d3623d`; el stash `stash@{0}` se conserva como respaldo y la rama `backup/eas-google-play-pre-auth-sync` apunta al HEAD previo.
 - Verificación local: Node `v22.13.1`, tsc limpio, 19 suites/195 tests, coverage 97.57% statements, Doctor 20/20 y export Android exitoso. Lint tiene 0 errores y 31 warnings existentes.
 - El backend HTTPS `/health` respondió 200. OpenAPI respondió 200, pero no documenta OTP/Supabase y expone discrepancias de `register` (200 publicado frente a 202 requerido) y servidor HTTP; no se declara autenticación OTP funcional.
+
+## Decisión OTP Supabase (2026-11-13)
+
+Supabase es responsable únicamente de confirmar el correo con `verifyOtp({ type: 'signup' })`
+y reenviar el código con `resend({ type: 'signup' })`. El Backend no recibe callbacks de OTP:
+el primer `POST /api/v1/auth/login` posterior a un OTP válido realiza la activación lazy de
+`PendingEmailVerification` a `Active`. La contraseña se mantiene en un `useRef` temporal del
+flujo y se elimina al consumir el OTP o cerrar sesión; nunca entra en almacenamiento, URL o logs.
+
+El contrato de identidad de `/api/v1/auth/me` y el perfil de `/api/v1/users/me` está validado
+en runtime y mantiene DTOs separados. El campo JWT de `/api/v1/auth/login` sigue sin evidencia
+en el OpenAPI actual, por lo que el decoder continúa bloqueado hasta recibir una respuesta real
+autorizada del Backend.

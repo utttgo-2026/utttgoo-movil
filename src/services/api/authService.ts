@@ -21,7 +21,8 @@ export const authService = {
         password: requirePassword(input.password),
         displayName: requiredText(input.displayName),
       },
-      expectedStatuses: [202],
+      // OpenAPI publica 200; 202 fue el contrato previo del equipo. Ambos se aceptan explícitamente.
+      expectedStatuses: [200, 202],
     });
   },
   getMe(token: string) {

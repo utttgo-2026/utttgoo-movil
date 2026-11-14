@@ -4,6 +4,7 @@ import { ApiError, errorMessage } from '@/services/api/errors';
 import { createAuthSession } from '@/services/authSession';
 import type { UserPatch } from '@/types/api';
 import type { User, UserRole } from '@/types/models';
+import { resendSignupOtp, verifySignupOtp } from '@/services/supabaseAuth';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
@@ -16,6 +17,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (fullName: string, email: string, password: string) => Promise<AuthResult>;
+  verifyEmail: (email: string, otp: string) => Promise<AuthResult>;
+  resendEmailCode: (email: string) => Promise<AuthResult>;
   restoreSession: () => Promise<void>;
   refreshProfile: () => Promise<AuthResult>;
   updateProfile: (patch: UserPatch) => Promise<AuthResult>;
@@ -30,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('restoring');
   const [sessionError, setSessionError] = useState<string>();
   const revision = useRef(0);
+  const pendingCredentials = useRef<{ email: string; password: string } | null>(null);
 
   const restoreSession = useCallback(async () => {
     const current = ++revision.current;
@@ -86,11 +90,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (fullName: string, email: string, password: string): Promise<AuthResult> => {
     try {
       await session.register(fullName, email, password);
+      pendingCredentials.current = { email: email.trim().toLowerCase(), password };
       return { success: true };
     } catch (error) {
       return { success: false, error: errorMessage(error) };
     }
   }, [session]);
+
+  const verifyEmail = useCallback(async (email: string, otp: string): Promise<AuthResult> => {
+    const credentials = pendingCredentials.current;
+    if (!credentials || credentials.email !== email.trim().toLowerCase()) {
+      return { success: false, error: 'Vuelve a crear la cuenta para continuar con la verificación.' };
+    }
+    try {
+      await verifySignupOtp(email.trim().toLowerCase(), otp);
+      // OTP válido consume el único paso que necesita la contraseña temporal.
+      pendingCredentials.current = null;
+      return await login(credentials.email, credentials.password);
+    } catch (error) {
+      return { success: false, error: errorMessage(error) };
+    }
+  }, [login]);
+
+  const resendEmailCode = useCallback(async (email: string): Promise<AuthResult> => {
+    try {
+      await resendSignupOtp(email.trim().toLowerCase());
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: errorMessage(error) };
+    }
+  }, []);
 
   const loadProfile = useCallback(async (patch?: UserPatch): Promise<AuthResult> => {
     const current = revision.current;
@@ -113,6 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async (): Promise<AuthResult> => {
     const current = ++revision.current;
+    pendingCredentials.current = null;
     setUser(null);
     setStatus('anonymous');
     setSessionError(undefined);
@@ -138,11 +168,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: status === 'authenticated' && user !== null,
     login,
     register,
+    verifyEmail,
+    resendEmailCode,
     restoreSession,
     refreshProfile,
     updateProfile: loadProfile,
     logout,
-  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout]);
+  }), [user, status, sessionError, login, register, verifyEmail, resendEmailCode, restoreSession, refreshProfile, loadProfile, logout]);
 
   // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
