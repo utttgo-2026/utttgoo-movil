@@ -1,12 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { errorMessage } from '@/services/api/errors';
+import { ApiError, errorMessage } from '@/services/api/errors';
 import { createAuthSession } from '@/services/authSession';
-import type { UserPatch } from '@/types/api';
+import type { SellerActivationRequest, UserPatch } from '@/types/api';
 import type { User, UserRole } from '@/types/models';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
+export type SellerOperationResult = { success: true; status: number; contractPending: true } |
+  { success: false; error: string; status?: number };
 
 interface AuthContextValue {
   user: User | null;
@@ -20,6 +22,8 @@ interface AuthContextValue {
   refreshProfile: () => Promise<AuthResult>;
   updateProfile: (patch: UserPatch) => Promise<AuthResult>;
   logout: () => Promise<AuthResult>;
+  requestSellerActivation: (input: SellerActivationRequest) => Promise<SellerOperationResult>;
+  consultSeller: () => Promise<SellerOperationResult>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -132,11 +136,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session]);
 
   const refreshProfile = useCallback(() => loadProfile(), [loadProfile]);
+  const runSeller = useCallback(async (input?: SellerActivationRequest): Promise<SellerOperationResult> => {
+    const current = revision.current;
+    if (status !== 'authenticated') return { success: false, error: 'Se requiere una sesión validada.' };
+    try {
+      const response = await session.sellerOperation(input);
+      if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
+      return { success: true, ...response };
+    } catch (error) {
+      if (current === revision.current && error instanceof ApiError && error.status === 401) {
+        ++revision.current; setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));
+      }
+      return { success: false, error: errorMessage(error), status: error instanceof ApiError ? error.status : undefined };
+    }
+  }, [session, status]);
+  const requestSellerActivation = useCallback((input: SellerActivationRequest) => runSeller(input), [runSeller]);
+  const consultSeller = useCallback(() => runSeller(), [runSeller]);
   const value = useMemo<AuthContextValue>(() => ({
     user, role: user?.role ?? null, status, sessionError,
     isAuthenticated: status === 'authenticated' && user !== null,
-    login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout,
-  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout]);
+    login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout, requestSellerActivation, consultSeller,
+  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout, requestSellerActivation, consultSeller]);
 
   // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

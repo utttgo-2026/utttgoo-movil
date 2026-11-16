@@ -91,3 +91,6 @@ El usuario solicita commit/push a HRDCORE y autoriza expresamente corregir el bl
 
 ## 14. Registro→login / DevSecOps / Play
 Reutilizar el hint en memoria para un acuse pending (no verified), dirigir Beta al login sin contraseña; mantener OTP por banderafalse y acceso opcional existente. Validar nombre/correo/tipos/longitudes en UI y authService, sin recortar contraseña ni inventar política Supabase. Errores429 genéricos y límites backend documentados. Reparar test omitido de duplicación usando eventos no bloqueantes: RNTL14 espera promesas retornadas por handlers, no aumentar timeout ni eliminar pruebas. Auditar npm y valores Android nativos/Play sin generar builds; revisar diff completo y secretos antes de commit local autorizado del trabajo005 acumulado. Mantener pruebas físicas/backend pendientes.
+
+## Dependencia007 — capacidades vendedor acotadas
+Se autoriza reutilizar la sesión actual para requestActivation/getMe de sellerService sin exponer JWT en Context ni reconstruir auth. Solo status HTTP/códigos sanitizados salen de la capa, cuerpos desconocidos permanecen desconocidos. No cambiar contratos de roles005, SecureStore, restauración/login/OTP. Una respuesta de vendedor no cambia user.role. Especificación y evidencia funcional en007.

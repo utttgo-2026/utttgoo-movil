@@ -53,6 +53,7 @@ function ProfileContent() {
           onPress={handleEditProfile}
           style={styles.editButton}
         />
+        <AppButton label="Quiero vender" variant="outline" onPress={() => router.push('/seller')} />
 
         <Surface style={styles.settingsCard} bordered>
           <View style={styles.settingsRow}>

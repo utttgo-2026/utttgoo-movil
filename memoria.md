@@ -233,6 +233,13 @@
 - Play es auditoría, no publicación. target36 en RN instalado no sustituye manifest final, producción bloquea3 permisos innecesarios y flagBetafalse; faltan privacidad pública/eliminación app+web/Data safety/firma/EAS y desplazar funciones mock antes de listing honesto. npm audit28/omitdev21, sin altos/críticos pero con remediación compatible pendiente; no fixforce.
 - Checks405pruebas/28suites sin skipped, tsc0, lint0errores/30warnings, Doctor20/20 y diffcheck limpio. Trabajo005 acumulado relacionado se prepara para commit local explícitamente autorizado sin .env ni artefactos; sin push/merge/release. Excepción de commit técnico con prueba física aún pendiente registrada por instrucción actual, nunca cierre de005.
 
+## 21. Etapa007 — vendedor sin contratos de respuesta supuestos
+- Servicios de vendedor005 preexistían, pantallas no. Se abre007, no004 (CI/CD) ni duplicación005/006. Referencias UI027/028/030/035/036 inspeccionadas; UI028 activado no se presenta al aceptar solicitud. Teléfono/imagen negocio sin campo API permanecen no editables.
+- Único coordinador/sessionContext extendido solo para solicitud/consulta: JWT privado, statusHTTP proyectado, cuerpo unknown descartado para UI. No otro SecureStore/clientauth. Locks y aceptación/resultadoincierto por sesión evitan doble envío/retries; logout/generación impide aplicar respuesta vieja.401 limpia con política,403 no cambia rol.
+- HTTP200/201 no demuestra autorización; GETme sin enum/DTO no fabrica pending/approved/rejected/suspended. Buyer sigue único rol confirmado del contrato005; Seller necesita DTO ampliado y permisos server-side. Edición negocio/CRUD productos se bloquean en vez de inventar schemas/endpoints. ConsultaOpenAPI actual ECONNRESET, sin bypass ni nueva evidencia del servidor.
+- Productos preparados solo como UI/preview efímero y validadores locales, no requestDTO AWS: precio2decimales→centavos exactos, imágenes5MB/6000px por metadata (no contenido binario), categorías vacías hastaAPI. No picker/upload/publicación/retirada real ni sustitución del catálogo21mocks; no afirmar publicación conectada.
+-449/449tests/31suites,405previos+44nuevos; tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio y bundleAndroidHTTP200/2477módulos. No prueba física, cuentas/altas reales automáticas, nuevas dependencias ni push/build. Commit local seguro solicitado, autorización no equivale cierre funcional. SDD007 EN PRUEBAS parcial y handoffbackend identifica exactamente lo faltante.
+
 **Última actualización**: 2026-11-13
 **Versión**: 1.4
 **Autor**: Equipo UTTT-Go Móvil

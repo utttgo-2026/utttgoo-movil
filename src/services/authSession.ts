@@ -1,5 +1,5 @@
 import type { User } from '@/types/models';
-import type { UserPatch } from '@/types/api';
+import type { SellerActivationRequest, UserPatch } from '@/types/api';
 import { institutionalEmail, requirePassword } from '@/utils/apiValidation';
 
 import { authService } from './api/authService';
@@ -10,6 +10,8 @@ import { requireProfileContract, requireSessionContract, sessionContract, type S
 import { userService } from './api/userService';
 import { sessionStorage, type SessionStorage } from './sessionStorage';
 import { pendingRegistration } from './pendingRegistration';
+import { sellerService } from './api/sellerService';
+import { activationBody } from '@/utils/sellerValidation';
 
 interface AuthSessionDependencies {
   storage: SessionStorage;
@@ -24,6 +26,9 @@ export class AuthSession {
   private generation = 0;
   private token: string | null = null;
   private profileRevision = 0;
+  private sellerBusy = false;
+  private sellerSubmitted = false;
+  private sellerOutcomeUnknown = false;
 
   constructor(private readonly deps: AuthSessionDependencies) {}
 
@@ -127,8 +132,34 @@ export class AuthSession {
   async logout(): Promise<void> {
     ++this.generation;
     this.token = null;
+    this.sellerSubmitted = false;
+    this.sellerOutcomeUnknown = false;
     pendingRegistration.reset();
     await this.deps.storage.clear();
+  }
+
+  /** No token or unknown response body leaves the session coordinator. Never grants Seller role. */
+  async sellerOperation(input?: SellerActivationRequest): Promise<{ status: number; contractPending: true }> {
+    this.deps.assertSecureTransport();
+    if (!this.token) throw new ApiError('unauthenticated', 'Inicia sesión para administrar tu solicitud de vendedor.');
+    if (this.sellerBusy) throw new ApiError('validation', 'Ya hay una operación de vendedor en curso.');
+    if (input && this.sellerSubmitted) throw new ApiError('validation', 'La solicitud ya fue recibida en esta sesión. Consulta con backend antes de repetirla.');
+    if (input && this.sellerOutcomeUnknown) throw new ApiError('validation', 'El resultado anterior es incierto. Confirma su persistencia con backend antes de repetir.');
+    const body = input ? activationBody(input) : undefined;
+    const generation = this.generation;
+    const token = this.token;
+    this.sellerBusy = true;
+    try {
+      const response = body ? await sellerService.requestActivation(token, body) : await sellerService.getMe(token);
+      this.checkCurrent(generation);
+      if (body) this.sellerSubmitted = true;
+      return { status: response.status, contractPending: true };
+    } catch (error) {
+      this.checkCurrent(generation);
+      if (body && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) this.sellerOutcomeUnknown = true;
+      if (error instanceof ApiError && error.status === 401) { this.token = null; await this.deps.storage.clear(); }
+      throw error;
+    } finally { this.sellerBusy = false; }
   }
 }
 

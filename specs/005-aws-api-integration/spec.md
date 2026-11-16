@@ -105,5 +105,8 @@ La bandera Beta ahora dirige directamente a login con acuse pendiente y correo e
 Validación local: nombre Unicode2–100 caracteres, letras/marcas/espacios/apóstrofos/guiones/punto, NFC y espacios normalizados, controles rechazados; correo string máximo254/local64 y dominio exacto; contraseña sin transformación, mínimo backend aún no publicado (recomendación12, no regla inventada), techo local4096 caracteres para solicitudes. Estos límites son política del cliente a alinear con AWS, no evidencia de protección de consultas backend.
 Se autoriza commit local del conjunto auth005 seguro acumulado y su configuración/tests/SDD; no push/build/release. Excepción explícita para ese commit técnico con prueba física pendiente, sin marcar005 COMPLETADA. No incluir .env ni trabajo006 ajeno. Auditoría Play y requisitos backend documentados, sin endpoints de borrado/SSO inventados.
 
+## Dependencia007 — vendedor
+La nueva etapa007 autoriza capacidades acotadas POST solicitud/GET negocio mediante el único coordinador/token existente. No exportar JWT al Context/UI ni modificar roles Buyer confirmados, contratos /me o auth005 para simular Seller. Cuerpos de respuesta vendedor siguen unknown hasta contrato; acceso007 usa guarda autenticada existente y publicación no se habilita.401 aplica política existente y respuestas tardías se rechazan por generación; resto de auth permanece sin reconstrucción.
+
 ## Referencias
 CONSTITUTION.md, AGENTS.md, plans/005-aws-api-integration-plan.md, tasks/005-aws-api-integration-tasks.md.

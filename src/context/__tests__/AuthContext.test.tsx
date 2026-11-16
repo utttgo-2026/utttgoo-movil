@@ -14,7 +14,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 const user: User = { id: 'fixture-user', role: 'buyer', fullName: 'Fixture', email: 'fixture@uttt.edu.mx' };
 const mockSession = {
-  restore: jest.fn(), login: jest.fn(), register: jest.fn(), refreshProfile: jest.fn(), logout: jest.fn(),
+  restore: jest.fn(), login: jest.fn(), register: jest.fn(), refreshProfile: jest.fn(), logout: jest.fn(), sellerOperation: jest.fn(),
 };
 
 describe('AuthContext como única autoridad de sesión', () => {
@@ -103,5 +103,28 @@ describe('AuthContext como única autoridad de sesión', () => {
     await act(async () => { finishOld({ ...user, fullName: 'Old fixture' }); expect((await old).success).toBe(false); });
     expect(result.current.user?.fullName).toBe('Latest fixture');
     expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  test('capacidades seller exigen sesión validada y aceptación no altera rol Buyer', async () => {
+    const anonymous = await renderHook(useAuth, { wrapper: AuthProvider });
+    await act(async () => { expect((await anonymous.result.current.consultSeller()).success).toBe(false); });
+    expect(mockSession.sellerOperation).not.toHaveBeenCalled(); await anonymous.unmount();
+    mockSession.restore.mockResolvedValueOnce(user);
+    mockSession.sellerOperation.mockResolvedValueOnce({ status: 201, contractPending: true });
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    await act(async () => { expect(await result.current.requestSellerActivation({ businessName: 'Fixture', description: 'Synthetic business', pickupPoint: 'Fixture building' }))
+      .toEqual({ success: true, status: 201, contractPending: true }); });
+    expect(result.current.role).toBe('buyer'); expect(result.current.user).toEqual(user);
+  });
+
+  test('401 seller invalida contexto sin conceder rol mientras403 conserva identidad existente', async () => {
+    mockSession.restore.mockResolvedValueOnce(user);
+    mockSession.sellerOperation.mockRejectedValueOnce(new ApiError('http', 'Synthetic403', 403))
+      .mockRejectedValueOnce(new ApiError('http', 'Synthetic401', 401));
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    await act(async () => { expect((await result.current.consultSeller()).success).toBe(false); });
+    expect(result.current.isAuthenticated).toBe(true);
+    await act(async () => { expect((await result.current.consultSeller()).success).toBe(false); });
+    expect(result.current.isAuthenticated).toBe(false); expect(result.current.user).toBeNull();
   });
 });

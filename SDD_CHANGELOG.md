@@ -15,6 +15,14 @@
 
 # Historial de cambios
 
+## Etapa007 — vendedor y preparación de productos (EN PRUEBAS, parcial)
+- No existía etapa vendedor; se crea007 siguiendo la numeración (004 ya es CI/CD) y se reutiliza sellerService005 con las4rutas confirmadas. Reconsulta OpenAPI falló por transporte/ECONNRESET sin desactivarTLS; respuestas seller/roles siguen sin contrato confirmado.
+- Perfil autenticado ofrece Quiero vender. Grupo /seller protegido contiene Mi negocio/solicitud/Mis productos/formulario draft. POST solicitud y GETme se ejecutan mediante AuthSession/AuthContext existente, sin exponer JWT/cuerpos unknown ni cambiar rol. Se muestran status/errores sanitizados; aceptación no equivale aprobación.
+- Validación textoUnicode/límites frontend, precioMXN centavos y metadata de imagen preparada, categoría real requerida. Bloqueos de duplicación y resultado incierto/resp tardías, sin reintentos automáticos ni idempotencia server-side supuesta.
+- Mi negocio tiene consultaHTTP, pero campos/edición se bloquean hasta schema de perfil/estado/ownership. Productos tienen preview efímero no publicado; sin APIs confirmadas no hay CRUD/publicación/upload/categorías ni productos ficticios. Catálogo comprador mock intacto, no Crear→Consultar→Mostrar real.
+-449/449pruebas/31suites (405previas+44nuevas), tsc0errores, lint0errores/30warnings previos, Doctor20/20, diffcheck limpio y bundleAndroidHTTP200/2477módulos. Sin operaciones reales automáticas, claves en logs, nuevas dependencias, cambios006 o push/release.
+- SDD007 registra diferencias Figma por contrato, roles ampliados pendientes, handoff backend y recorrido ExpoGo. Usuario autoriza commit local seguro; hash/resultado en entrega/historial. No módulo terminado hasta contratos/prueba física/publicación integral.
+
 ## Etapa005 — Registro→Login seguro y auditoría de preparación Play
 - Beta true en desarrollo/internal explícita ahora redirige directamente a Login tras200/202 con correo efímero/acuse pendiente y contraseña vacía; false conserva OTP original. No auto-login, bypass de Confirm email/Active ni eliminación de servicios. Cuentas nuevas pendientes siguen rechazadas por AWS: enlace/SSO aprobado es bloqueo contractual, no se inventa endpoint.
 - Validación nombre Unicode2–100/NFC/espacios y controles, email string254/local64/dominio exacto, password sin transformación con recomendación12 (política real pendiente) y techo cliente4096. Servicio valida tipos/listas blancas.429 tiene mensaje genérico, controles de consultas/rate-limit/enumeración son responsabilidad backend no auditada.
