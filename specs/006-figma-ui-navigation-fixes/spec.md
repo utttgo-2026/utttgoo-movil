@@ -49,3 +49,6 @@ La autorización P3 permite cambiar únicamente los recursos de imagen del mock,
 
 ## Cierre
 tsc, lint, Jest, Doctor, diff check y pruebas de rutas/acceso/categorías/listas. No COMPLETADO hasta Expo Go. El regreso inesperado a login/cierre sigue pendiente de reproducción y logs.
+
+## Dependencia de integración007 P0
+Las categorías persistentes ahora proceden de AWS y no se fuerzan a los6ids/nombres mock. Fuente mock/composición visual006 se conserva exclusivamente bajo configuración explícita de desarrollo; producción usaAWS sinfallback. Mismas rutas y componentes temáticos, estados carga/error/vacío/contrato incompleto para no mostrar FoodItem/medios ficticios mientras falte DTOproducto. No cambios de tabs/back/fallback/globalresponsiveness; pruebas de recorridos previos declaran fuente fixture expresamente. Media y publicación real siguen pendientes, no se presenta catálogo vacío como fidelidad visual concluida.

@@ -27,7 +27,7 @@ export default function ActivationScreen() {
       const result = await requestSellerActivation(body);
       if (result.success) {
         setAccepted(true);
-        setMessage(`Solicitud recibida por AWS (HTTP ${result.status}). Esto no confirma aprobación ni un cambio de rol. Consulta el estado y coordina con backend la validación de la respuesta.`);
+        setMessage(`Negocio activado por AWS (HTTP ${result.status}): ${result.seller.businessName}. ${result.roleSynced ? 'Permiso Seller revalidado en tu sesión.' : 'Tu JWT actual aún no confirma Seller. Vuelve a iniciar sesión para obtener los permisos del servidor.'}`);
       } else {
         setMessage(`${result.status ? `HTTP ${result.status}. ` : ''}${result.error}`);
         // Network outcomes may have persisted. Consult before any manual retry; no automatic retry.
@@ -41,7 +41,7 @@ export default function ActivationScreen() {
         <Ionicons name="storefront-outline" size={56} color={colors.primary} accessible={false} />
       </View>
       <AppText variant="title" align="center">Vende dentro de la comunidad UTTT</AppText>
-      <AppText>Solicita la activación de tu negocio. No se aprueba automáticamente.</AppText>
+      <AppText>AWS activa el negocio inmediatamente si confirma la respuesta Active. El permiso de sesión se revalida por separado.</AppText>
       <Surface bordered style={{ gap: spacing.md }}>
         <AppInput label="Nombre del emprendimiento" accessibilityLabel="Nombre del negocio" value={form.businessName} editable={!busy && !accepted && !uncertain}
           onChangeText={(businessName) => setForm((value) => ({ ...value, businessName }))} placeholder="Nombre del negocio" />

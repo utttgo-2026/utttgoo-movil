@@ -10,6 +10,8 @@ import { mockCategories, mockFoods } from '@/data/mock';
 import { foodDetailRoute } from '@/navigation/buyerRoutes';
 import { catalogRoute, filtersRoute, readCatalogSelection, selectFoods, type CatalogParams } from '@/utils/catalog';
 import { colors, layout, spacing } from '@/theme';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsCatalog } from '@/components/catalog/AwsCatalog';
 
 // Tipo de componente estable: cambios de query no desmontan input/encabezado.
 export function SearchHeader({ query, onQueryChange, onCategory }: {
@@ -27,7 +29,7 @@ export function SearchHeader({ query, onQueryChange, onCategory }: {
   );
 }
 
-export default function SearchScreen() {
+function MockSearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<CatalogParams>();
   const selection = readCatalogSelection(params);
@@ -49,6 +51,7 @@ export default function SearchScreen() {
     </Screen>
   );
 }
+export default function SearchScreen() { return usesMockCatalog() ? <MockSearchScreen /> : <AwsCatalog title="Buscar" search />; }
 
 const styles = StyleSheet.create({
   list: { flex: 1 },

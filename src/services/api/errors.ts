@@ -22,6 +22,26 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+  public code?: string;
+}
+
+export function backendHttpError(status: number, data: unknown): ApiError {
+  const messages: Record<string, string> = {
+    UNAUTHORIZED: httpErrorMessage(401), SELLER_ROLE_REQUIRED: 'AWS requiere permiso Seller para esta operación.',
+    CATEGORY_NOT_FOUND: 'AWS no encontró la categoría seleccionada.', PRODUCT_NOT_FOUND: 'AWS no encontró el producto.',
+    PRODUCT_CONFLICT: 'El producto cambió o está en conflicto. Consulta su estado antes de repetir.',
+    VALIDATION_ERROR: httpErrorMessage(400), RATE_LIMITED: httpErrorMessage(429),
+    CATALOG_UNAVAILABLE: 'El catálogo AWS no está disponible temporalmente.', SELLER_UNAVAILABLE: 'El servicio de vendedores no está disponible temporalmente.',
+  };
+  let code: string | undefined;
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const value = data as Record<string, unknown>;
+    if (value.status === status && typeof value.correlationId === 'string' && typeof value.message === 'string' &&
+        typeof value.code === 'string' && Object.prototype.hasOwnProperty.call(messages, value.code)) code = value.code;
+  }
+  const error = new ApiError('http', code ? messages[code] : httpErrorMessage(status), status, data);
+  error.code = code;
+  return error;
 }
 
 export function httpErrorMessage(status: number): string {

@@ -10,7 +10,7 @@ export default function SellerProductsScreen() {
     <View style={{ gap: spacing.lg, paddingVertical: spacing.lg }}>
       <Surface bordered style={{ gap: spacing.md }}>
         <AppText variant="subtitle">Catálogo del vendedor pendiente de integración</AppText>
-        <AppText>No existe un contrato confirmado para consultar productos propios. No es una lista vacía obtenida de AWS ni se muestran productos publicados ficticios.</AppText>
+        <AppText>El catálogo público ya existe. El filtro sellerId/listado privado y el DTO de producto siguen pendientes. No es una lista vacía obtenida de AWS ni se muestran productos publicados ficticios.</AppText>
       </Surface>
       <AppButton label="Agregar alimento (preparación)" onPress={() => router.push('/seller/product-draft')} />
       <AppText>Publicar, editar, ocultar, retirar o cambiar disponibilidad de productos reales requiere autorización y endpoints backend confirmados.</AppText>

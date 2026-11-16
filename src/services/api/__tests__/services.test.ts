@@ -39,11 +39,13 @@ describe('Servicios: construcción de solicitudes documentadas', () => {
     });
   });
 
-  test('vendedores: activación 200/201, me, PATCH y público sin token', async () => {
+  test('vendedores: activación201, me, PATCH y público sin token', async () => {
     const input = { businessName: 'Fixture', description: 'Synthetic description', pickupPoint: 'Fixture point' };
+    request.mockResolvedValue({ status: 201, headers: {}, data: { ...input, sellerId: 'seller-fixture', status: 'Active', isActive: true,
+      roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' } });
     await sellerService.requestActivation('synthetic.jwt', input);
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/activation-requests', {
-      method: 'POST', token: 'synthetic.jwt', body: input, expectedStatuses: [200, 201],
+      method: 'POST', token: 'synthetic.jwt', body: input, expectedStatuses: [201],
     });
     await sellerService.getMe('synthetic.jwt');
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/me', { token: 'synthetic.jwt', expectedStatuses: [200] });

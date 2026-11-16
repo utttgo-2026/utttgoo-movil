@@ -11,8 +11,10 @@ import { mockCategories, mockFoods } from '@/data/mock';
 import { foodDetailRoute } from '@/navigation/buyerRoutes';
 import { catalogRoute, filtersRoute, readCatalogSelection, selectFoods, selectionParams, type CatalogParams } from '@/utils/catalog';
 import { colors, layout, radii, spacing } from '@/theme';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsCatalog } from '@/components/catalog/AwsCatalog';
 
-export default function CategoryScreen() {
+function MockCategoryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<CatalogParams>();
   const selection = readCatalogSelection(params);
@@ -56,6 +58,7 @@ export default function CategoryScreen() {
     </Screen>
   );
 }
+export default function CategoryScreen() { return usesMockCatalog() ? <MockCategoryScreen /> : <AwsCatalog title="Categoría" category />; }
 
 const styles = StyleSheet.create({
   list: { flex: 1 },

@@ -17,8 +17,8 @@ export interface LoginRequest {
   password: string;
 }
 
-/** Only Buyer is confirmed for this iteration; no inferred role priority/permissions. */
-export type AwsRoles = ['Buyer'];
+/** Exact combinations confirmed by backend; no Admin, reversed or extra roles inferred. */
+export type AwsRoles = ['Buyer'] | ['Buyer', 'Seller'];
 
 export interface AuthMeResponse {
   id: string;
@@ -53,6 +53,20 @@ export interface SellerActivationRequest {
 }
 
 export type SellerPatch = Partial<SellerActivationRequest>;
+
+export interface SellerActiveResponse extends SellerActivationRequest {
+  sellerId: string;
+  status: 'Active';
+  isActive: true;
+  roles: ['Buyer', 'Seller'];
+  createdAt: string;
+  updatedAt: string;
+}
+export interface ApiCategory { id: string; name: string; sortOrder: number }
+export interface ApiPage<T> { items: T[]; page: number; pageSize: number; total: number }
+export interface CreateProductRequest {
+  name: string; description: string; ingredients: string[]; categoryId: string; price: number; stock: number;
+}
 
 export interface AdminUsersQuery {
   page?: number;

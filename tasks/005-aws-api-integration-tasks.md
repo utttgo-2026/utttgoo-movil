@@ -278,3 +278,5 @@ Bundle Android dev finalHTTP200/2470módulos, handoff y configuración comprobad
 
 ## Dependencia007 vendedor
 Se agregan únicamente requestSellerActivation/consultSeller al Context existente con ejecución dentro del coordinador: Bearer no sale a UI, guardas de sesión y generaciones se conservan,401 invalida estado conforme a política y403 no crea permisos. Login/OTP/SecureStore/contratos /me no se alteran. Regresión449/449/31suites aprobada; estado de vendedor unknown/publicación bloqueada hasta contratos. Detalle en specs007/backend-handoff.md, no cierre de auth005.
+
+Continuación contractual007P0: SellerActiveDTO confirmado y roles [Buyer,Seller] ahora soportados en login/identidad/perfil, además deBuyer. Tras activar/consultar, mismoJWT consulta /me y Context solo adopta el rol revalidado; no rotación automática ni cambio deOTP/loginUI.491pruebas/33suites y todosloschecks aprobados. DTOproductos sigue incompleto y mutaciones bloqueadas; no auth ni publicación completas por mocks.

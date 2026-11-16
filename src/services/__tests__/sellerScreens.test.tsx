@@ -7,24 +7,26 @@ import Draft from '@/app/seller/product-draft';
 import SellerLayout from '@/app/seller/_layout';
 
 const mockRequest = jest.fn(); const mockConsult = jest.fn(); const mockPush = jest.fn();
+const seller = { sellerId: 'seller-fixture', businessName: 'Cocina fixture', description: 'Comida del campus fixture', pickupPoint: 'Edificio fixture' };
 let mockAuthenticated = true;
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush }), Stack: () => null }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
+jest.mock('@/services/api/categoryService', () => ({ categoryService: { getAll: async () => [{ id: 'category-fixture', name: 'Categoría fixture', sortOrder: 1 }] } }));
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ isAuthenticated: mockAuthenticated, status: mockAuthenticated ? 'authenticated' : 'anonymous',
   requestSellerActivation: mockRequest, consultSeller: mockConsult }) }));
 
 describe('Vendedor UI sin operaciones reales', () => {
   beforeEach(() => { jest.clearAllMocks(); mockAuthenticated = true; });
   test('alta HTTP no se presenta como aprobación automática y bloquea segundo envío', async () => {
-    mockRequest.mockResolvedValue({ success: true, status: 200, contractPending: true });
+    mockRequest.mockResolvedValue({ success: true, status: 201, seller, roleSynced: false });
     const view = await render(<Activation />);
     await fireEvent.changeText(view.getByLabelText('Nombre del negocio'), 'Cocina fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del negocio'), 'Comida del campus fixture');
     await fireEvent.changeText(view.getByLabelText('Punto de entrega'), 'Edificio fixture');
     await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
-    expect(view.getByText(/Solicitud recibida por AWS/)).toBeTruthy();
+    expect(view.getByText(/Negocio activado por AWS/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Solicitar activación' })).toBeDisabled();
     expect(mockRequest).toHaveBeenCalledTimes(1);
     expect(mockRequest).toHaveBeenCalledWith({ businessName: 'Cocina fixture', description: 'Comida del campus fixture', pickupPoint: 'Edificio fixture' });
@@ -34,11 +36,11 @@ describe('Vendedor UI sin operaciones reales', () => {
     expect(mockRequest).not.toHaveBeenCalled();
   });
   test('consulta HTTP real informada sin fabricar estado de autorización ni perfil', async () => {
-    mockConsult.mockResolvedValue({ success: true, status: 200, contractPending: true });
+    mockConsult.mockResolvedValue({ success: true, status: 200, seller, roleSynced: true });
     const view = await render(<Business />);
     expect(mockConsult).not.toHaveBeenCalled();
     await fireEvent.press(view.getByRole('button', { name: 'Consultar mi solicitud' }));
-    expect(view.getByText(/Falta confirmar el contrato/)).toBeTruthy();
+    expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
   });
   test('403 no se convierte en rechazo administrativo', async () => {
@@ -60,10 +62,12 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.changeText(view.getByLabelText('Nombre del alimento'), 'Alimento fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del alimento'), 'Descripción de alimento fixture');
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '35.25');
+    await waitFor(() => expect(view.getByText('Categoría fixture')).toBeTruthy());
+    await fireEvent.press(view.getByText('Categoría fixture'));
     await fireEvent.press(view.getByRole('button', { name: 'Vista previa local' }));
     expect(view.getByText('Vista previa — no publicado')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Publicar alimento' })).toBeDisabled();
-    expect(view.getByRole('button', { name: 'Agregar foto' })).toBeDisabled();
+    expect(view.getByText(/Media pendiente/)).toBeTruthy();
     expect(mockRequest).not.toHaveBeenCalled(); expect(mockConsult).not.toHaveBeenCalled();
   });
   test('pulsaciones simultáneas en alta quedan excluidas', async () => {
@@ -76,7 +80,7 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
     await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
     expect(mockRequest).toHaveBeenCalledTimes(1);
-    await act(async () => { finish({ success: true, status: 201 }); });
-    await waitFor(() => expect(view.getByText(/Solicitud recibida/)).toBeTruthy());
+    await act(async () => { finish({ success: true, status: 201, seller, roleSynced: false }); });
+    await waitFor(() => expect(view.getByText(/Negocio activado/)).toBeTruthy());
   });
 });

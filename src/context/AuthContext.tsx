@@ -2,12 +2,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { ApiError, errorMessage } from '@/services/api/errors';
 import { createAuthSession } from '@/services/authSession';
-import type { SellerActivationRequest, UserPatch } from '@/types/api';
+import type { SellerActivationRequest, SellerActiveResponse, UserPatch } from '@/types/api';
 import type { User, UserRole } from '@/types/models';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
-export type SellerOperationResult = { success: true; status: number; contractPending: true } |
+export type SellerOperationResult = { success: true; status: number; seller: SellerActiveResponse; roleSynced: boolean } |
   { success: false; error: string; status?: number };
 
 interface AuthContextValue {
@@ -142,7 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await session.sellerOperation(input);
       if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
-      return { success: true, ...response };
+      if (response.user) setUser(response.user);
+      return { success: true, status: response.status, seller: response.seller, roleSynced: response.roleSynced };
     } catch (error) {
       if (current === revision.current && error instanceof ApiError && error.status === 401) {
         ++revision.current; setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));

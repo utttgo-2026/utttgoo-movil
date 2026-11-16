@@ -15,6 +15,14 @@
 
 # Historial de cambios
 
+## Etapa007 P0 — SellerActive y categorías AWS, productos bloqueados por DTO
+- Usuario confirma POSTactivación201/GETme SellerActiveDTO y rolesBuyer+Seller, sin aprobación administrativa. Parser runtime y representación Mi negocio reales; misma sesión/JWT revalida authme/usersme antes de adoptar Seller, no se fabrica ni guarda otroJWT. Si quedaBuyer, se permite ir al login para actualizar permisos.
+- OpenAPI público accesible con rutas categorías/productos y pedidos, pero sin responseDTO producto ni enums sortBy. GETcategories/products observados con items[]/total0. Aclaración usuario autoriza completar solo contratosseguros; no publicación con respuestas incompletas.
+- Servicio categoría paginado/idpersistente/sortOrder y consumidores comprador/vendedor conectados sin fallback. ProducciónAWS siempre; maquetas previas solo flagCATSOURCE=mock explícito dev. Mismas rutas y tema; catálogo con estadosAWS, no mocks ante error ni fotos por coincidencia deID.007/006 documentan esa dependencia de datos sin rehacer estilosglobales.
+- ProductService prepara GETlist/detail y requestbuilders name/description/ingredients/categoryId/price/stock, PATCHprice/stock y disponibilidadPaused únicamente. Mutaciones fallan antes dePOST/PATCH por responseDTOpendiente. Página vacía sí se valida; item no vacío/detalle muestran bloqueo, nunca éxitos/listas ficticias. SinDELETE/media/pedidos/sellerId supuesto.
+- Errorenvelope código/status/correlationId/message se clasifica con mensajesfijos sin mostrar cuerpos.491/491pruebas/33suites, tsc0errores, lint0errores/30warnings, Doctor20/20 y diffchecklimpio. Regresiónauth/navegación conservada con mocks explícitos; sin cuentas/negocios/productos reales automáticos ni cambiosOTP/SecureStore.
+- Handoff007 actualizado con DTO/env/whitelistfaltantes y guíaExpoGo; Crear→Consultar→Mostrar comprador sigue bloqueado. Commitlocal solicitado del trabajo seguro, sinpush/merge/buildrelease y sin etapaCOMPLETADA por falta de evidencia física.
+
 ## Etapa007 — vendedor y preparación de productos (EN PRUEBAS, parcial)
 - No existía etapa vendedor; se crea007 siguiendo la numeración (004 ya es CI/CD) y se reutiliza sellerService005 con las4rutas confirmadas. Reconsulta OpenAPI falló por transporte/ECONNRESET sin desactivarTLS; respuestas seller/roles siguen sin contrato confirmado.
 - Perfil autenticado ofrece Quiero vender. Grupo /seller protegido contiene Mi negocio/solicitud/Mis productos/formulario draft. POST solicitud y GETme se ejecutan mediante AuthSession/AuthContext existente, sin exponer JWT/cuerpos unknown ni cambiar rol. Se muestran status/errores sanitizados; aceptación no equivale aprobación.

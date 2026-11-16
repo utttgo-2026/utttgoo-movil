@@ -1,11 +1,11 @@
 # Specification007 — Vendedor y productos
 
-Estado: EN PRUEBAS, alcance parcial. Continúa la infraestructura005; no existe spec vendedor previa (004 es CI/CD,006 UI comprador). No duplicar servicios, AuthContext o catálogo. Fuente visual UI027/028/030/035/036 inspeccionada y UI037 disponible como referencia. No afirmar que productos/publicación o autorización están completos.
+Estado: EN PRUEBAS, P0 parcial. SellerActive/categoríasAWS integrados según nuevos contratos; producto/publicación pendientes de DTO. Continúa infraestructura005 sin duplicar servicios/AuthContext. Fuente visual UI027/028/030/035/036 inspeccionada y UI037 disponible. La continuaciónP0 posterior sustituye los bloqueos históricos de Seller/categorías, no habilita productos sin schema.
 
 ## Contratos y límites de evidencia
 Rutas confirmadas por usuario y servicio005: POST /api/v1/sellers/activation-requests (businessName,description,pickupPoint), GET/PATCH /api/v1/sellers/me, GET /api/v1/sellers/{sellerId}. Histórico OpenAPI200 activación y compatibilidad201 existente. Consulta actual GET OpenAPI HTTPS falló ECONNRESET, sin bypassTLS. No respuesta autenticada real observada ni JSON/enum/roles vendedor entregados. No inferir aprobación de POST200/201 ni ausencia de solicitud de un404.
 
-## Requisitos
+## Requisitos iniciales (históricos; continuaciónP0 los amplía)
 - Perfil autenticado ofrece Quiero vender; rutas seller bajo guarda existente. Invitados no consultan ni mandan datos privados. JWT solo en coordinador actual, no accesible a pantallas.
 - Solicitud exacta validada (nombre2–100, descripción10–1000, punto2–200; límites frontend a alinear con backend), sin phone/roles/sellerId extras. Exclusión mutua de mutaciones en sesión; respuesta tardía tras logout no se aplica. No retries automáticos; una aceptación impide reenviar en esa sesión, fallo de red ambiguo exige consultar antes de otro intento.
 - Resultado real HTTP, error fijo sanitizado y aceptación no aprobación. GETme puede ejecutarse y mostrar código; cuerpo unknown no se imprime ni interpreta como perfil/permiso. Contrato faltante explícito. Edición Mi negocio deshabilitada hasta DTO/enum/ownership verificados. Servicio PATCH existente conservado, sin llamadas automáticas.
@@ -14,3 +14,8 @@ Rutas confirmadas por usuario y servicio005: POST /api/v1/sellers/activation-req
 - Figma se conserva con componentes/tema existentes; diferencias contractuales: teléfono/imagen negocio sin soporte permanecen no editables, UI028 de activado nunca se muestra por aceptar solicitud. Sin tabs vendedor nuevos para módulos no implementados.
 - Comprador conserva21 mocks, categorías/medios, rutas006 y auth005. Ningún producto draft aparece en comprador. Integración real bloqueada hasta API/identificadores persistentes/publicación/ownership.
 - Solo tests simulados; tsc/lint/Jest/Doctor/diffcheck y commit local autorizado si seguro, no push/build ni altas reales automáticas.
+
+## Continuación P0: contratos nuevos y alcance aclarado
+Usuario confirma activación inmediata201 y GETme con sellerId/businessName/description/pickupPoint/statusActive/isActivetrue/rolesBuyer+Seller/createdAt/updatedAt. No aprobación administrativa en este contrato. Roles válidos Buyer o Buyer+Seller; revalidar /authme y /usersme usando JWT actual, sin rotación supuesta ni permisos locales.
+Categorías reales paginadas: items(id,name,sortOrder),page,pageSize,total. GET públicos actuales de categorías y productos devolvieron items[]/total0. OpenAPI accesible confirma rutas nuevas pero carece de schemas de respuesta producto; PATCH usa JsonElement y sortBy string sin enum.
+Usuario aclara avanzar solo contratos completos: vendedor/categorías y requests productos confirmados, sin mocks de producción ni publicación con contratos incompletos. Página vacía de productos es validable, no asumir forma de items no vacíos. Paused es único valor confirmado de mutación availability; no inventar valores de publicación ni sortBy. No DELETE/listado sellerId/media/pedidos. Whitelist PATCH limitada a price/stock mencionados, pendiente confirmación exhaustiva y respuesta. No producto publicado real sin DTO validado y evidencia física.

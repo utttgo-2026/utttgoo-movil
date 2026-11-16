@@ -94,3 +94,5 @@ Reutilizar el hint en memoria para un acuse pending (no verified), dirigir Beta 
 
 ## Dependencia007 — capacidades vendedor acotadas
 Se autoriza reutilizar la sesión actual para requestActivation/getMe de sellerService sin exponer JWT en Context ni reconstruir auth. Solo status HTTP/códigos sanitizados salen de la capa, cuerpos desconocidos permanecen desconocidos. No cambiar contratos de roles005, SecureStore, restauración/login/OTP. Una respuesta de vendedor no cambia user.role. Especificación y evidencia funcional en007.
+
+Contrato nuevo007: revalidar DTO SellerActive y permitir exactamente Buyer+Seller en identidad/login/perfil, además delBuyerexistente. Proyectar SellerDTO validado y roleSynced; no guardar/nuevoJWT por activación. Catálogo/categorías servicios públicos separados de sesión. Errorenvelope nuevo se sanitiza con códigos conocidos; message remoto nunca se imprime.

@@ -240,6 +240,13 @@
 - Productos preparados solo como UI/preview efímero y validadores locales, no requestDTO AWS: precio2decimales→centavos exactos, imágenes5MB/6000px por metadata (no contenido binario), categorías vacías hastaAPI. No picker/upload/publicación/retirada real ni sustitución del catálogo21mocks; no afirmar publicación conectada.
 -449/449tests/31suites,405previos+44nuevos; tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio y bundleAndroidHTTP200/2477módulos. No prueba física, cuentas/altas reales automáticas, nuevas dependencias ni push/build. Commit local seguro solicitado, autorización no equivale cierre funcional. SDD007 EN PRUEBAS parcial y handoffbackend identifica exactamente lo faltante.
 
+## 22. P0 comercial por contratos completos, sin productos adivinados
+- POSTseller201/GETme ActiveDTO recibidos; roles exactosBuyer oBuyer+Seller. Se deja atrás el supuesto de aprobaciónadministrativa en estecontrato. Revalidación /me usaJWTactual, no tokennuevo desde el DTOnegocio. Rol enContext solo desde identidad/perfil confirmados; siJWTviejo no confirmaSeller, usuario debe ir al login explícito.
+- Categorías reales paginadas con idsserver y vacío honesto; AWS por defecto en comprador y siempre en vendedor. Mocksolo flagdesarrollo, nunca fallbackdeerror ni fuenteproductiva. Categorías Figma no se convierten en idsAWS; styles/rutas anteriores quedan reutilizables en la maqueta explícita.
+- OpenAPI cambió: publica productos/categorías/pedidos, pero responses sin schema y PATCHJsonElement/sortBystring no son contratoscompletos. GETpúblicoscategories/products devolvieron vacío; no extraerDTOdeitems inexistentes. Se preguntó al usuario y autorizó completarvendedor/categorías y prepararcapa producto sin publicar.
+- Producto requestexacto preparado con precioMXN/stock0/ingredientes/categoríaAWS sinimagen; Paused único valor conocido. Create/update/pause bloqueados antesdefetch hasta responsedecoder/whitelist. GETvacío es validable, no vacío o detalle exigenDTO y no se renderizancomomock; placeholderneutro sin fotofood-id. No privatelistsellerId ni endpointsinventados, media/pedidospendientes.
+-491/491pruebas/33suites, tsc0errores, lint0errores/30warnings, Doctor20/20,diffcheck limpio. Cambios de expectativa históricos200solicitud/contractPending se ajustaron al201Activeconfirmado, no se quitaron suites. Un fallo inicial de efectoReact/importorder y cast de test se corrigió antesdechecksfinales; ninguna regresiónpendiente. Sin operacionesmutantesautomáticas, secretos/logs,nuevasdependencias ni cambiosOTP/loginUI/storage. Commitlocalseguro solicitado; evidenciafísica Crear→Consultar→Mostrar aún bloqueada porDTOfaltantes.
+
 **Última actualización**: 2026-11-13
 **Versión**: 1.4
 **Autor**: Equipo UTTT-Go Móvil

@@ -1,5 +1,5 @@
 import type { User } from '@/types/models';
-import type { SellerActivationRequest, UserPatch } from '@/types/api';
+import type { SellerActivationRequest, SellerActiveResponse, UserPatch } from '@/types/api';
 import { institutionalEmail, requirePassword } from '@/utils/apiValidation';
 
 import { authService } from './api/authService';
@@ -138,8 +138,8 @@ export class AuthSession {
     await this.deps.storage.clear();
   }
 
-  /** No token or unknown response body leaves the session coordinator. Never grants Seller role. */
-  async sellerOperation(input?: SellerActivationRequest): Promise<{ status: number; contractPending: true }> {
+  /** No token leaves this coordinator. Seller role requires validated /me, never the business DTO alone. */
+  async sellerOperation(input?: SellerActivationRequest): Promise<{ status: number; seller: SellerActiveResponse; roleSynced: boolean; user?: User }> {
     this.deps.assertSecureTransport();
     if (!this.token) throw new ApiError('unauthenticated', 'Inicia sesión para administrar tu solicitud de vendedor.');
     if (this.sellerBusy) throw new ApiError('validation', 'Ya hay una operación de vendedor en curso.');
@@ -153,7 +153,16 @@ export class AuthSession {
       const response = body ? await sellerService.requestActivation(token, body) : await sellerService.getMe(token);
       this.checkCurrent(generation);
       if (body) this.sellerSubmitted = true;
-      return { status: response.status, contractPending: true };
+      let user: User | undefined;
+      try {
+        user = await this.validatedUser(token, requireSessionContract(this.deps.contract), generation);
+        this.checkCurrent(generation);
+      } catch (error) {
+        this.checkCurrent(generation);
+        if (error instanceof ApiError && error.status === 401) throw error;
+        // Business activation succeeded but this JWT may still lack Seller; never replace it locally.
+      }
+      return { status: response.status, seller: response.data, roleSynced: user?.role === 'seller', user };
     } catch (error) {
       this.checkCurrent(generation);
       if (body && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) this.sellerOutcomeUnknown = true;

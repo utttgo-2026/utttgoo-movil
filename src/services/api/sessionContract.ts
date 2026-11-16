@@ -1,5 +1,5 @@
 import type { User } from '@/types/models';
-import type { AuthMeResponse, UserProfileResponse } from '@/types/api';
+import type { AuthMeResponse, UserProfileResponse, AwsRoles } from '@/types/api';
 import { institutionalEmail } from '@/utils/apiValidation';
 
 import { ApiError } from './errors';
@@ -16,7 +16,7 @@ export interface AwsLoginResponse {
   accessToken: string;
   expiresIn: number;
   tokenType: 'Bearer';
-  user: { id: string; roles: ['Buyer']; accountStatus: 'Active' };
+  user: { id: string; roles: AwsRoles; accountStatus: 'Active' };
 }
 
 function invalidLogin(): never {
@@ -45,14 +45,15 @@ function validatedEmail(value: unknown): string {
   try { return institutionalEmail(value); } catch { return invalidMe(); }
 }
 
-function validRoles(value: unknown): boolean {
-  return Array.isArray(value) && value.length === 1 && value[0] === 'Buyer';
+export function validRoles(value: unknown): value is AwsRoles {
+  return Array.isArray(value) && value[0] === 'Buyer' &&
+    (value.length === 1 || (value.length === 2 && value[1] === 'Seller'));
 }
 
 export function decodeAuthMeResponse(data: unknown): AuthMeResponse {
   const value = record(data, invalidMe);
   if (!validId(value.id) || !validText(value.displayName) || !validRoles(value.roles) || value.accountStatus !== 'Active') return invalidMe();
-  return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName, roles: ['Buyer'], accountStatus: 'Active' };
+  return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName, roles: value.roles as AwsRoles, accountStatus: 'Active' };
 }
 
 export function decodeUserProfileResponse(data: unknown): UserProfileResponse {
@@ -60,7 +61,7 @@ export function decodeUserProfileResponse(data: unknown): UserProfileResponse {
   if (!validId(value.id) || !validText(value.displayName) || !validRoles(value.roles) ||
       (value.phone !== null && !validText(value.phone)) || (value.avatarUrl !== null && !validText(value.avatarUrl))) return invalidMe();
   return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName,
-    phone: value.phone, avatarUrl: value.avatarUrl, roles: ['Buyer'] };
+    phone: value.phone, avatarUrl: value.avatarUrl, roles: value.roles as AwsRoles };
 }
 
 /** Validate transport data, not unverified JWT claims. No signing secrets or token logs. */
@@ -70,12 +71,11 @@ export function decodeAwsLoginResponse(data: unknown): AwsLoginResponse {
   if (typeof response.accessToken !== 'string' || !response.accessToken || /\s|[\u0000-\u001f\u007f]/.test(response.accessToken) ||
       typeof response.expiresIn !== 'number' || !Number.isSafeInteger(response.expiresIn) || response.expiresIn <= 0 ||
       response.tokenType !== 'Bearer' || typeof user.id !== 'string' || !user.id.trim() || user.id !== user.id.trim() ||
-      /[\u0000-\u001f\u007f]/.test(user.id) || !Array.isArray(user.roles) || user.roles.length !== 1 ||
-      user.roles[0] !== 'Buyer' || user.accountStatus !== 'Active') return invalidLogin();
+      /[\u0000-\u001f\u007f]/.test(user.id) || !validRoles(user.roles) || user.accountStatus !== 'Active') return invalidLogin();
   // Project known properties only. Extra server fields are not copied into app/session storage.
   return {
     accessToken: response.accessToken, expiresIn: response.expiresIn, tokenType: 'Bearer',
-    user: { id: user.id, roles: ['Buyer'], accountStatus: 'Active' },
+    user: { id: user.id, roles: user.roles as AwsRoles, accountStatus: 'Active' },
   };
 }
 
@@ -84,15 +84,16 @@ export const sessionContract: SessionContract = {
   decodeLoginUser: (data, submittedEmail) => {
     const { user } = decodeAwsLoginResponse(data);
     // Login supplies no displayName/email. Keep name absent and use the submitted email for presentation only.
-    return { id: user.id, role: 'buyer', fullName: '', email: institutionalEmail(submittedEmail) };
+    return { id: user.id, role: user.roles.length === 2 ? 'seller' : 'buyer', fullName: '', email: institutionalEmail(submittedEmail) };
   },
   decodeIdentity: (data) => {
     const identity = decodeAuthMeResponse(data);
-    return { id: identity.id, email: identity.email, fullName: identity.displayName, role: 'buyer', accountStatus: 'Active' };
+    return { id: identity.id, email: identity.email, fullName: identity.displayName, role: identity.roles.length === 2 ? 'seller' : 'buyer', accountStatus: 'Active' };
   },
   decodeProfile: (data, identity) => {
     const profile = decodeUserProfileResponse(data);
-    if (profile.id !== identity.id || profile.email !== identity.email || identity.role !== 'buyer') return invalidMe();
+    if (profile.id !== identity.id || profile.email !== identity.email ||
+        (profile.roles.length === 2 ? 'seller' : 'buyer') !== identity.role) return invalidMe();
     // Identity controls authorization; the editable profile only supplies presentation fields.
     return { ...identity, fullName: profile.displayName, phone: profile.phone, avatar: profile.avatarUrl };
   },

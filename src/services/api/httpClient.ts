@@ -1,7 +1,7 @@
 import type { ApiResponse, JsonValue } from '@/types/api';
 
 import { getApiBaseUrl, parseApiBaseUrl } from './config';
-import { ApiError, httpErrorMessage } from './errors';
+import { ApiError, backendHttpError } from './errors';
 import { registrationDiagnostic } from './registrationDiagnostics';
 
 export interface RequestOptions {
@@ -91,7 +91,7 @@ export class HttpClient {
         try { data = JSON.parse(text) as unknown; } catch { validJson = false; }
       }
       if (!response.ok) {
-        throw new ApiError('http', httpErrorMessage(response.status), response.status, data);
+        throw backendHttpError(response.status, data);
       }
       if (!validJson || (options.expectedStatuses && !options.expectedStatuses.includes(response.status))) {
         throw new ApiError('invalid_response', 'La API devolvió una respuesta no compatible con el contrato esperado.', response.status);

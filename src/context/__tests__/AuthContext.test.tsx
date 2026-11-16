@@ -110,10 +110,10 @@ describe('AuthContext como única autoridad de sesión', () => {
     await act(async () => { expect((await anonymous.result.current.consultSeller()).success).toBe(false); });
     expect(mockSession.sellerOperation).not.toHaveBeenCalled(); await anonymous.unmount();
     mockSession.restore.mockResolvedValueOnce(user);
-    mockSession.sellerOperation.mockResolvedValueOnce({ status: 201, contractPending: true });
+    mockSession.sellerOperation.mockResolvedValueOnce({ status: 201, seller: { sellerId: 'seller-fixture' }, roleSynced: false });
     const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
     await act(async () => { expect(await result.current.requestSellerActivation({ businessName: 'Fixture', description: 'Synthetic business', pickupPoint: 'Fixture building' }))
-      .toEqual({ success: true, status: 201, contractPending: true }); });
+      .toEqual({ success: true, status: 201, seller: { sellerId: 'seller-fixture' }, roleSynced: false }); });
     expect(result.current.role).toBe('buyer'); expect(result.current.user).toEqual(user);
   });
 

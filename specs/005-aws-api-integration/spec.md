@@ -108,5 +108,7 @@ Se autoriza commit local del conjunto auth005 seguro acumulado y su configuraci�
 ## Dependencia007 — vendedor
 La nueva etapa007 autoriza capacidades acotadas POST solicitud/GET negocio mediante el único coordinador/token existente. No exportar JWT al Context/UI ni modificar roles Buyer confirmados, contratos /me o auth005 para simular Seller. Cuerpos de respuesta vendedor siguen unknown hasta contrato; acceso007 usa guarda autenticada existente y publicación no se habilita.401 aplica política existente y respuestas tardías se rechazan por generación; resto de auth permanece sin reconstrucción.
 
+Actualización contractual posterior: usuario confirma SellerActiveDTO y combinación exacta [Buyer,Seller], además de [Buyer]. Se amplían parsers login/authme/usersme coherentemente (sin Admin), conservando OTP/login/almacenamiento. Activación no rota JWT: /me se revalida con tokenactual y solo entonces actualiza rol; si no confirmaSeller, pedirlogin explícito. No conceder permisos del DTOnegocio a sesión sin esa revalidación. Evidencia nueva en continuaciónP0 de007.
+
 ## Referencias
 CONSTITUTION.md, AGENTS.md, plans/005-aws-api-integration-plan.md, tasks/005-aws-api-integration-tasks.md.
