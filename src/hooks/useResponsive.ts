@@ -23,9 +23,14 @@ export function getGridMetrics(viewportWidth: number, textScale = 1, gutter = 16
   return { columns, cardWidth: Math.max(1, (contentWidth - gap * (columns - 1)) / columns), width };
 }
 
-export function getTabBarHeight(textScale: number, bottomInset: number): number {
-  const lineHeight = Math.ceil(16 * Math.max(1, textScale));
-  return Math.max(60, 24 + lineHeight * (textScale > 1.3 ? 2 : 1) + 16) + Math.max(0, bottomInset);
+export function getTabBarHeight(textScale: number, bottomInset: number, width = 320): number {
+  const scale = Math.max(1, Number.isFinite(textScale) ? textScale : 1);
+  const lineHeight = Math.ceil(16 * scale);
+  const labelWidth = Math.max(1, width / 5 - 10);
+  // Reserve natural wrapping of the longest label; never shrink or cap the system font.
+  const lines = Math.max(scale >= 1.3 ? 2 : 1, Math.ceil(7 * 12 * 0.55 * scale / labelWidth));
+  // Native icon slot28 + label + button/bar padding + indicator slot/border20.
+  return Math.max(64, 28 + lineHeight * lines + 20) + Math.max(0, bottomInset);
 }
 
 export function groupRows<T>(items: readonly T[], columns: number): T[][] {

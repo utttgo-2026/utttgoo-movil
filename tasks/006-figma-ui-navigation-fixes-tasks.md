@@ -1,5 +1,22 @@
 # Tasks 006 — Figma UI / Navigation Fixes
 
+## Recuperación por bloques — auditoría actual
+- [x] Después de Bloque1verificado, abrir22PNG originales comprador/vendedor y contrastar código actual fuenteAWS. Matrizexistenteactualizada; sin capturas nuevas de dispositivo.
+- [x] Clasificar presentaciónlocal vs endpointsconfirmados vs backendpendiente. Detectar mockNotifications fuera del gate de desarrollo y ausencia de navegación/dashboardSeller.
+- [x] B3acotado verificado técnicamente: efectivo UI015/016, marcoQR UI017sincredencial y avisosremotoshonestos;625/625tests/40suites y cinco checks aprobados,27warnings existentes. Sin renderfísico, matrizactual no acredita pixel-perfect.
+- [ ] Restauración completa de historia/seguimiento/dashboard/tabsSeller por unidades3.1/3.2, con checkpointpropio. No implementadas en este bloque.
+
+## Continuación movimiento — EN PRUEBAS
+- [x] Leer Constitution/AGENTS/memoria, revisar006/layouts/gestos/dependencias y PNG UI006. Tabs existentes SDK58, RNAnimated suficiente; sin instalación ni cambio de navegador.
+- [x] ReduceMotion dinámico, política común y animaciones cancelables nativas.
+- [x] Iconos1.08/−2.5dp/color, indicador220ms y labels accesibles/cinco tabs con SafeArea. Altura mínima64dp+inset y reserva de líneas según fuente/ancho, sin limitar fontScale.
+- [x] Stack nativos y microinteracciones discretas en componentes existentes, sin cambios de negocio005/007.
+- [x] Tests de navegación/activo/rápidos/back/invitado/privacidad/logout/movimiento reducido y checks obligatorios:593/593tests/38suites, tsc0errores, lint0errores/30warnings previos, Doctor20/20 y diffcheck limpio. BundleAndroid200/14,050,485bytes, Metrodetenido.
+- [x] Comparar archivos protegidos contra checkpoint comercial inicial:72 idénticos/SHA25643509f3a316af4339a08da50d41e4987a3670d00de375b973fc88089f0a2b484; memoria/changelog/guía actualizados.
+- [ ] ExpoGo visual320/360/390/430dp,fontScale1/1.3/1.6/2,ReduceMotion,back/gesto y fluidez física. Commit solicitado sujeto a esta evidencia porAGENTS; no push.
+
+Guía: `specs/006-figma-ui-navigation-fixes/motion-expo-go.md`. No se acredita60FPS ni gesto/renders físicos desdeJest/bundle. Los callbacks tabBar/tabBarBackground del SDK se envuelven como JSX (no llamar componentes con hooks como funciones); la regresiónrouter detectó y permitió corregir ese problema antes de checksfinales. Tests iOS del SDK conservan rolebutton con selected, Androidrole tab; se prueban los estados/labels nativos sin reemplazar botones. Sin nuevas dependencias, contratos ni mocks runtime.
+
 ## Información General
 - **Spec**: 006-figma-ui-navigation-fixes
 - **Fecha**: 2026-11-11

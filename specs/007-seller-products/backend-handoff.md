@@ -1,6 +1,107 @@
 # Contratos faltantes y prueba manual007
 
-**Estado vigente:** ver sección «Continuación P0» al final. La auditoría inicial siguiente es histórica: SellerActive y categorías ya recibieron contratos nuevos, pero producto aún no tiene DTO completo.
+## Repetición física urgente — hotfix runSeller176
+El usuario reportó TypeError físico al consultar vendedor. Expresión identificada/reproducida: sellerSubmissionState() dentro del catch, ausente en una instancia incompatible aunque exista en claseactual. useState retiene instancias; retención compatible conFastRefresh reproducida en tests, no inspección del objeto real del teléfono.
+
+1. Detener Metro anterior. Ejecutar `npx expo start -c` desde la raíz del proyecto y volver a abrir el proyecto en ExpoGo.
+2. Hacer **Reload completo** desde el menú de Expo Go (o cerrar y abrir el proyecto), no solo guardar un archivo/FastRefresh. No desinstalar ni borrarSecureStore/AsyncStorage para corregir este problema. La instancia nueva restaura la sesión por el flujoAWS habitual; si AWSresponde401, loginexplícito sigue siendo necesario.
+3. Perfil→Quiero vender: dejar terminar consultaautomática. Pulsar Reconsultar mi negocio/validarestado nuevamente. Si aparece mensaje fijo de módulo incompatible, repetir apertura completa para cargar el bundle nuevo; ese mensaje no concede permisos ni representa respuestaAWS.
+4. GET200Active/isActivetrue y rolesBuyer+Seller confirmados: verMi negocio y habilitarMis productos. GET404SELLER_PROFILE_NOT_FOUND: mostrarformulario, sin fallo general. Otro404/403/red/5xx: mensaje y reintento seguro, no formulario por defecto.401 mantiene invalidación de sesión.
+5. Probar primero solo consultas. Si backend/usuario autoriza alta para una cuenta sinnegocio, realizarla manualmente una vez: POST200/201válido→GETperfil→roles. Ante resultadoincierto no repetirPOST. No se crean vendedores automáticamente para verificar elhotfix.
+6. Salir y volver a entrar al módulo, comprobarMis productos y catálogo; cerrar sesión con consulta pendiente no debe reponer perfil/rol. Compartir solo secuencia/mensaje y códigoHTTP sanitizados si falla, nunca JWT/headers/cuerpos/contraseñas.
+
+Verificación técnica delhotfix:640/640tests/40suites, tsc0, ESLint0errores/27warnings, Doctor20/20,diffchecklimpio,bundleAndroid200/14,066,037bytes conMetrodetenido. Posteriormente el usuario confirma esta repetición física enExpoGo tras reloadcompleto sinexcepción y autoriza publicar los cambios enV1.2. Esa evidencia se limita al hotfix: el resto del circuito comercial/Figma permanece ENPRUEBAS.
+
+---
+
+## Entrega vigente — Bloque1 y recuperaciónFigma acotada
+Ver matrizactual en `specs/006-figma-ui-navigation-fixes/figma-matrix.md`:22PNGs inspeccionados contra código actual, sin capturasfísicas. Bloque1implementado; Bloque3solo efectivo/QRvisual/avisoshonestos. No se afirma restaurada la historia ni el dashboardSeller.
+
+### Contratos/correcciones aplicadas
+- GETseller propio:404SELLER_PROFILE_NOT_FOUND únicamente significa sinnegocio. UI entra con consultaautomática y formulario cuando missing; Active/isActivetrue más Buyer+Seller validado habilita Misproductos y loseditores. Otras respuestas no autorizan alta ni publicación. Queriesduplicadas se coalescen por sesión.
+- Camposalta exactos businessName/description/pickupPoint; conservar discrepancia storeName/phone. OpenAPIstatus200 y antiguo201confirmado se validan conDTOActive+GETposterior. Recibido no se pierde por error posterior ni autoriza reenvío. No autoridad de roles local.
+- ProductResponse completo, requirednullable metadata; solo total en listado, imagenplaceholder porque responseactual noincluyeimageUrl. isAvailable/status/stock reales. Create201preservaIDtrasdecoder; PATCHprecio/stock ystatus conservados. created_descnoHTTP por incompatibilidad400; ordenpredeterminado no envía sortBy.
+- GETpúblicos de esta entrega: categorías3,productos1/total1; esquemaactual verificado sin credenciales. No mutaciones ni confirmación física nueva.
+
+### Recorrido Expo Go vigente (pendiente)
+1. `npx expo start -c`, fuenteAWS por defecto. Login con cuenta verificada/autorizada, sin compartir claves/JWT/contraseñas en evidencia.
+2. Perfil→Quiero vender: observar consultaautomática. Si no existe negocio, debe aparecer formulario sin errorgeneral404. Usuario con negocio existente veMi negocio, no otra solicitud. Red/401/403/404distinto deben mostrar guarda/error/reintento, no alta.
+3. Con autorización de backend, registrar una sola vez con nombre/description/puntoentrega. Comprobar respuesta200o201real, GETsellerposteriorActive/isActivetrue y roles revalidados. Si sigueBuyer, usarloginexplícito; no forzarrol. SiPOSTrecibido yGETfalla, reconsultar sinreenviar. Registroaceptado no acredita lectura/permiso por sísolo.
+4. Misproductos→Agregar alimento: categoría deAPI, nombre/description/ingredientes/precio/stockpositivo, sinfoto. Previewlocal no envíaPOST. Publicaruna vez→201válido/IDreal, luego consultar producto propio y cambiar precio/stock; comprobarGETposterior. Pausar/Reactivar validan ownership.
+5. Volver a comprador: al recuperar foco debe reconsultar y mostrar el IDreal creado sin pedirreinicio; buscar/categoría/página y back conservanquery/input/scroll. Ordenpredeterminado; Másrecientes se indica no disponible y no envíacreated_desc. Producto noavailable/Paused/stock0 impidecompra.
+6. Buyer: productoúnico/cantidad/notas→Datos→Confirmar muestraEfectivo; importe previo esestimado, POSTsolo productId/quantity/notes. Tras201validado, reciboIDreal/totalbackend y marcoQRconbloqueo. No debe existir patrónQR generado ni scanner/confirmaciónentrega. CambiarIDenruta no debe mostrarotrorecibo niQR.
+7. AvisosAWS: guarda invitado y mensajeintegraciónpendiente, no alertasfixture ni colecciónvacía supuestamenteconsultada. Historial/seguimiento aúnpendientes; no presentarloscomoreales.
+8. Logout duranteconsulta/alta y cambio de cuenta: no repoblar negocio/productos/recibo ni habilitar editor por respuesta vieja. CompararAndroidback/gesto, fuentegrande y animaciones según manual006.
+
+### Checkpoints y siguiente unidad
+B1:622tests/40suites ycinco checks. Final625tests/40suites, tsc0, lint0errores/27warnings, Doctor20/20,diffchecklimpio,bundleAndroid200/14,063,236bytes, Metrodetenido. Faltan prueba física y confirmación de persistencia conbackend; no commit porAGENTS.
+Siguienteunidad3.1 es integrar GETorders/mine(total/OrderSummary) yGETorders/{id}(OrderResponse) conDTOpublicado/ownership/sesión/contextonavegación. Sus endpoints existen; es trabajo pendiente, no una ausencia deAPI. ColaSeller requiere confirmar alcance/role; acciones/cancelación/reseña/entrega/QRseguro/notificaciones/métricas/media necesitancontratos adicionales. No recuperar datos ficticios para rellenar panelesFigma.
+
+---
+Las secciones inferiores son históricas y quedan sustituidas en lo indicado arriba.
+
+## P0 vigente — PR backend #24
+PR24 fusionado según confirmación del usuario/compañero. Contratos status/notes/imageUrl aclarados y representados en OpenAPI desplegado por HTTPS. No se consultó repositorio backend ni se hicieron mutaciones remotas, así que no equivale a prueba física de las operaciones.
+
+### Evidencia pública no mutante
+- GET /health: Healthy, MongoDB/RedisHealthy.
+- GETcategories page1/pageSize20:200,3categorías persistentes (Comida Preparada, Bebidas, Snacks); el bloqueo de seeding ya no se observa en esta consulta. Si otra carga devuelve vacío/error, mostrarlo sin fallbackmock.
+- GETproducts sin sort:200,items[],page1,pageSize20,total0. GETsearch=tacos, categoryId de una categoría real y maxPrice60:200,vacíos. No hay producto público con que acreditar detalle ni visibilidad trasalta.
+- GETproducts con cada sort confirmado (created_desc,price_asc,price_desc,name_asc):400 VALIDATION_ERROR. UI carga sin sortBy y permite seleccionar Predeterminado AWS; orden explícito conserva su valor y error, sin retry/fallback silencioso ni enums alternos adivinados. Backend debe alinear contrato/despliegue antes de acreditar ordenamiento real.
+- OpenAPI ahora incluye UpdateProductAvailabilityRequest.status y respuesta200 ProductResponse; CreateProductRequest.imageUrl nullable y CreateOrderRequest.notes nullable. Enum Active/Paused y límite250 provienen de confirmación del usuario; OpenAPI no publica enum/maxLength.
+- Discrepancias adicionales: ProductListResponse.total vs totalCount previo; OrderResponse orderId/buyerUserId/total y metadata vs id/buyerId/totalAmount previos. Adaptadores de lectura explícitos para ambos contratos, solo JSON numérico válido, sin mezclas contradictorias. Pedidos creados admiten Pending y MXN confirmados, no nuevos estados inferidos. POSTorders publica201/200 pero el cliente mantiene201 para creación confirmada. Activación aún documenta200 frente201 confirmado; failclosed ante status inesperado, no mutación para comprobarlo.
+
+### Implementación cliente
+Mis alimentos crea/consulta IDs propios de sesión, edita precio/stock y pausa/reactiva con bodyexclusivo status. Se revalidan /me y SellerActive en cada acción. Owner de producto confirmado se conserva solo en sesión para poder reactivar un Paused que deje de ser público; no concede permiso backend ni permiteIDs arbitrarios. Si tras reiniciar un productoPaused devuelve404público, falta listado/consulta privada que permita recuperarlo: resolver con backend, no adivinar endpoint.
+Alta omite siempre imageUrl, incluso si entrada tipada trae null. URLs mock/placeholder/S3/file se rechazan antes de fetch. Preview/catálogo/detalle usan placeholder local neutro cuando no hayimagen. Subida real pendienteFase05/S3. Un422IMAGE_NOT_AVAILABLE muestra texto fijo para publicar sinimagen; diagnóstico proyectado a evento/método/pathconstante/status/code/timestamp, sin headers/bodies/IDs/URL/notas/token. Último diagnóstico sanitizado en memoria, console solo desarrollo.
+Notas opcionales se editan en Datos del pedido, se revisan en Confirmar y viajan en POST junto a productId/quantity. Máximo250 unidadesUTF16, sin truncado silencioso ni controles peligrosos. Error conserva preparación/notas; solo201 validado limpia preparación. No se vacía ni convierte el carrito mock en pedidos remotos. Backend calcula total; respuesta se valida por identidad/producto/cantidad/total, no se envían importes cliente.
+Historial/seguimiento siguen sin simular órdenes: OpenAPI ya publica schemas GETmine/detail, pero integración/enums y recorrido quedan pendientes; UI lo indica. No fotos ni órdenes ficticias productivas.
+
+### Expo Go — recorrido manual PR24 (pendiente)
+1. FuenteAWS por defecto y `npx expo start -c`. Usar cuenta institucional verificada; comprobar login/restauración existentes.
+2. Perfil→Quiero vender: consultar negocio existente o solicitar una vez con autorización. Validar Active y rolesBuyer+Seller mediante /me; si JWT sigueBuyer, login explícito. Registrar statusreal sin credenciales;200 inesperado no acredita201.
+3. Mis alimentos→Agregar: nombre/description/ingredientes/categoríaAWS/precio/stock, sin fotografía. Vista previa debe ser local y neutra. Publicar una sola vez; registrarIDreal/201 y comprobar persistencia con backend. No reenviar resultado incierto sin confirmación.
+4. Consultar propio, editarprecio/stock y verificar GETposterior. Pausar→200/Paused; refrescar comprador y comprobar que no puede comprarse. Reactivar desde la misma sesión→200/Active; reconsultar. Ajeno/Buyer/401/403 no debe mutar ni elevar permisos.
+5. Comprador: Inicio/Buscar/Categoría/Disponible/Detalle con el mismoIDreal, búsqueda/categoría/precio/página. OrdenPredeterminado permite consultar; los sorts explícitos actualmente400 y deben registrarse como bloqueo de despliegue, no éxito.
+6. Buyer: cantidad≤stock→Datos→notas(Sin cebolla)→Confirmar→201/reciboIDreal/Pending/totalAWS. Probar250aceptados/251rechazados antes de red. Error no debe mostrar recibo ni limpiar preparación/notas. Sin pedido mock ni QR inventado.
+7. Logout con petición pendiente: no repoblar productos/owner/preparación/recibo ni datos de otra cuenta. Revisar back, giro/fontScale/teclado y Figma en dispositivo.
+
+Commit local solicitado tras checks; AGENTS exige además manualExpoGo, por lo que queda pendiente hasta evidencia. Ninguna etapa se marcaCOMPLETADA por fixtures/bundle.
+
+### Verificación técnica PR24
+562/562tests en36suites, TypeScript0errores, ESLint0errores/30warnings previos, ExpoDoctor20/20 y diffchecklimpio. BundleAndroidHTTP200/14,026,589bytes con routerRoot=src/app y serviciosproducto/órdenes presentes; procesoMetro detenido. Tests cubren Active/Paused/ownership/duplicados/logout, imágenesomitidas/null/rechazoURL/422diagnóstico seguro en desarrollo y producción, notasválidas250/invalidas251/control/NoSQL, adaptaciónDTO desplegado, catálogo vacío/total/sort400 y regresiones auth/OTP. No schemafixture ni bundle acredita persistencia comercial o prueba física.
+
+---
+Las continuaciones siguientes son históricas y sus bloqueos status/notes/imageUrl quedan sustituidos por esta sección.
+
+**Estado vigente:** ver continuación DTO y manual al inicio. La auditoría y continuaciónP0 inferiores son históricas; los DTOs nuevos sustituyen sus bloqueos de producto/sort/órdenes.
+
+## Continuación DTO productos y pedido simple
+- Implementado en cliente: producto individual/list/create201/PATCH200 con campos confirmados, estados Active/Paused, sortBy price_asc/price_desc/name_asc/created_desc y listado totalCount. Categorías conservan total. Sin nueva consulta privada real ni mutación AWS durante esta iteración: las respuestas de pruebas son fixtures.
+- Create solo categoryId/name/description/price/stock/ingredients. ImageUrl se lee de respuesta, nunca se envía en alta; null/ausencia/HTTP/error de carga→medio neutro. No fotos mock por ID. Confirmar con backend nulabilidad exacta si difiere; tolerancia de lectura no amplía whitelist de escritura.
+- Mis alimentos contiene IDs creados/consultados de esta sesión y consulta manual de ID propio. GETsellerActive y rol Seller se revalidan; sellerId del producto debe coincidir antes de PATCHprice/stock. Sin listado privado o filtro sellerId inventado. Salir/iniciar/restaurar sesión limpia datos comerciales en memoria.
+- Pedido de un producto: detalle→datos→confirmar→recibo de201. Body solo productId/quantity. Backend conserva autoridad de precio/stock; total estimado local no se envía. Recibo solo para ID coincidente con respuesta validada de sesión; sin QR, fee, notas ni pago no contratado. Historial y seguimiento no usan mock en fuenteAWS.
+- POSTs sin reintentos automáticos, bloqueo simultáneo y de resultado incierto; alta repetida del mismo cuerpo de producto bloqueada en sesión. GET propio no levanta bloqueo ambiguo. **No es idempotencia persistente del backend:** login/restauración/logout/reinicio reinician protección en memoria; confirmar con backend antes de repetir tras pérdida de conexión.
+
+### Pendientes contractuales concretos
+1. PATCHavailability: status del compañero vs availability de OpenAPI; ambos cuerpos bloqueados hasta aclaración y DTO/status de respuesta confirmado.
+2. GETorders/mine/listado/detalle, estados posteriores a Pending y operaciones de seguimiento/cancelación/calificación: faltan DTOs; no llamadas ni rutas API supuestas.
+3. Listado privado de productos/visibilidad de Paused, GET propio si no es visible en endpoint público, media/upload y PATCHnegocio completo. Seeding categorías corresponde a backend.
+4. Pruebas de concurrencia/idempotencia y evidencia de persistencia requieren backend; tests del cliente no acreditan MongoDB.
+
+### Expo Go — manual vigente (pendiente)
+1. Iniciar con fuenteAWS (flagmock ausente) y `npx expo start -c`. Cuenta institucional verificada, login/restauración y autorización backend; no registrar credenciales en evidencia.
+2. Activar negocio una vez o consultar existente. Confirmar Active y Seller validado en /me; si sigue Buyer, login explícito. Backend debe disponer categorías persistentes antes de probar alta.
+3. Agregar alimento con nombre/description/ingredientes/categoríaAWS/precio/stock. Preview no debe enviarPOST. Publicar explícitamente una vez; comprobar201 y guardar solo ID sanitizado. Backend confirma persistencia y no duplicación.
+4. Volver Mis alimentos, consultar ID propio y comprobar coincidencia de campos. Cambiar únicamente precio/stock, guardar, volver a consultar para verificar persistencia. Producto ajeno/403 no habilita edición; stock0/Paused impiden preparar compra.
+5. Comprador: catálogo/Buscar/categoría/filtros/sort/página y detalle deben mostrar el mismo ID/valores. Ausencia o fallo de imagen debe ser neutro. Probar giro/fontScale/teclado/back contra UI013/035/036 sin mezclar fixtures.
+6. Buyer autorizado: seleccionar cantidad≤stock→Datos→Confirmar una vez→201/recibo con ID real/Pending/total del backend. Error conserva preparación; no éxito, clear de carrito ni recibo ficticio. No repetir resultado incierto sin revisión backend. Confirmar historial pendiente sin pedidos demo.
+7. Logout con request pendiente: ninguna respuesta repuebla productos/preparación/recibo ni cambia permiso. Guardas de rutas seller/private siguen vigentes.
+
+La etapa permanece EN PRUEBAS hasta este recorrido físico. Commit local pendiente de cumplir la regla AGENTS de Expo Go; no push.
+
+### Verificación técnica vigente
+526/526tests,35suites; TypeScript0errores; lint0errores y30warnings previos; Doctor20/20; gitdiffcheck limpio. BundleAndroidHTTP200/14,015,245bytes con routerRoot=src/app y servicios producto/órdenes presentes, Metro detenido. La primera consulta sinrouterRoot omitía rutas src/app: se corrigió el diagnóstico, no se declaró como validación funcional. No dispositivo ni mutaciones AWS reales; publicación/pedido están implementados en cliente pero el circuito comercial y persistencia física aún no acreditados.
 
 ## Auditoría real
 - HRDCORE limpio al comenzar, HEADda4a5f2. Etapas001–006 existentes; ninguna spec dedicada a vendedor. Servicios vendedores005 reutilizados; no pantallas seller anteriores.

@@ -13,6 +13,7 @@ import {
 import { colors, fontFamily, fontSize, layout, radii, spacing } from '@/theme';
 
 import { AppText } from './AppText';
+import { MotionFeedback } from './MotionFeedback';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -98,9 +99,11 @@ export const AppInput = forwardRef<React.ComponentRef<typeof TextInput>, AppInpu
         ) : null}
       </View>
       {error ? (
-        <AppText variant="caption" color={colors.danger} style={styles.helper}>
-          {error}
-        </AppText>
+        <MotionFeedback trigger={error}>
+          <AppText variant="caption" accessibilityRole="alert" accessibilityLiveRegion="polite" color={colors.danger} style={styles.helper}>
+            {error}
+          </AppText>
+        </MotionFeedback>
       ) : helper ? (
         <AppText variant="caption" style={styles.helper}>
           {helper}

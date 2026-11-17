@@ -122,7 +122,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
   test('422 registra código y clasificación, sin exponer el cuerpo del backend', async () => {
     transport.mockResolvedValue(new Response('{"private-response":"fixture-private"}', { status: 422 }));
     const view = await submit();
-    await waitFor(() => expect(view.getByText('El servidor no pudo procesar los datos. Revisa el correo institucional y los campos.')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('El servidor no pudo procesar los datos. Revisa los campos de la solicitud.')).toBeTruthy());
     expect(log).toHaveBeenCalledWith('[aws-register]', expect.objectContaining({ event: 'response', status: 422 }));
     expect(log).toHaveBeenCalledWith('[aws-register]', expect.objectContaining({ event: 'failure', kind: 'http' }));
     expect(mockPush).not.toHaveBeenCalled();

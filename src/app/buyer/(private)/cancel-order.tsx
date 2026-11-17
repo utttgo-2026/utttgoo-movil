@@ -7,7 +7,11 @@ import { AppButton, AppHeader, AppText, Screen, Surface } from '@/components';
 import { colors, radii, spacing } from '@/theme';
 import { navigateBack } from '@/navigation/buyerRoutes';
 
-export default function CancelOrderScreen() {
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
+
+export default function CancelOrderScreen() { return usesMockCatalog() ? <MockCancelOrderScreen /> : <AwsOrdersPending />; }
+function MockCancelOrderScreen() {
   const router = useRouter();
 
   const handleConfirmCancel = () => {

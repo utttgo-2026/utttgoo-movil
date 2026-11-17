@@ -1,7 +1,7 @@
 import { AuthSession } from '../authSession';
 import { sessionContract } from '../api/sessionContract';
 import { sellerService } from '../api/sellerService';
-import { ApiError } from '../api/errors';
+import { ApiError, backendHttpError } from '../api/errors';
 import type { SellerActiveResponse } from '@/types/api';
 
 jest.mock('../sessionStorage', () => ({ sessionStorage: {} }));
@@ -20,6 +20,7 @@ function fixture() {
   return { deps, session: new AuthSession(deps) };
 }
 describe('Seller sobre sesión única sin revelar JWT/cuerpo unknown', () => {
+  beforeEach(() => { jest.spyOn(sellerService, 'getMe').mockResolvedValue({ status: 200, headers: {}, data: active }); });
   afterEach(() => jest.restoreAllMocks());
   test('sin sesión no transmite solicitud ni consulta', async () => {
     const post = jest.spyOn(sellerService, 'requestActivation'); const get = jest.spyOn(sellerService, 'getMe');
@@ -82,5 +83,66 @@ describe('Seller sobre sesión única sin revelar JWT/cuerpo unknown', () => {
     expect(result.roleSynced).toBe(true); expect(result.user?.role).toBe('seller');
     expect(deps.auth.getMe).toHaveBeenLastCalledWith('synthetic.aws.token');
     expect(deps.storage.save).toHaveBeenCalledTimes(1); expect(deps.auth.login).toHaveBeenCalledTimes(1);
+  });
+  test('solo404SELLER_PROFILE_NOT_FOUND de lookup significa ausencia, sin cambiar autoridad del usuario', async () => {
+    jest.mocked(sellerService.getMe).mockRejectedValue(backendHttpError(404, { status: 404, code: 'SELLER_PROFILE_NOT_FOUND', correlationId: 'fixture', message: 'private-response' }));
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    expect(await session.sellerOperation()).toEqual({ kind: 'missing', status: 404, roleSynced: false });
+    expect(session.sellerSubmissionState()).toEqual({ received: false, uncertain: false });
+  });
+  test.each([[401, 'SELLER_PROFILE_NOT_FOUND'], [403, 'SELLER_PROFILE_NOT_FOUND'], [404, 'PRODUCT_NOT_FOUND'], [404, 'UNKNOWN_CODE'], [503, 'SELLER_UNAVAILABLE']] as const)
+  ('HTTP%s/%s no se convierte en ausencia de negocio', async (status, code) => {
+    jest.mocked(sellerService.getMe).mockRejectedValue(backendHttpError(status, { status, code, correlationId: 'fixture', message: 'private-response' }));
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    await expect(session.sellerOperation()).rejects.toMatchObject({ status });
+  });
+  test('lookup concurrente comparte perfil e identidad, y una consulta posterior vuelve a AWS', async () => {
+    let finish!: (value: { status: number; data: SellerActiveResponse; headers: Record<string, string> }) => void;
+    jest.mocked(sellerService.getMe).mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    const { session, deps } = fixture(); await session.login(identity.email, 'synthetic-password');
+    deps.auth.getMe.mockClear(); deps.users.getMe.mockClear();
+    const a = session.sellerOperation(); const b = session.sellerOperation();
+    expect(sellerService.getMe).toHaveBeenCalledTimes(1);
+    finish({ status: 200, headers: {}, data: active });
+    expect(await a).toBe(await b);
+    expect(deps.auth.getMe).toHaveBeenCalledTimes(1); expect(deps.users.getMe).toHaveBeenCalledTimes(1);
+    await session.sellerOperation(); expect(sellerService.getMe).toHaveBeenCalledTimes(2);
+  });
+  test.each([200, 201])('alta%s confirma por GET antes de exponer Active y permisos', async (status) => {
+    const post = jest.spyOn(sellerService, 'requestActivation').mockResolvedValue({ status, headers: {}, data: active });
+    const { session, deps } = fixture(); await session.login(identity.email, 'synthetic-password');
+    deps.auth.getMe.mockResolvedValue({ status: 200, headers: {}, data: { ...identity, roles: ['Buyer', 'Seller'] } });
+    deps.users.getMe.mockResolvedValue({ status: 200, headers: {}, data: { ...identity, roles: ['Buyer', 'Seller'], phone: null, avatarUrl: null } });
+    expect(await session.sellerOperation(input)).toMatchObject({ kind: 'active', status, seller: active, roleSynced: true });
+    expect(jest.mocked(sellerService.getMe).mock.invocationCallOrder[0]).toBeGreaterThan(post.mock.invocationCallOrder[0]);
+    expect(deps.auth.getMe.mock.invocationCallOrder[1]).toBeGreaterThan(jest.mocked(sellerService.getMe).mock.invocationCallOrder[0]);
+  });
+  test('POST aceptado seguido de GET fallido conserva recibido y prohíbe reenviar', async () => {
+    const post = jest.spyOn(sellerService, 'requestActivation').mockResolvedValue({ status: 201, headers: {}, data: active });
+    jest.mocked(sellerService.getMe).mockRejectedValueOnce(new ApiError('timeout', 'Fixture timeout'));
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'timeout' });
+    expect(session.sellerSubmissionState().received).toBe(true);
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'validation' });
+    expect(await session.sellerOperation()).toMatchObject({ kind: 'active' });
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+  test('missing después de POST recibido es verificación pendiente, no otra oportunidad de alta', async () => {
+    jest.spyOn(sellerService, 'requestActivation').mockResolvedValue({ status: 200, headers: {}, data: active });
+    jest.mocked(sellerService.getMe).mockRejectedValue(backendHttpError(404, { status: 404, code: 'SELLER_PROFILE_NOT_FOUND', correlationId: 'fixture', message: 'Fixture missing' }));
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'invalid_response' });
+    expect(session.sellerSubmissionState().received).toBe(true);
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'validation' });
+    expect(sellerService.requestActivation).toHaveBeenCalledTimes(1);
+  });
+  test('lookup tardío tras logout no repuebla perfil y no invalida una sesión posterior', async () => {
+    let finish!: (value: { status: number; data: SellerActiveResponse; headers: Record<string, string> }) => void;
+    jest.mocked(sellerService.getMe).mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    const pending = session.sellerOperation(); await session.logout(); await session.login(identity.email, 'synthetic-password');
+    finish({ status: 200, headers: {}, data: active });
+    await expect(pending).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(await session.sellerOperation()).toMatchObject({ kind: 'active' });
   });
 });

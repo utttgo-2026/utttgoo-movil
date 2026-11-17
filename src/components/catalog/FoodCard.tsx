@@ -1,14 +1,15 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText, Badge } from '@/components/ui';
 import { colors, fontFamily, layout, radii, spacing } from '@/theme';
 import type { FoodItem } from '@/types/models';
 import { FoodImage } from './FoodImage';
+import { MotionPressable } from '@/components/ui/MotionPressable';
 
 export function FoodCard({ food, width, onPress }: { food: FoodItem; width: number; onPress: (food: FoodItem) => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Ver ${food.name}`} onPress={() => onPress(food)}
+    <MotionPressable accessibilityRole="button" accessibilityLabel={`Ver ${food.name}`} onPress={() => onPress(food)}
       style={[styles.card, { width }]}>
       <FoodImage foodId={food.id} name={food.name} style={styles.image} />
       <View style={styles.info}>
@@ -17,7 +18,7 @@ export function FoodCard({ food, width, onPress }: { food: FoodItem; width: numb
         <AppText variant="bodyStrong" color={colors.primary} style={styles.price}>${food.price.toFixed(2)}</AppText>
         <Badge label={food.availability === 'available' ? 'Disponible ahora' : 'Agotado'} tone={food.availability === 'available' ? 'success' : 'danger'} />
       </View>
-    </Pressable>
+    </MotionPressable>
   );
 }
 

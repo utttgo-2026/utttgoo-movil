@@ -1,5 +1,13 @@
 # Plan 006 — Figma UI / Navigation Fixes
 
+## Continuación movimiento
+1. Auditar Constitution/AGENTS/memoria/layouts/dependencias y PNG UI006. Preservar workingtree comercial previo y verificar al final archivos protegidos por huellas contra este checkpoint, no contraHEAD antiguo.
+2. Hook ReduceMotion compartido con AccessibilityInfo/useSyncExternalStore: query+listener con cancelación de consulta obsoleta, limpieza y default conservador. Política de tiempos/Stack central y hooks Animated nativos interrumpibles, isInteractionfalse.
+3. Decorar BottomTabBar público de expo-router/js-tabs, mantener botones/eventos/navegación/historial. Progreso por tab y contexto propio solo visual (el renderIcon de la librería dibuja variantes focusedtrue/false, no usar ese argumento como autoridad de selección). Indicador en background del bar con medida real e insets; textos permanecen nativos, sin escalado extra.
+4. Aplicar política Stack a root/buyer/private/seller sin mover rutas ni agregar Stack.Screen redundantes. Tabs fade120 o none según preferencia.
+5. Reutilizar feedback de pulsación en AppButton y tarjetas, feedback de errores y región de catálogo/confirmación. No demorar callbacks, retener datos al logout, animar filas por cada render ni alterar lista/input/key/scroll.
+6. Pruebas router real+política/reduceMotion/interrupción/geometry/press, regresión completa005/007. Checks obligatorios, Metro y guía visual; no afirmar60FPS, gestos físicos ni fidelidad final por tests simulados.
+
 ## Información General
 - **Spec**: 006-figma-ui-navigation-fixes
 - **Fecha**: 2026-11-11

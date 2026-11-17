@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { type ComponentProps } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   StyleSheet,
   View,
@@ -12,6 +13,7 @@ import {
 import { colors, fontFamily, fontSize, layout, radii, spacing } from '@/theme';
 
 import { AppText } from './AppText';
+import { usePressMotion } from '@/hooks/useMotion';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -50,6 +52,7 @@ export function AppButton({
   style,
 }: AppButtonProps) {
   const isDisabled = disabled || loading;
+  const press = usePressMotion(isDisabled);
   const iconColor = variant === 'outline' || variant === 'ghost' ? colors.primary : colors.textOnPrimary;
 
   return (
@@ -58,6 +61,8 @@ export function AppButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={isDisabled}
       hitSlop={size === 'sm' ? 5 : undefined}
       style={({ pressed }) => [
@@ -70,7 +75,7 @@ export function AppButton({
         style,
       ]}
     >
-        <View style={[styles.content, loading && styles.reserved]}>
+        <Animated.View style={[styles.content, loading && styles.reserved, press.style]}>
           {icon && iconPosition === 'left' ? (
             <Ionicons name={icon} size={18} color={iconColor} />
           ) : null}
@@ -83,7 +88,7 @@ export function AppButton({
           {icon && iconPosition === 'right' ? (
             <Ionicons name={icon} size={18} color={iconColor} />
           ) : null}
-        </View>
+        </Animated.View>
       {loading ? <View pointerEvents="none" style={styles.spinner}><ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.textOnPrimary} /></View> : null}
     </Pressable>
   );

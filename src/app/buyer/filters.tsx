@@ -8,6 +8,7 @@ import { useCatalogCategories } from '@/hooks/useCatalogCategories';
 import { usesMockCatalog } from '@/config/catalogSource';
 import { catalogRoute, readCatalogSelection, singleParam, type CatalogDestination, type CatalogParams } from '@/utils/catalog';
 import { colors, layout, spacing } from '@/theme';
+import type { ProductSort } from '@/types/api';
 
 export default function FiltersScreen() {
   const router = useRouter();
@@ -43,13 +44,18 @@ export default function FiltersScreen() {
       <AppHeader title="Filtros" />
       <View style={styles.content}>
         <AppText variant="subtitle">Disponibilidad</AppText>
-        {!mock ? <AppText>Disponibilidad y orden pendientes de enums AWS; no se envían valores supuestos.</AppText> : <View style={styles.row}>
+        {!mock ? <AppText>La disponibilidad se muestra según estado y stock. El filtro remoto de disponibilidad sigue pendiente de contrato.</AppText> : <View style={styles.row}>
           <FilterChip label="Disponible ahora" selected={selection.availability === 'available'} onPress={() => setSelection({ ...selection, availability: 'available' })} />
           {origin !== '/buyer/available-now' ? <>
             <FilterChip label="Todas" selected={selection.availability === 'all'} onPress={() => setSelection({ ...selection, availability: 'all' })} />
             <FilterChip label="Mostrar agotados" selected={selection.availability === 'sold-out'} onPress={() => setSelection({ ...selection, availability: 'sold-out' })} />
           </> : null}
         </View>}
+        {!mock ? <><AppText variant="subtitle">Ordenar por</AppText><View style={styles.row}>
+          <FilterChip label="Predeterminado AWS" selected={!selection.awsSort} onPress={() => setSelection({ ...selection, awsSort: undefined })} />
+          {([['created_desc', 'Más recientes'], ['price_asc', 'Menor precio'], ['price_desc', 'Mayor precio'], ['name_asc', 'Nombre']] as [ProductSort, string][]).map(([value, label]) =>
+            <FilterChip key={value} label={value === 'created_desc' ? `${label} (no disponible)` : label} disabled={value === 'created_desc'} selected={selection.awsSort === value} onPress={() => setSelection({ ...selection, awsSort: value })} />)}
+        </View></> : null}
         <AppText variant="subtitle">Categoría</AppText>
         <View style={styles.row}>
           {origin !== '/buyer/category' ? <FilterChip label="Todas las categorías" selected={!selection.categoryId} onPress={() => setSelection({ ...selection, categoryId: undefined })} /> : null}

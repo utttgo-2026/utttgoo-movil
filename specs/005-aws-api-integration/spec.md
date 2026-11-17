@@ -1,5 +1,17 @@
 # Specification 005 — AWS-API-INTEGRATION
 
+## Hotfix contrato interno seller en Context
+Validación runtime de métodos sellerobligatorios y snapshot tipado explícito; la instancia useState puede no coincidir con módulos actualizados. Incompatibilidad es fallo explícito que requiere reloadcompleto y restauración normal, no recreación automática de sesión ni JWT nuevo. El catchseller no propaga fallos del lector de metadata, conserva401 y descarta respuestas de revisiónanterior. User no se actualiza antes de comprobar snapshot/resultado interno. Login/restore/storage/Supabase/serviciosAWS no cambian su contrato por estehotfix.
+
+## Dependencia Bloque1 vendedor
+El coordinador de sesión y Context existentes incorporan lookupSeller missing/active, coalescingGET por generación y confirmación GET posterior al alta. Missing solo de GETseller404/códigoexacto, nunca de identidad/perfil. User/roles siguen exclusivamente decodificados de authme/usersme con JWT actual, sin otra sesión ni cambio de SecureStore/OTP/Supabase. POST recibido no se reintenta por fallo de verificación;401 conserva invalidación. Cambios funcionales de007 requieren regresiónauth completa.
+
+## Dependencia PR24
+La capacidad de productos incorpora PATCHstatus Active/Paused con JWT interno, SellerActive y ownership. Ownercache por sesión solo de respuestas validadas permite reactivar Paused no público, se limpia al cambiar/restaurar/cerrar sesión; cada mutación sigue autorizada por backend. Preparación añade notes≤250, no cambia autoridadJWT/OTP/roles. 422IMAGE_NOT_AVAILABLE genera diagnóstico fijo sin bodies/headers/IDs/secretos; frontend no implementaS3. Regresiónauth incluye texto422 genérico reutilizable para formularios y ausencia de datos sensibles.
+
+## Dependencia comercial007/003
+AuthSession y el único AuthContext incorporan capacidades privadas createProduct/ownProduct/createOrder. JWT permanece exclusivamente en coordinador/SecureStore; antes de operar revalidar identidad/perfil y, para seller, rol Seller y GETsellers/me Active. Ownership producto por sellerId (distinto de user.id), pedido por buyerId y sellerId. Bloqueo simultáneo comercial, generación contra respuestas tardías y bloqueo conservador de POST ambiguo. Preparación/recibo e IDs consultados de productos solo memoria por sesión; login/restauración/logout limpian datos comerciales, 401 limpia sesión con política existente. Sin cambio de flujo OTP, almacenamiento JWT ni endpoints de autenticación.
+
 ## Información General
 - **ID**: 005-aws-api-integration
 - **Nombre**: AWS-API-INTEGRATION

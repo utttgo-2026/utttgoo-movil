@@ -7,58 +7,73 @@ import Draft from '@/app/seller/product-draft';
 import SellerLayout from '@/app/seller/_layout';
 
 const mockRequest = jest.fn(); const mockConsult = jest.fn(); const mockPush = jest.fn();
+const mockCreateProduct = jest.fn();
+const mockConsultProduct = jest.fn();
+const mockUpdateStatus = jest.fn();
+const mockProducts = [{ id: 'aws-product', name: 'Producto fixture', price: 30, stock: 4, status: 'Active' }];
 const seller = { sellerId: 'seller-fixture', businessName: 'Cocina fixture', description: 'Comida del campus fixture', pickupPoint: 'Edificio fixture' };
 let mockAuthenticated = true;
+let mockRole: 'buyer' | 'seller' = 'seller';
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush }), Stack: () => null }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush }), Stack: () => null,
+  useFocusEffect: (callback: () => void | (() => void)) => jest.requireActual<typeof import('react')>('react').useEffect(callback, [callback]) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('@/services/api/categoryService', () => ({ categoryService: { getAll: async () => [{ id: 'category-fixture', name: 'Categoría fixture', sortOrder: 1 }] } }));
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ isAuthenticated: mockAuthenticated, status: mockAuthenticated ? 'authenticated' : 'anonymous',
-  requestSellerActivation: mockRequest, consultSeller: mockConsult }) }));
+  role: mockRole, sessionProducts: mockProducts, updateProductStatus: mockUpdateStatus, createProduct: mockCreateProduct, consultProduct: mockConsultProduct, requestSellerActivation: mockRequest, consultSeller: mockConsult }) }));
 
 describe('Vendedor UI sin operaciones reales', () => {
-  beforeEach(() => { jest.clearAllMocks(); mockAuthenticated = true; });
+  beforeEach(() => {
+    jest.clearAllMocks(); mockAuthenticated = true; mockRole = 'seller'; mockProducts[0].status = 'Active';
+    mockConsult.mockResolvedValue({ success: true, kind: 'missing', status: 404, roleSynced: false, received: false, uncertain: false });
+  });
   test('alta HTTP no se presenta como aprobación automática y bloquea segundo envío', async () => {
-    mockRequest.mockResolvedValue({ success: true, status: 201, seller, roleSynced: false });
+    mockRequest.mockResolvedValue({ success: true, kind: 'active', status: 201, seller, roleSynced: false });
     const view = await render(<Activation />);
+    await waitFor(() => expect(view.getByLabelText('Nombre del negocio')).toBeTruthy());
     await fireEvent.changeText(view.getByLabelText('Nombre del negocio'), 'Cocina fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del negocio'), 'Comida del campus fixture');
     await fireEvent.changeText(view.getByLabelText('Punto de entrega'), 'Edificio fixture');
-    await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
-    expect(view.getByText(/Negocio activado por AWS/)).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Solicitar activación' })).toBeDisabled();
+    await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
+    expect(view.getByText(/Negocio Active confirmado por GET AWS/)).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Registrar negocio' })).toBeNull();
+    expect(view.getByRole('button', { name: 'Mis productos' })).toBeDisabled();
     expect(mockRequest).toHaveBeenCalledTimes(1);
     expect(mockRequest).toHaveBeenCalledWith({ businessName: 'Cocina fixture', description: 'Comida del campus fixture', pickupPoint: 'Edificio fixture' });
   });
   test('campos inválidos no envían nada', async () => {
-    const view = await render(<Activation />); await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
+    const view = await render(<Activation />);
+    await waitFor(() => expect(view.getByRole('button', { name: 'Registrar negocio' })).toBeTruthy());
+    await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
     expect(mockRequest).not.toHaveBeenCalled();
   });
   test('consulta HTTP real informada sin fabricar estado de autorización ni perfil', async () => {
-    mockConsult.mockResolvedValue({ success: true, status: 200, seller, roleSynced: true });
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
     const view = await render(<Business />);
-    expect(mockConsult).not.toHaveBeenCalled();
-    await fireEvent.press(view.getByRole('button', { name: 'Consultar mi solicitud' }));
+    await waitFor(() => expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy());
+    expect(mockConsult).toHaveBeenCalledTimes(1);
     expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy();
     expect(view.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
   });
   test('403 no se convierte en rechazo administrativo', async () => {
     mockConsult.mockResolvedValue({ success: false, status: 403, error: 'No autorizado (fixture)' });
-    const view = await render(<Business />); await fireEvent.press(view.getByRole('button', { name: 'Consultar mi solicitud' }));
-    expect(view.getByText(/No se deduce un estado administrativo/)).toBeTruthy();
+    const view = await render(<Business />);
+    await waitFor(() => expect(view.getByText('No autorizado (fixture)')).toBeTruthy());
+    expect(view.queryByLabelText('Nombre del negocio')).toBeNull();
   });
   test('invitado bloqueado por guarda del grupo', async () => {
     mockAuthenticated = false;
     const view = await render(<SellerLayout />);
     expect(view.getByText('Exploras como invitado')).toBeTruthy(); expect(mockRequest).not.toHaveBeenCalled();
   });
-  test('productos no afirman catálogo real vacío ni publican; preview es solo memoria', async () => {
+  test('preview local no publica, envío explícito usa DTO y bloquea repetición tras201', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
     const list = await render(<Products />);
-    expect(list.getByText(/No es una lista vacía obtenida de AWS/)).toBeTruthy();
-    expect(list.getByRole('button', { name: 'Publicar productos' })).toBeDisabled();
+    await waitFor(() => expect(list.getByText(/El listado privado completo aún no tiene contrato/)).toBeTruthy());
     await list.unmount();
     const view = await render(<Draft />);
+    await waitFor(() => expect(view.getByLabelText('Nombre del alimento')).toBeTruthy());
     await fireEvent.changeText(view.getByLabelText('Nombre del alimento'), 'Alimento fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del alimento'), 'Descripción de alimento fixture');
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '35.25');
@@ -66,21 +81,96 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.press(view.getByText('Categoría fixture'));
     await fireEvent.press(view.getByRole('button', { name: 'Vista previa local' }));
     expect(view.getByText('Vista previa — no publicado')).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Publicar alimento' })).toBeDisabled();
+    expect(mockCreateProduct).not.toHaveBeenCalled();
     expect(view.getByText(/Media pendiente/)).toBeTruthy();
-    expect(mockRequest).not.toHaveBeenCalled(); expect(mockConsult).not.toHaveBeenCalled();
+    expect(mockRequest).not.toHaveBeenCalled(); expect(mockConsult).toHaveBeenCalledTimes(2);
+    mockCreateProduct.mockResolvedValue({ success: true, data: { id: 'aws-product-fixture', status: 'Active' } });
+    await fireEvent.press(view.getByRole('button', { name: 'Publicar alimento' }));
+    expect(mockCreateProduct).toHaveBeenCalledWith({ name: 'Alimento fixture', description: 'Descripción de alimento fixture', price: 35.25,
+      stock: 0, ingredients: [], categoryId: 'category-fixture' });
+    expect(view.getByRole('button', { name: 'Publicar alimento' })).toBeDisabled();
+    expect(view.getByText(/Producto recibido por AWS: aws-product-fixture/)).toBeTruthy();
   });
   test('pulsaciones simultáneas en alta quedan excluidas', async () => {
     let finish!: (response: object) => void;
     mockRequest.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
     const view = await render(<Activation />);
+    await waitFor(() => expect(view.getByLabelText('Nombre del negocio')).toBeTruthy());
     await fireEvent.changeText(view.getByLabelText('Nombre del negocio'), 'Cocina fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del negocio'), 'Comida del campus fixture');
     await fireEvent.changeText(view.getByLabelText('Punto de entrega'), 'Edificio fixture');
-    await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
-    await fireEvent.press(view.getByRole('button', { name: 'Solicitar activación' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
     expect(mockRequest).toHaveBeenCalledTimes(1);
-    await act(async () => { finish({ success: true, status: 201, seller, roleSynced: false }); });
-    await waitFor(() => expect(view.getByText(/Negocio activado/)).toBeTruthy());
+    await act(async () => { finish({ success: true, kind: 'active', status: 201, seller, roleSynced: false }); });
+    await waitFor(() => expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy());
+  });
+  test('consulta producto propio antes de editar solo precio y stock; cambiar ID invalida editor', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
+    mockConsultProduct.mockResolvedValue({ success: true, data: { id: 'aws-product', name: 'Producto fixture', price: 30, stock: 4 } });
+    const view = await render(<Products />);
+    await waitFor(() => expect(view.getByLabelText('ID de producto AWS')).toBeTruthy());
+    await fireEvent.changeText(view.getByLabelText('ID de producto AWS'), 'aws-product');
+    await fireEvent.press(view.getByRole('button', { name: 'Consultar producto propio' }));
+    expect(mockConsultProduct).toHaveBeenCalledWith('aws-product', undefined);
+    await fireEvent.changeText(view.getByLabelText('Precio MXN'), '32.50');
+    await fireEvent.changeText(view.getByLabelText('Stock'), '0');
+    await fireEvent.press(view.getByRole('button', { name: 'Guardar precio y stock' }));
+    expect(mockConsultProduct).toHaveBeenLastCalledWith('aws-product', { price: 32.5, stock: 0 });
+    expect(view.getByText('Precio y stock confirmados por AWS.')).toBeTruthy();
+    await fireEvent.changeText(view.getByLabelText('ID de producto AWS'), 'another-id');
+    expect(view.queryByRole('button', { name: 'Guardar precio y stock' })).toBeNull();
+  });
+  test('acciones explícitas pausan y reactivan usando solo status sin cambiar antes de respuesta', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
+    mockUpdateStatus.mockResolvedValue({ success: true, data: { ...mockProducts[0], status: 'Paused' } });
+    const view = await render(<Products />);
+    await waitFor(() => expect(view.getByRole('button', { name: 'Pausar Producto fixture' })).toBeTruthy());
+    await fireEvent.press(view.getByRole('button', { name: 'Pausar Producto fixture' }));
+    expect(mockUpdateStatus).toHaveBeenCalledWith('aws-product', { status: 'Paused' });
+    expect(view.getByText('Publicación pausada por AWS.')).toBeTruthy();
+    mockProducts[0].status = 'Paused'; await view.rerender(<Products />);
+    mockUpdateStatus.mockResolvedValue({ success: true, data: { ...mockProducts[0], status: 'Active' } });
+    await fireEvent.press(view.getByRole('button', { name: 'Reactivar Producto fixture' }));
+    expect(mockUpdateStatus).toHaveBeenLastCalledWith('aws-product', { status: 'Active' });
+    expect(view.getByText('Publicación reactivada por AWS.')).toBeTruthy();
+  });
+  test('entrada al módulo muestra alta directamente solo tras missing confirmado', async () => {
+    const view = await render(<Business />);
+    await waitFor(() => expect(view.getByRole('button', { name: 'Registrar negocio' })).toBeTruthy());
+    expect(mockConsult).toHaveBeenCalledTimes(1);
+    expect(view.queryByText(/HTTP 404/)).toBeNull(); expect(mockRequest).not.toHaveBeenCalled();
+  });
+  test.each([401, 403, 404, 503])('lookupHTTP%s genérico no ofrece formulario ni productos', async (status) => {
+    mockConsult.mockResolvedValue({ success: false, status, error: 'Error de consulta fixture' });
+    const view = await render(<Business />);
+    await waitFor(() => expect(view.getByText('Error de consulta fixture')).toBeTruthy());
+    expect(view.queryByRole('button', { name: 'Registrar negocio' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Mis productos' })).toBeNull();
+  });
+  test('editores directos no se montan con negocio activo pero JWT Buyer', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', seller, status: 200, roleSynced: false });
+    const view = await render(<Draft />);
+    await waitFor(() => expect(view.getByRole('button', { name: 'Actualizar permisos en login' })).toBeTruthy());
+    expect(view.queryByLabelText('Nombre del alimento')).toBeNull();
+    expect(mockCreateProduct).not.toHaveBeenCalled();
+  });
+  test('cambio de rol del Context invalida editor aunque la consulta anterior confirmara Seller', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', seller, status: 200, roleSynced: true });
+    const view = await render(<Draft />);
+    await waitFor(() => expect(view.getByLabelText('Nombre del alimento')).toBeTruthy());
+    mockRole = 'buyer'; await view.rerender(<Draft />);
+    expect(view.queryByLabelText('Nombre del alimento')).toBeNull();
+    expect(view.getByRole('button', { name: 'Mis productos' })).toBeDisabled();
+  });
+  test('rechazo inesperado al entrar se maneja y reintento seguro permite abrir Mis alimentos', async () => {
+    mockConsult.mockRejectedValueOnce(new TypeError('private-callback-detail')).mockResolvedValueOnce({ success: true, kind: 'active', seller, status: 200, roleSynced: true });
+    const view = await render(<Business />);
+    await waitFor(() => expect(view.getByText('No se pudo completar la operación. Intenta nuevamente.')).toBeTruthy());
+    expect(view.queryByRole('button', { name: 'Mis productos' })).toBeNull(); expect(mockRequest).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByRole('button', { name: 'Reconsultar mi negocio' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Mis productos' })).not.toBeDisabled());
+    await fireEvent.press(view.getByRole('button', { name: 'Mis productos' }));
+    expect(mockPush).toHaveBeenLastCalledWith('/seller/products');
   });
 });

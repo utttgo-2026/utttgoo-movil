@@ -66,6 +66,29 @@ export interface ApiCategory { id: string; name: string; sortOrder: number }
 export interface ApiPage<T> { items: T[]; page: number; pageSize: number; total: number }
 export interface CreateProductRequest {
   name: string; description: string; ingredients: string[]; categoryId: string; price: number; stock: number;
+  imageUrl?: null;
+}
+export type ProductSort = 'price_asc' | 'price_desc' | 'name_asc' | 'created_desc';
+export type ProductStatus = 'Active' | 'Paused';
+export interface ProductAvailabilityRequest { status: ProductStatus }
+export interface ProductResponse extends Omit<CreateProductRequest, 'imageUrl'> {
+  id: string; sellerId: string; sellerDisplayName: string | null; categoryName: string | null;
+  status: ProductStatus; isAvailable: boolean; ratingAverage: number | null; ratingCount: number | null;
+  createdAt: string; updatedAt: string;
+}
+export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; total: number }
+export interface ProductPatch { price?: number; stock?: number }
+export interface CreateOrderRequest { productId: string; quantity: number; notes?: string }
+export interface OrderResponse extends CreateOrderRequest {
+  id: string; buyerId: string; sellerId: string; unitPrice: number; totalAmount: number;
+  status: 'Pending'; createdAt: string;
+}
+/** PR24 deployed wire schema; orderResponse normalizes it into the existing receipt model above. */
+export interface DeployedOrderResponse {
+  orderId: string; productId: string; productName: string; sellerId: string; buyerUserId: string;
+  quantity: number; unitPrice: number; total: number; currency: string; paymentMethod: string; status: string;
+  pickupPoint: string; deliveredAt: string | null; completedAt: string | null;
+  createdAt: string; updatedAt: string; version: number; notes?: string | null;
 }
 
 export interface AdminUsersQuery {

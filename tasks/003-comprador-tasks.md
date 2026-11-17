@@ -1,5 +1,27 @@
 # Tasks 003 — Flujo del Comprador
 
+## Recuperación por bloques actual
+- [x] CheckpointBloque1 y comparación estática nueva UI015–024 originales vs fuenteAWS (matriz006).
+- [x] B3acotado: panelEfectivo, marcoQRsinpayload ni scanner y avisosAWS sinfixtures;625/625tests/40suites, tsc0, lint0errores/27warnings, Doctor20/20 y diffchecklimpio; sin validación física nueva.
+- [ ] Unidad3.1: integrar GETorders/mine/GETdetail usando schemas ya publicados, ownership/generación y metadatareal; recuperar UI019/020 sin timelineinventado.
+- [ ] Acciones persistentes/QRseguro después de endpoints; no confundir layout local con operación confirmada.
+- [ ] Prueba física Figma/ExpoGo y commit segúnAGENTS. No se marca restaurado historial ni seguimiento con solo recibo dePOST.
+
+## P0 PR #24
+- [x] Notas opcionales≤250 en DTO/builder, preparación de sesión y formulario/revisión, sin importescliente ni multiitem.
+- [x] Conservación de preparación/notas ante fallo, limpieza solo tras201válido y exclusión de duplicados/logouttardío.
+- [x] Lectura de respuestaorden del OpenAPI desplegado normalizada al modelo existente sin campos supuestos ni mezclas.
+- [x] Verificación final automatizada y registro de resultados en007/changelog:562/562tests/36suites, tsc0, ESLint0errores/30warnings, Doctor20/20, diffchecklimpio; bundleAndroid200.
+- [ ] Recorrido ExpoGo/persistencia producto/pedido autorizado. GETmine/detail: schemaahorapublicado, enums e integración/seguimiento pendientes; no mocks productivos.
+
+## Continuación AWS — estado real
+- [x] DTO/servicio de pedido de un producto y request exacto productId/quantity, 201 validado.
+- [x] Preparación por sesión y rutas existentes revisión/confirmación/recibo AWS; catálogo y stock reales, sin carrito multiitem ni cargos inventados.
+- [x] Guardas de sesión, ownership de respuesta, duplicados, errores y logout tardío con pruebas simuladas.
+- [x] Historial/seguimiento/calificación/cancelación sin fallback mock en fuenteAWS, explícitamente pendientes de contratos.
+- [ ] GETorders/mine y detalle: faltan DTOs. No interpretar colección ni estados por suposición.
+- [ ] Prueba física autorizada en Expo Go y comparación visual contra Figma; las marcas históricas siguientes corresponden a maquetas, no a integración real.
+
 ## Información General
 - **Spec**: 003-comprador
 - **Versión**: 1.0
