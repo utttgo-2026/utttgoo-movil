@@ -4,39 +4,30 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
+import { navigateBack } from '@/navigation/buyerRoutes';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
 
-  const handleSend = async () => {
+  const handleSend = () => {
     setError(undefined);
     if (!email.trim()) {
       setError('Ingresa tu correo institucional.');
       return;
     }
-    setLoading(true);
-    try {
-      // Simulación de envío de enlace
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push('/verify-email');
-    } finally {
-      setLoading(false);
-    }
+    setError('La recuperación está pendiente del contrato del backend/Supabase. No se envió ningún enlace.');
   };
 
   return (
-    <Screen backgroundColor={colors.background} padded={false} scroll>
+    <Screen backgroundColor={colors.background} scroll constrained header={<AppHeader title="Recuperar contraseña" />}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoiding}
       >
         <View style={styles.content}>
-          <AppHeader title="Recuperar contraseña" />
-
           <View style={styles.iconCircle}>
             <Ionicons name="key-outline" size={48} color={colors.primary} />
           </View>
@@ -45,7 +36,7 @@ export default function ForgotPasswordScreen() {
             Recupera tu acceso
           </AppText>
           <AppText variant="body" color={colors.textMuted} style={styles.subtitle}>
-            Te enviaremos un enlace seguro a tu correo institucional. Caduca en 15 minutos.
+            La recuperación de contraseña estará disponible cuando se confirme el flujo del backend.
           </AppText>
 
           <Surface style={styles.card} bordered>
@@ -57,14 +48,13 @@ export default function ForgotPasswordScreen() {
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
-              error={error ? 'Correo requerido' : undefined}
-              placeholder="20230184@utt.edu.mx"
+              error={error}
+              placeholder="matricula@uttt.edu.mx"
             />
             <AppButton
               label="Enviar enlace"
               variant="primary"
               onPress={handleSend}
-              loading={loading}
               style={styles.sendButton}
             />
           </Surface>
@@ -73,7 +63,7 @@ export default function ForgotPasswordScreen() {
             <AppButton
               label="Volver a iniciar sesión"
               variant="outline"
-              onPress={() => router.replace('/login')}
+              onPress={() => navigateBack(router, '/login')}
               fullWidth={false}
             />
           </View>
@@ -89,7 +79,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
     gap: spacing.xl,
     justifyContent: 'flex-start',
   },

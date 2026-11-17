@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { type ComponentProps } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   StyleSheet,
   View,
@@ -12,6 +13,7 @@ import {
 import { colors, fontFamily, fontSize, layout, radii, spacing } from '@/theme';
 
 import { AppText } from './AppText';
+import { usePressMotion } from '@/hooks/useMotion';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -32,9 +34,9 @@ interface AppButtonProps {
 }
 
 const sizeStyles: Record<ButtonSize, ViewStyle> = {
-  sm: { minHeight: 38, paddingHorizontal: spacing.md },
-  md: { minHeight: 44, paddingHorizontal: spacing.lg },
-  lg: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.xl },
+  sm: { minHeight: 38, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  md: { minHeight: 44, paddingHorizontal: spacing.lg, paddingVertical: 10 },
+  lg: { minHeight: layout.buttonHeight, paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
 };
 
 export function AppButton({
@@ -50,14 +52,19 @@ export function AppButton({
   style,
 }: AppButtonProps) {
   const isDisabled = disabled || loading;
+  const press = usePressMotion(isDisabled);
   const iconColor = variant === 'outline' || variant === 'ghost' ? colors.primary : colors.textOnPrimary;
 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={isDisabled}
+      hitSlop={size === 'sm' ? 5 : undefined}
       style={({ pressed }) => [
         styles.base,
         sizeStyles[size],
@@ -68,24 +75,21 @@ export function AppButton({
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.textOnPrimary} />
-      ) : (
-        <View style={styles.content}>
+        <Animated.View style={[styles.content, loading && styles.reserved, press.style]}>
           {icon && iconPosition === 'left' ? (
             <Ionicons name={icon} size={18} color={iconColor} />
           ) : null}
           <AppText
             variant="label"
-            style={[styles.label, variant === 'outline' || variant === 'ghost' ? styles.labelOutline : null]}
+            style={[styles.label, size === 'sm' && styles.compactLabel, variant === 'outline' || variant === 'ghost' ? styles.labelOutline : null]}
           >
             {label}
           </AppText>
           {icon && iconPosition === 'right' ? (
             <Ionicons name={icon} size={18} color={iconColor} />
           ) : null}
-        </View>
-      )}
+        </Animated.View>
+      {loading ? <View pointerEvents="none" style={styles.spinner}><ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.textOnPrimary} /></View> : null}
     </Pressable>
   );
 }
@@ -108,6 +112,9 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   content: {
+    maxWidth: '100%',
+    minWidth: 0,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -116,11 +123,17 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fontFamily.semibold,
     fontSize: fontSize.lg,
+    lineHeight: 24,
+    flexShrink: 1,
+    textAlign: 'center',
     color: colors.textOnPrimary,
   },
   labelOutline: {
     color: colors.primary,
   },
+  compactLabel: { fontSize: fontSize.sm, lineHeight: 18 },
+  reserved: { opacity: 0 },
+  spinner: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
   pressed: {
     opacity: 0.86,
   },

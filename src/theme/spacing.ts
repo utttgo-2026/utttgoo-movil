@@ -1,7 +1,5 @@
 import { Dimensions } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const guidelineBaseWidth = 375;
 const guidelineBaseHeight = 667;
 
@@ -30,7 +28,7 @@ export const radii = {
 } as const;
 
 export const layout = {
-  screenPadding: 20,
+  screenPadding: 16,
   maxContentWidth: 520,
   buttonHeight: 52,
   inputHeight: 52,
@@ -38,12 +36,12 @@ export const layout = {
   tabBarHeight: 64,
   
   // Responsive helpers (baseline iPhone 8: 375x667)
-  scale: SCREEN_WIDTH / guidelineBaseWidth,
-  verticalScale: SCREEN_HEIGHT / guidelineBaseHeight,
-  screenWidth: SCREEN_WIDTH,
-  screenHeight: SCREEN_HEIGHT,
-  isSmallScreen: SCREEN_WIDTH < 375,
-  isLargeScreen: SCREEN_WIDTH > 414,
+  get scale() { return Dimensions.get('window').width / guidelineBaseWidth; },
+  get verticalScale() { return Dimensions.get('window').height / guidelineBaseHeight; },
+  get screenWidth() { return Dimensions.get('window').width; },
+  get screenHeight() { return Dimensions.get('window').height; },
+  get isSmallScreen() { return Dimensions.get('window').width < 375; },
+  get isLargeScreen() { return Dimensions.get('window').width > 414; },
 } as const;
 
 export function moderateScale(size: number, factor = 0.5): number {

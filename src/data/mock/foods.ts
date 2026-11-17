@@ -1,6 +1,9 @@
-import type { FoodCategory, FoodItem, FoodAvailability } from '@/types/models';
+import type { FoodItem } from '@/types/models';
+import { verifiedCategoryId } from './foodCategoryMap';
 
-export const mockFoods: FoodItem[] = [
+// Datos comerciales conservados; categoryId se normaliza según el mapeo006.
+// Las fotografías se resuelven únicamente por id en data/catalog/foodMedia.ts (P3).
+const catalogSource: FoodItem[] = [
   // DESAYUNOS (cat-1) - 4 items
   {
     id: 'food-1',
@@ -9,7 +12,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Chilaquiles con Huevo',
     description: 'Chilaquiles verdes o rojos con huevo frito, frijoles y crema.',
     price: 48,
-    image: 'https://images.unsplash.com/photo-1543064986-ea913744d4f6?w=400',
     rating: 4.8,
     reviewCount: 112,
     prepTimeMinutes: 12,
@@ -25,7 +27,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Hotcakes con Fruta',
     description: 'Hotcakes esponjosos con fresas, plátano y miel de maple.',
     price: 42,
-    image: 'https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=400',
     rating: 4.7,
     reviewCount: 95,
     prepTimeMinutes: 10,
@@ -41,7 +42,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Huevos Rancheros',
     description: 'Huevos fritos sobre tortilla con salsa ranchera, frijoles y aguacate.',
     price: 45,
-    image: 'https://images.unsplash.com/photo-1603046891740-3f5e5b3b3b3b?w=400',
     rating: 4.6,
     reviewCount: 78,
     prepTimeMinutes: 15,
@@ -57,7 +57,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Avena con Frutos Rojos',
     description: 'Avena cocida con leche, fresas, arándanos, almendras y miel.',
     price: 38,
-    image: 'https://images.unsplash.com/photo-1517673400267-02571b8191c2?w=400',
     rating: 4.5,
     reviewCount: 64,
     prepTimeMinutes: 8,
@@ -75,7 +74,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Torta de Milanesa',
     description: 'Torta de milanesa con aguacate, frijoles, jitomate y cebolla en pan telera.',
     price: 45,
-    image: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400',
     rating: 4.7,
     reviewCount: 89,
     prepTimeMinutes: 15,
@@ -91,7 +89,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Enchiladas Verdes',
     description: 'Tres enchiladas verdes con pollo, crema, queso y cebolla. Incluye arroz.',
     price: 55,
-    image: 'https://images.unsplash.com/photo-1559338353-b2e69999b91f?w=400',
     rating: 4.5,
     reviewCount: 67,
     prepTimeMinutes: 20,
@@ -107,7 +104,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Mole Poblano con Pollo',
     description: 'Pollo en mole poblano tradicional, arroz rojo y tortillas calientes.',
     price: 65,
-    image: 'https://images.unsplash.com/photo-1583510955018-4c4a8b3b3b3b?w=400',
     rating: 4.8,
     reviewCount: 103,
     prepTimeMinutes: 25,
@@ -123,7 +119,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Caldo de Res',
     description: 'Caldo de res con verduras, arroz y tortillas de maíz.',
     price: 50,
-    image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',
     rating: 4.6,
     reviewCount: 72,
     prepTimeMinutes: 30,
@@ -141,7 +136,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Quesadillas de Hongos',
     description: 'Quesadillas de flor de calabaza y hongos con salsa verde.',
     price: 38,
-    image: 'https://images.unsplash.com/photo-1565299624964-b32404e929b4?w=400',
     rating: 4.4,
     reviewCount: 54,
     prepTimeMinutes: 10,
@@ -157,7 +151,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Tacos de Canasta',
     description: 'Tacos de canasta de papa, frijol y adobo con cebolla y salsa.',
     price: 35,
-    image: 'https://images.unsplash.com/photo-1571003123884-3562798094b0?w=400',
     rating: 4.6,
     reviewCount: 91,
     prepTimeMinutes: 8,
@@ -173,7 +166,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Sopes de Pollo',
     description: 'Sopes de masa con pollo deshebrado, lechuga, crema y queso.',
     price: 42,
-    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400',
     rating: 4.5,
     reviewCount: 68,
     prepTimeMinutes: 12,
@@ -189,7 +181,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Gorditas de Chicharrón',
     description: 'Gorditas rellenas de chicharrón prensado con salsa y queso.',
     price: 38,
-    image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400',
     rating: 4.4,
     reviewCount: 56,
     prepTimeMinutes: 10,
@@ -207,7 +198,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Agua de Horchata',
     description: 'Agua fresca de horchata tradicional de arroz y canela.',
     price: 18,
-    image: 'https://images.unsplash.com/photo-1558559565-112b37e3e6e4?w=400',
     rating: 4.6,
     reviewCount: 43,
     prepTimeMinutes: 2,
@@ -223,7 +213,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Agua de Jamaica',
     description: 'Agua de jamaica natural con azúcar de caña y hielo.',
     price: 16,
-    image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400',
     rating: 4.7,
     reviewCount: 51,
     prepTimeMinutes: 2,
@@ -239,7 +228,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Licuado de Plátano',
     description: 'Licuado cremoso de plátano con leche, canela y miel.',
     price: 25,
-    image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=400',
     rating: 4.8,
     reviewCount: 87,
     prepTimeMinutes: 3,
@@ -257,7 +245,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Flan de Coco',
     description: 'Flan casero de coco con caramelo líquido.',
     price: 32,
-    image: 'https://images.unsplash.com/photo-1593498706210-9217b3403345?w=400',
     rating: 4.7,
     reviewCount: 38,
     prepTimeMinutes: 3,
@@ -273,7 +260,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Gelatina de Mosaico',
     description: 'Gelatina de mosaico con leche condensada y frutas.',
     price: 28,
-    image: 'https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=400',
     rating: 4.6,
     reviewCount: 45,
     prepTimeMinutes: 5,
@@ -289,7 +275,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Arroz con Leche',
     description: 'Arroz con leche cremoso, canela y pasas.',
     price: 30,
-    image: 'https://images.unsplash.com/photo-1542340317-0d2b5e3b3b3b?w=400',
     rating: 4.5,
     reviewCount: 41,
     prepTimeMinutes: 4,
@@ -307,7 +292,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Elote en Vaso',
     description: 'Elote con mayonesa, queso, chile en polvo y limón.',
     price: 25,
-    image: 'https://images.unsplash.com/photo-1531273447376-51a860cd7460?w=400',
     rating: 4.3,
     reviewCount: 76,
     prepTimeMinutes: 5,
@@ -323,7 +307,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Papas con Chile y Limón',
     description: 'Papas fritas crujientes con chile en polvo, limón y sal.',
     price: 22,
-    image: 'https://images.unsplash.com/photo-1566478894999-ecf0b3b3b3b3?w=400',
     rating: 4.4,
     reviewCount: 62,
     prepTimeMinutes: 3,
@@ -339,7 +322,6 @@ export const mockFoods: FoodItem[] = [
     name: 'Chicharrones con Salsa',
     description: 'Chicharrones de cerdo crujientes con salsa verde y limón.',
     price: 28,
-    image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400',
     rating: 4.2,
     reviewCount: 34,
     prepTimeMinutes: 4,
@@ -349,5 +331,7 @@ export const mockFoods: FoodItem[] = [
     isFavorite: false,
   },
 ];
+
+export const mockFoods: FoodItem[] = catalogSource.map((food) => ({ ...food, categoryId: verifiedCategoryId(food.id) }));
 
 export const featuredFoods: FoodItem[] = mockFoods.filter((f) => f.availability === 'available').slice(0, 4);

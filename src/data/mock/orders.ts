@@ -20,7 +20,8 @@ export const mockOrders: Order[] = [
     status: 'delivered',
     createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
     pickupLocation: 'Puerta 3 - Edificio A',
-    paymentMethod: 'Transferencia institucional',
+    paymentMethod: 'cash',
+    qrPayload: JSON.stringify({ orderId: 'order-1', code: 'UTTT-1001', buyerId: 'buyer-1', sellerId: 'seller-1', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), status: 'delivered' }),
     rated: true,
   },
   {
@@ -39,7 +40,8 @@ export const mockOrders: Order[] = [
     status: 'preparing',
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
     pickupLocation: 'Puerta 3 - Edificio A',
-    paymentMethod: 'Efectivo',
+    paymentMethod: 'cash',
+    qrPayload: JSON.stringify({ orderId: 'order-2', code: 'UTTT-1002', buyerId: 'buyer-1', sellerId: 'seller-1', timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), status: 'preparing' }),
     rated: false,
   },
   {
@@ -59,7 +61,8 @@ export const mockOrders: Order[] = [
     status: 'pending',
     createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
     pickupLocation: 'Puerta 3 - Edificio A',
-    paymentMethod: 'Tarjeta universitaria',
+    paymentMethod: 'cash',
+    qrPayload: JSON.stringify({ orderId: 'order-3', code: 'UTTT-1003', buyerId: 'buyer-1', sellerId: 'seller-1', timestamp: new Date(Date.now() - 3600000 * 5).toISOString(), status: 'pending' }),
     rated: false,
   },
   {
@@ -78,7 +81,8 @@ export const mockOrders: Order[] = [
     status: 'cancelled',
     createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
     pickupLocation: 'Puerta 3 - Edificio A',
-    paymentMethod: 'Efectivo',
+    paymentMethod: 'cash',
+    qrPayload: JSON.stringify({ orderId: 'order-4', code: 'UTTT-1004', buyerId: 'buyer-1', sellerId: 'seller-1', timestamp: new Date(Date.now() - 86400000 * 7).toISOString(), status: 'cancelled' }),
     rated: false,
   },
 ];

@@ -35,6 +35,8 @@ export function Badge({ label, tone = 'neutral', style }: BadgeProps) {
 
 const styles = StyleSheet.create({
   base: {
+    maxWidth: '100%',
+    flexShrink: 1,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -42,5 +44,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 11,
+    lineHeight: 16,
+    flexShrink: 1,
   },
 });
