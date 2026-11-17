@@ -15,6 +15,11 @@
 
 # Historial de cambios
 
+## V1.2 — guía y configuración para colaborador remoto
+- Usuario solicita subir lo necesario para que un compañero clone y ejecute el cliente desde casa. READMEactualizado, docs/COLABORACION.md añadido, .nvmrc24 y comentarios de .env.example con clavespúblicas a completar localmente. .gitignore ignora todaslas variantes.env salvo ejemplo; sin cambiar códigoapp/dependencias/lock/backend ni compartir sesión.
+- Clonación remota limpia deV1.2 baseb6a8890 en temporal independiente: npmci exitoso, tsc0errores,640/640tests/40suites, Doctor20/20, manifest/lock/appconfigsin cambios. BundleAndroidHTTP200/14,057,550bytes con plantilla pública sin Supabasekey, Metrodetenido. Node25.4/npm11.7local dieron advertenciasengines; Node24LTS sigue recomendado porCI. Esto no prueba OTP ni computadora/teléfono delcompañero.
+- Guía cubre LAN/túnel/Reloadcompleto, cuenta institucional propia, permisosGitHub y troubleshooting. Assetsruntime ya versionados; originalesFigma se compartenaparte para trabajo visual. EAS/APKrequiere accesos/proyecto/env; workflowactual no ejecutabuildreal y no se activa. ActualizadoSDD001/memoria, checksdocs/ignore y pruebas previas acommit; publicación solicitada sobreV1.2, sin despliegue de aplicación ni tiendas.
+
 ## Publicación autorizada V1.2
 - Usuario autoriza subir todos los cambios acumulados en una nueva ramaV1.2 y confirma explícitamente prueba física del hotfixrunSeller tras reloadcompleto enExpoGo: validaciónseller sinexcepción. Esa confirmación permite commit; no cierra007/006 ni acredita pasos comerciales no probados.
 - Se conserva historial local deHRDCORE (2commits previos pendientes de publicación) y se prepara commit del trabajo acumulado vendedor/productos/pedido simple/Figma/animaciones/hotfix con pruebas y SDD. Excluir.env, secretos, coverage, .expo y temporales.

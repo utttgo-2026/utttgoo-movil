@@ -1,5 +1,11 @@
 # Memoria — UTTT-Go Móvil
 
+## V1.2 — preparación de colaboración desde casa
+- READMEobsoleto sobre login demo/sinbackend reemplazado por estado actual y quickstart para ramaV1.2. Guía docs/COLABORACION.md con Node24/npmci, Windows/macOSLinux, plantilla.env, cuenta institucional propia, LAN/túnel, actualizaciónGit, errores y alcance real. .nvmrc24 añadido como recomendación sin enginesforzados ni cambio de dependencias.
+- .env.example conserva solo orígenes públicos/flags y publishablekey vacía a completar por responsable; se aclara formato público aceptado y flujo beta sin otorgarpermisos. .gitignore protege todaslas variantes.env salvo plantilla. Ninguna lectura/copia del .env privado para preparar el clon ni exposición de credenciales.
+- Validación desde clonación remota limpia b6a8890 en temporal: npmci, tsc0,640/640tests/40suites, Doctor20/20; paquete/lock/configsin cambios. BundleAndroid200/14,057,550bytes con solo URLs/flags de plantilla pública y clave vacía, Metrodetenido. Instalación se hizo con Node25.4/npm11.7local y dio engines; se recomienda24LTS comoCI, no se afirma prueba remotaNode24 ni OTPreal. Runtime y evidenciafísica delhotfix confirmado porusuario permanecen iguales.
+- Assetsruntime estánversionados; PNGsoriginalesFigma externos se solicitan al equipo para diseñar, no son requisito de arranque. EASpreview se documenta como preparaciónadicional: falta projectId y workflowbuildactual solo tieneplaceholder; no se activan builds/tiendas ni se simulaAPK. Repositorio público para clonar, escrituraGitHub requiereautorización propia.
+
 ## Publicación en rama V1.2 autorizada
 Usuario solicita subir todos los cambios acumulados a V1.2 y confirma en pregunta explícita que verificó físicamente el hotfixrunSeller enExpoGo tras recargacompleta, sin laexcepción. Se cumple la condición manual para crear el commit de esta entrega; resto del recorrido comercial/Figma permanece ENPRUEBAS y no se amplía esa evidencia a flujos no reportados. Rama creada desdeHRDCORE con sus2commits locales previos y el workingtree acumulado; solo fuente/tests/SDD, sin .env/credenciales/temporales. CIactual filtra push a main/HRDCORE y PR contra esasramas: un push exclusivo aV1.2 no disparaCI automáticamente.
 
