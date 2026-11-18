@@ -15,6 +15,16 @@
 
 # Historial de cambios
 
+## Integración V1.2 en `eas-google-play` (2026-11-18)
+
+- Se integraron selectivamente Seller, activación protegida por sesión, roles explícitos Buyer/Buyer+Seller y operaciones de productos respaldadas por los contratos AWS disponibles.
+- Se integraron categorías paginadas, catálogo/producto AWS, pedido directo y pago en efectivo. Producción no usa carrito ni fallback silencioso a mocks; `EXPO_PUBLIC_CATALOG_SOURCE=mock` solo opera con `__DEV__`.
+- Se conservaron OTP Supabase, login automático posterior a OTP, contraseña únicamente en memoria, JWT únicamente en SecureStore y las guardas actuales de sesión.
+- Se conservaron CI/CD, Security, CodeQL, Gitleaks, Dependabot, EAS, package `mx.edu.utt.uttgo`, Node `22.13.1` y el versionado remoto EAS. No se integraron configuraciones antiguas de V1.2.
+- Se integró SDD 007 y se documentan como pendientes `QR_VISUAL_ONLY`, fotografías/S3, historial/seguimiento AWS, notificaciones remotas, dashboard Seller y listado privado no respaldado.
+- La versión canónica de Expo queda en `1.2.0`; `versionCode` continúa delegado a EAS `autoIncrement` remoto.
+- Estado: EN PRUEBAS. Falta validación física en Expo Go; no se genera Production AAB ni se ejecuta `eas submit` en esta fase.
+
 ## EAS Production AAB Gate (2026-11-14)
 
 - Se registra `PREVIEW_PHYSICAL_TEST_PASSED` para el build EAS `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, commit validado `6b407e8`.

@@ -4,6 +4,15 @@
 
 La fase `004-ci-cd` concentra la preparación de calidad, seguridad y release. Node se fija en 22.13.1. La URL API se obtiene de entorno y usa la base HTTPS verificada `https://3.129.142.54.nip.io`; el cliente rechaza rutas de documentación como `/openapi/v1.json` y no se debilita la seguridad Android para Production. El cliente API interpreta el contrato `ApiError` centralmente, pero las pantallas continúan usando mocks hasta que exista contrato funcional aprobado.
 
+## Integración V1.2 — 2026-11-18
+
+- `eas-google-play` conserva la infraestructura de release y seguridad; no se copian `eas.json`, workflows, configuración EAS, package ni variables desde V1.2.
+- Seller requiere sesión AWS válida, perfil Active y roles exactos `Buyer` o `Buyer + Seller`; el estado local nunca concede permisos.
+- El catálogo productivo usa AWS por defecto. El mock solo está permitido en desarrollo con `EXPO_PUBLIC_CATALOG_SOURCE=mock`; no existe fallback silencioso.
+- El pedido productivo es directo por producto, cantidad, notas y efectivo. `CartContext` se conserva como deuda histórica y no participa en el flujo AWS.
+- El QR del recibo es `QR_VISUAL_ONLY`; fotografías/S3, historial/seguimiento completo, dashboard Seller, notificaciones remotas y listado privado permanecen bloqueados hasta contratos/backend y evidencia física.
+- `app.json` es la única versión canónica y queda en `1.2.0`; EAS mantiene `appVersionSource: remote` y `autoIncrement: true`.
+
 ## Fase 005: demo y onboarding
 
 El demo invitado vive en `src/data/demo` y no utiliza el cliente API. Login y registro
