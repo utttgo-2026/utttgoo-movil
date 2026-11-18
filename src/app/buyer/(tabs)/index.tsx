@@ -10,8 +10,10 @@ import { mockFoods } from '@/data/mock';
 import { foodDetailRoute } from '@/navigation/buyerRoutes';
 import { useSafeBack } from '@/navigation/useSafeBack';
 import { colors, layout, spacing } from '@/theme';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsCatalog } from '@/components/catalog/AwsCatalog';
 
-export default function BuyerHomeScreen() {
+function MockBuyerHomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   useSafeBack();
@@ -38,6 +40,7 @@ export default function BuyerHomeScreen() {
     </Screen>
   );
 }
+export default function BuyerHomeScreen() { return usesMockCatalog() ? <MockBuyerHomeScreen /> : <AwsCatalog title="Inicio" />; }
 
 const styles = StyleSheet.create({
   header: { padding: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },

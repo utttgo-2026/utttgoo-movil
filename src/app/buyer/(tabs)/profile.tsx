@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Avatar, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
@@ -17,8 +17,6 @@ function ProfileContent() {
   const handleEditProfile = () => {
     Alert.alert('Editar perfil', 'Los datos del perfil ya se consultan en AWS. La pantalla de edición aún no está implementada.');
   };
-
-  const openLegal = (url: string) => { void Linking.openURL(url); };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -55,6 +53,7 @@ function ProfileContent() {
           onPress={handleEditProfile}
           style={styles.editButton}
         />
+        <AppButton label="Quiero vender" variant="outline" onPress={() => router.push('/seller')} />
 
         <Surface style={styles.settingsCard} bordered>
           <View style={styles.settingsRow}>
@@ -77,16 +76,6 @@ function ProfileContent() {
             <AppText variant="body">Ayuda y soporte</AppText>
             <Ionicons name="chevron-forward" size={16} color={colors.textSubtle} />
           </View>
-          <AppButton
-            label="Política de privacidad"
-            variant="ghost"
-            onPress={() => openLegal('https://utttgo-2026.github.io/utttgo-legal/privacidad.html')}
-          />
-          <AppButton
-            label="Eliminar cuenta"
-            variant="ghost"
-            onPress={() => openLegal('https://utttgo-2026.github.io/utttgo-legal/eliminar-cuenta.html')}
-          />
         </Surface>
 
         <View style={styles.logoutContainer}>

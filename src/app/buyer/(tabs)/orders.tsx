@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -73,7 +75,8 @@ function OrdersContent() {
   );
 }
 
-export default function OrdersScreen() {
+export default function OrdersScreen() { return usesMockCatalog() ? <MockOrdersScreen /> : <AwsOrdersPending />; }
+function MockOrdersScreen() {
   return <RequireSession title="Mis pedidos" inTabs><OrdersContent /></RequireSession>;
 }
 

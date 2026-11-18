@@ -7,7 +7,11 @@ import { AppButton, AppHeader, AppText, Badge, Screen, Surface } from '@/compone
 import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { mockOrders, getOrderStatusLabel, getOrderStatusColor } from '@/data/mock';
 
-export default function OrderTrackingScreen() {
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
+
+export default function OrderTrackingScreen() { return usesMockCatalog() ? <MockOrderTrackingScreen /> : <AwsOrdersPending />; }
+function MockOrderTrackingScreen() {
   const router = useRouter();
 
   const order = mockOrders[0];

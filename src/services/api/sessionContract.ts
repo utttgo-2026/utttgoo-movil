@@ -1,9 +1,10 @@
-import type { AuthMeResponse, BackendRole, UserProfileResponse } from '@/types/api';
-import type { User, UserRole } from '@/types/models';
+import type { User } from '@/types/models';
+import type { AuthMeResponse, UserProfileResponse, AwsRoles } from '@/types/api';
 import { institutionalEmail } from '@/utils/apiValidation';
 
 import { ApiError } from './errors';
 
+/** Only response shapes explicitly confirmed by the backend may have decoders. */
 export interface SessionContract {
   decodeLogin: (data: unknown) => string;
   decodeLoginUser?: (data: unknown, submittedEmail: string) => User;
@@ -15,88 +16,100 @@ export interface AwsLoginResponse {
   accessToken: string;
   expiresIn: number;
   tokenType: 'Bearer';
-  user: { id: string; roles: BackendRole[]; accountStatus: 'Active' };
+  user: { id: string; roles: AwsRoles; accountStatus: 'Active' };
 }
 
-const roleMap: Record<BackendRole, UserRole> = { Buyer: 'buyer', Seller: 'seller', Admin: 'admin' };
+function invalidLogin(): never {
+  throw new ApiError('invalid_response', 'La respuesta de inicio de sesión no cumple el contrato confirmado de una cuenta Buyer activa.');
+}
 
-function invalid(message: string): never { throw new ApiError('invalid_response', message); }
-function record(value: unknown, message: string): Record<string, unknown> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return invalid(message);
+function record(value: unknown, invalid: () => never = invalidLogin): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return invalid();
   return value as Record<string, unknown>;
 }
-function validText(value: unknown): value is string { return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value); }
-function validId(value: unknown): value is string { return validText(value) && Boolean(value.trim()) && value === value.trim(); }
-function validRoles(value: unknown): value is BackendRole[] {
-  return Array.isArray(value) && value.length > 0 && value.every((role) => typeof role === 'string' && role in roleMap);
-}
-function mapRole(roles: BackendRole[]): UserRole {
-  const mapped = roles.map((role) => roleMap[role]);
-  if (mapped.length === 0) return invalid('La respuesta no contiene roles válidos.');
-  return mapped[0];
-}
-function validatedEmail(value: unknown): string {
-  if (!validText(value)) return invalid('La respuesta no contiene un correo válido.');
-  try { return institutionalEmail(value); } catch { return invalid('La respuesta no contiene un correo institucional válido.'); }
+
+function invalidMe(): never {
+  throw new ApiError('invalid_response', 'La identidad o el perfil devueltos por AWS no cumplen el contrato de una cuenta Buyer activa.');
 }
 
-export function decodeAwsLoginResponse(data: unknown): AwsLoginResponse {
-  const response = record(data, 'La respuesta de inicio de sesión no cumple el contrato Backend.');
-  const user = record(response.user, 'La respuesta de inicio de sesión no contiene un usuario válido.');
-  if (typeof response.accessToken !== 'string' || !response.accessToken || /\s|[\u0000-\u001f\u007f]/.test(response.accessToken) ||
-      typeof response.expiresIn !== 'number' || !Number.isSafeInteger(response.expiresIn) || response.expiresIn <= 0 ||
-      response.tokenType !== 'Bearer' || !validId(user.id) || !validRoles(user.roles) || user.accountStatus !== 'Active') {
-    return invalid('La respuesta de inicio de sesión no cumple el contrato Backend.');
-  }
-  return { accessToken: response.accessToken, expiresIn: response.expiresIn, tokenType: 'Bearer',
-    user: { id: user.id, roles: user.roles, accountStatus: 'Active' } };
+function validText(value: unknown): value is string {
+  return typeof value === 'string' && !/[\u0000-\u001f\u007f]/.test(value);
+}
+
+function validId(value: unknown): value is string {
+  return validText(value) && Boolean(value.trim()) && value === value.trim();
+}
+
+function validatedEmail(value: unknown): string {
+  if (!validText(value)) return invalidMe();
+  try { return institutionalEmail(value); } catch { return invalidMe(); }
+}
+
+export function validRoles(value: unknown): value is AwsRoles {
+  return Array.isArray(value) && value[0] === 'Buyer' &&
+    (value.length === 1 || (value.length === 2 && value[1] === 'Seller'));
 }
 
 export function decodeAuthMeResponse(data: unknown): AuthMeResponse {
-  const value = record(data, 'La respuesta de auth/me no cumple el contrato Backend.');
-  if (!validId(value.id) || !validText(value.displayName) || !validRoles(value.roles) || value.accountStatus !== 'Active') {
-    return invalid('La respuesta de auth/me no cumple el contrato Backend.');
-  }
-  return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName, roles: value.roles, accountStatus: 'Active' };
+  const value = record(data, invalidMe);
+  if (!validId(value.id) || !validText(value.displayName) || !validRoles(value.roles) || value.accountStatus !== 'Active') return invalidMe();
+  return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName, roles: value.roles as AwsRoles, accountStatus: 'Active' };
 }
 
 export function decodeUserProfileResponse(data: unknown): UserProfileResponse {
-  const value = record(data, 'La respuesta de users/me no cumple el contrato Backend.');
+  const value = record(data, invalidMe);
   if (!validId(value.id) || !validText(value.displayName) || !validRoles(value.roles) ||
-      (value.phone !== null && !validText(value.phone)) || (value.avatarUrl !== null && !validText(value.avatarUrl))) {
-    return invalid('La respuesta de users/me no cumple el contrato Backend.');
-  }
+      (value.phone !== null && !validText(value.phone)) || (value.avatarUrl !== null && !validText(value.avatarUrl))) return invalidMe();
   return { id: value.id, email: validatedEmail(value.email), displayName: value.displayName,
-    phone: value.phone as string | null, avatarUrl: value.avatarUrl as string | null, roles: value.roles };
+    phone: value.phone, avatarUrl: value.avatarUrl, roles: value.roles as AwsRoles };
+}
+
+/** Validate transport data, not unverified JWT claims. No signing secrets or token logs. */
+export function decodeAwsLoginResponse(data: unknown): AwsLoginResponse {
+  const response = record(data);
+  const user = record(response.user);
+  if (typeof response.accessToken !== 'string' || !response.accessToken || /\s|[\u0000-\u001f\u007f]/.test(response.accessToken) ||
+      typeof response.expiresIn !== 'number' || !Number.isSafeInteger(response.expiresIn) || response.expiresIn <= 0 ||
+      response.tokenType !== 'Bearer' || typeof user.id !== 'string' || !user.id.trim() || user.id !== user.id.trim() ||
+      /[\u0000-\u001f\u007f]/.test(user.id) || !validRoles(user.roles) || user.accountStatus !== 'Active') return invalidLogin();
+  // Project known properties only. Extra server fields are not copied into app/session storage.
+  return {
+    accessToken: response.accessToken, expiresIn: response.expiresIn, tokenType: 'Bearer',
+    user: { id: user.id, roles: user.roles as AwsRoles, accountStatus: 'Active' },
+  };
 }
 
 export const sessionContract: SessionContract = {
   decodeLogin: (data) => decodeAwsLoginResponse(data).accessToken,
   decodeLoginUser: (data, submittedEmail) => {
     const { user } = decodeAwsLoginResponse(data);
-    return { id: user.id, role: mapRole(user.roles), fullName: '', email: institutionalEmail(submittedEmail), accountStatus: 'Active' };
+    // Login supplies no displayName/email. Keep name absent and use the submitted email for presentation only.
+    return { id: user.id, role: user.roles.length === 2 ? 'seller' : 'buyer', fullName: '', email: institutionalEmail(submittedEmail) };
   },
   decodeIdentity: (data) => {
     const identity = decodeAuthMeResponse(data);
-    return { id: identity.id, email: identity.email, fullName: identity.displayName, role: mapRole(identity.roles), accountStatus: 'Active' };
+    return { id: identity.id, email: identity.email, fullName: identity.displayName, role: identity.roles.length === 2 ? 'seller' : 'buyer', accountStatus: 'Active' };
   },
   decodeProfile: (data, identity) => {
     const profile = decodeUserProfileResponse(data);
-    if (profile.id !== identity.id || profile.email !== identity.email || mapRole(profile.roles) !== identity.role) {
-      return invalid('El perfil Backend no corresponde con la identidad validada.');
-    }
+    if (profile.id !== identity.id || profile.email !== identity.email ||
+        (profile.roles.length === 2 ? 'seller' : 'buyer') !== identity.role) return invalidMe();
+    // Identity controls authorization; the editable profile only supplies presentation fields.
     return { ...identity, fullName: profile.displayName, phone: profile.phone, avatar: profile.avatarUrl };
   },
 };
 
 export function requireSessionContract(contract: SessionContract | null): SessionContract {
-  if (!contract) throw new ApiError('contract_unavailable', 'Falta confirmar el contrato de sesión e identidad del Backend.');
+  if (!contract) {
+    throw new ApiError('contract_unavailable', 'Falta confirmar el contrato de sesión e identidad del backend. El inicio de sesión real aún no está habilitado.');
+  }
   return contract;
 }
 
 export function requireProfileContract(contract: SessionContract) {
-  if (!contract.decodeIdentity || !contract.decodeProfile) {
-    throw new ApiError('contract_unavailable', 'Falta confirmar el contrato de perfil Backend.');
+  const { decodeIdentity, decodeProfile } = contract;
+  if (!decodeIdentity || !decodeProfile) {
+    throw new ApiError('contract_unavailable', 'Falta confirmar las respuestas de /auth/me y /users/me para restaurar la sesión o consultar el perfil. Puedes iniciar sesión nuevamente.');
   }
-  return { decodeIdentity: contract.decodeIdentity, decodeProfile: contract.decodeProfile };
+  return { decodeIdentity, decodeProfile };
 }

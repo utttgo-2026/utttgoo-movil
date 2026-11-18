@@ -21,8 +21,8 @@ export const authService = {
         password: requirePassword(input.password),
         displayName: registrationName(input.displayName),
       },
-      // Backend implementation returns 202; the deployed OpenAPI incorrectly says 200.
-      expectedStatuses: [202],
+      // Current OpenAPI documents200; retain the previously agreed202 without inferring a session.
+      expectedStatuses: [200, 202],
     });
   },
   getMe(token: string) {

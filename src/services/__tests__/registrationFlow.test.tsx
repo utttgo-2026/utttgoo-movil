@@ -70,8 +70,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     return view;
   }
 
-  test('HTTP202 envía solo el request acordado, limpia contraseñas y no inicia sesión', async () => {
-    const status = 202;
+  test.each([200, 202])('HTTP%s envía solo el request acordado, limpia contraseñas y no inicia sesión', async (status) => {
     transport.mockResolvedValue(new Response('{"private-response":true}', { status }));
     const view = await submit();
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/verify-email'));
@@ -123,7 +122,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
   test('422 registra código y clasificación, sin exponer el cuerpo del backend', async () => {
     transport.mockResolvedValue(new Response('{"private-response":"fixture-private"}', { status: 422 }));
     const view = await submit();
-    await waitFor(() => expect(view.getByText('El servidor no pudo procesar los datos. Revisa el correo institucional y los campos.')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('El servidor no pudo procesar los datos. Revisa los campos de la solicitud.')).toBeTruthy());
     expect(log).toHaveBeenCalledWith('[aws-register]', expect.objectContaining({ event: 'response', status: 422 }));
     expect(log).toHaveBeenCalledWith('[aws-register]', expect.objectContaining({ event: 'failure', kind: 'http' }));
     expect(mockPush).not.toHaveBeenCalled();
@@ -140,7 +139,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
   });
 
   test('registro AWS→reenvío→OTP nunca repite registro ni guarda sesión Supabase', async () => {
-    transport.mockResolvedValue(new Response('{}', { status: 202 }));
+    transport.mockResolvedValue(new Response('{}', { status: 200 }));
     jest.mocked(verificationClient.verify).mockResolvedValue(undefined);
     jest.mocked(verificationClient.resend).mockResolvedValue(undefined);
     const view = await submit();
@@ -156,8 +155,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     expect(view.getByTestId('session-fixture').props.children).toBe('{"user":null,"isAuthenticated":false}');
   });
 
-  test('Beta HTTP202 prepara login pendiente sin obligar a OTP ni crear sesión', async () => {
-    const status = 202;
+  test.each([200, 202])('Beta HTTP%s prepara login pendiente sin obligar a OTP ni crear sesión', async (status) => {
     process.env.EXPO_PUBLIC_BETA_REGISTRATION_ONLY = 'true';
     transport.mockResolvedValue(new Response('{}', { status }));
     const view = await submit();
@@ -216,7 +214,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     const view = await submit(undefined, undefined, true);
     await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
     expect(transport).toHaveBeenCalledTimes(1);
-    await act(async () => { finish(new Response('{}', { status: 202 })); });
+    await act(async () => { finish(new Response('{}', { status: 200 })); });
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
     await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
     expect(transport).toHaveBeenCalledTimes(1);

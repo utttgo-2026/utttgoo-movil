@@ -7,7 +7,11 @@ import { AppButton, AppHeader, AppText, Screen, Surface } from '@/components';
 import { colors, radii, spacing } from '@/theme';
 import { navigateBack } from '@/navigation/buyerRoutes';
 
-export default function RateOrderScreen() {
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
+
+export default function RateOrderScreen() { return usesMockCatalog() ? <MockRateOrderScreen /> : <AwsOrdersPending />; }
+function MockRateOrderScreen() {
   const router = useRouter();
   const [rating, setRating] = useState(0);
 

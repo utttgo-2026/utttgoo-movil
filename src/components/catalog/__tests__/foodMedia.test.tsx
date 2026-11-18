@@ -15,6 +15,7 @@ import ConfirmOrder from '@/app/buyer/(private)/confirm-order';
 import Welcome from '@/app/(auth)/welcome';
 import manifest from '../../../../specs/006-figma-ui-navigation-fixes/media-assets.generated.json';
 
+jest.mock('@/config/catalogSource', () => ({ usesMockCatalog: () => true }));
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('expo-image', () => ({ Image: (props: object) => {

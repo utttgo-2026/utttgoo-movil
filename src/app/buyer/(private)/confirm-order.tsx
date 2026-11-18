@@ -9,7 +9,11 @@ import { FoodImage } from '@/components/catalog/FoodImage';
 import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
 
-export default function ConfirmOrderScreen() {
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrderReview } from '@/components/catalog/AwsOrderFlow';
+
+export default function ConfirmOrderScreen() { return usesMockCatalog() ? <MockConfirmOrderScreen /> : <AwsOrderReview confirm />; }
+function MockConfirmOrderScreen() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
 

@@ -9,7 +9,11 @@ import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { formatCurrency } from '@/utils/format';
 import { mockOrders } from '@/data/mock';
 
-export default function OrderCreatedScreen() {
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsOrderReceipt } from '@/components/catalog/AwsOrderFlow';
+
+export default function OrderCreatedScreen() { return usesMockCatalog() ? <MockOrderCreatedScreen /> : <AwsOrderReceipt />; }
+function MockOrderCreatedScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
 

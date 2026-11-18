@@ -1,5 +1,6 @@
 import type { Href } from 'expo-router';
 import type { FoodAvailability, FoodItem } from '@/types/models';
+import type { ProductSort } from '@/types/api';
 
 export type CatalogParams = Record<string, string | string[] | undefined>;
 export interface CatalogSelection {
@@ -8,6 +9,7 @@ export interface CatalogSelection {
   availability: FoodAvailability | 'all';
   maxPrice?: number;
   sort: 'price' | 'rating';
+  awsSort?: ProductSort;
 }
 
 export function singleParam(value: string | string[] | undefined): string | undefined {
@@ -24,6 +26,7 @@ export function readCatalogSelection(params: CatalogParams): CatalogSelection {
     availability: availability === 'available' || availability === 'sold-out' || availability === 'scheduled' ? availability : 'all',
     maxPrice: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : undefined,
     sort: params.sort === 'price' ? 'price' : 'rating',
+    ...(['price_asc', 'price_desc', 'name_asc', 'created_desc'].includes(singleParam(params.awsSort) ?? '') ? { awsSort: params.awsSort as ProductSort } : {}),
   };
 }
 
@@ -48,6 +51,7 @@ export function selectionParams(selection: CatalogSelection): Record<string, str
     availability: selection.availability,
     maxPrice: selection.maxPrice === undefined ? '' : String(selection.maxPrice),
     sort: selection.sort,
+    ...(selection.awsSort ? { awsSort: selection.awsSort } : {}),
   };
 }
 

@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
-import { Pressable } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
-import { AppButton, AppHeader, AppText, Screen } from '@/components';
+import { AppHeader, AppText, Screen } from '@/components';
 import { colors, spacing } from '@/theme';
 import { RequireSession } from '@/components/navigation/RequireSession';
 import { mockNotifications } from '@/data/mock';
 import type { AppNotification } from '@/types/models';
+import { usesMockCatalog } from '@/config/catalogSource';
 
 function NotificationsContent() {
   const router = useRouter();
@@ -75,7 +75,14 @@ function NotificationsContent() {
 }
 
 export default function NotificationsScreen() {
-  return <RequireSession title="Avisos" inTabs><NotificationsContent /></RequireSession>;
+  return <RequireSession title="Avisos" inTabs>{usesMockCatalog() ? <NotificationsContent /> :
+    <Screen padded={false} edges={['top']}>
+      <AppHeader title="Notificaciones" showBack={false} />
+      <View style={{ padding: spacing.xl, gap: spacing.md }}>
+        <AppText variant="subtitle">Avisos remotos pendientes de integración</AppText>
+        <AppText>El backend todavía no publica el contrato de notificaciones. Aquí no se muestran avisos de demostración como si fueran eventos de tu cuenta.</AppText>
+      </View>
+    </Screen>}</RequireSession>;
 }
 
 const styles = StyleSheet.create({

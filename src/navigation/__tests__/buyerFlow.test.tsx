@@ -19,6 +19,7 @@ import PrivateLayout from '@/app/buyer/(private)/_layout';
 import OrderData from '@/app/buyer/(private)/order-data';
 import NotFound from '@/app/+not-found';
 
+jest.mock('@/config/catalogSource', () => ({ usesMockCatalog: () => true }));
 let mockAuthenticated = false;
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({
   user: mockAuthenticated ? { id: 'fixture-user', role: 'buyer', fullName: 'Fixture', email: 'fixture@uttt.edu.mx' } : null,

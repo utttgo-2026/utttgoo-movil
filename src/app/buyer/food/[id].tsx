@@ -10,8 +10,11 @@ import { formatCurrency } from '@/utils/format';
 import { mockFoods } from '@/data/mock';
 import type { FoodItem } from '@/types/models';
 import { FoodImage } from '@/components/catalog/FoodImage';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsProductDetail } from '@/components/catalog/AwsCatalog';
 
-export default function FoodDetailScreen() {
+export default function FoodDetailScreen() { return usesMockCatalog() ? <MockFoodDetailScreen /> : <AwsProductDetail />; }
+function MockFoodDetailScreen() {
   const router = useRouter();
   const { addItem, itemCount } = useCart();
   const { id } = useLocalSearchParams<{ id: string }>();

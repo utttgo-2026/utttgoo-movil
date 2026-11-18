@@ -10,8 +10,11 @@ import { mockFoods } from '@/data/mock';
 import { foodDetailRoute } from '@/navigation/buyerRoutes';
 import { filtersRoute, readCatalogSelection, selectFoods, selectionParams, type CatalogParams } from '@/utils/catalog';
 import { colors, layout, spacing } from '@/theme';
+import { usesMockCatalog } from '@/config/catalogSource';
+import { AwsCatalog } from '@/components/catalog/AwsCatalog';
 
-export default function AvailableNowScreen() {
+export default function AvailableNowScreen() { return usesMockCatalog() ? <MockAvailableNowScreen /> : <AwsCatalog title="Disponible ahora" />; }
+function MockAvailableNowScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<CatalogParams>();
   const selection = { ...readCatalogSelection(params), availability: 'available' as const };
