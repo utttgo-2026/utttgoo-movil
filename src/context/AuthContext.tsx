@@ -1,13 +1,18 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { errorMessage } from '@/services/api/errors';
-import { createAuthSession } from '@/services/authSession';
-import type { UserPatch } from '@/types/api';
+import { ApiError, errorMessage } from '@/services/api/errors';
+import { createAuthSession, type SellerSessionResult, type SellerSubmissionState } from '@/services/authSession';
+import type { SellerActivationRequest, UserPatch, CreateProductRequest, ProductResponse, ProductPatch, OrderResponse, ProductAvailabilityRequest } from '@/types/api';
+import { orderNotes } from '@/services/api/orderService';
 import type { User, UserRole } from '@/types/models';
 import { resendSignupOtp, verifySignupOtp } from '@/services/supabaseAuth';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
+export type SellerOperationResult = ({ success: true; received: boolean; uncertain: boolean } & SellerSessionResult) |
+  { success: false; error: string; status?: number; received?: boolean; uncertain?: boolean };
+export type CommerceResult<T> = { success: true; data: T } | { success: false; error: string };
+export interface OrderPreparation { product: ProductResponse; quantity: number; key: string; notes: string }
 
 interface AuthContextValue {
   user: User | null;
@@ -23,9 +28,42 @@ interface AuthContextValue {
   refreshProfile: () => Promise<AuthResult>;
   updateProfile: (patch: UserPatch) => Promise<AuthResult>;
   logout: () => Promise<AuthResult>;
+  requestSellerActivation: (input: SellerActivationRequest) => Promise<SellerOperationResult>;
+  consultSeller: () => Promise<SellerOperationResult>;
+  sessionProducts: ProductResponse[];
+  createProduct: (input: CreateProductRequest) => Promise<CommerceResult<ProductResponse>>;
+  consultProduct: (id: string, patch?: ProductPatch) => Promise<CommerceResult<ProductResponse>>;
+  updateProductStatus: (id: string, input: ProductAvailabilityRequest) => Promise<CommerceResult<ProductResponse>>;
+  orderPreparation: OrderPreparation | null;
+  lastOrder: OrderResponse | null;
+  prepareOrder: (product: ProductResponse, quantity: number) => AuthResult;
+  updateOrderNotes: (notes: string) => AuthResult;
+  submitOrder: () => Promise<CommerceResult<OrderResponse>>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+type SellerSessionPort = Pick<ReturnType<typeof createAuthSession>, 'sellerOperation' | 'sellerSubmissionState'>;
+const sellerSessionReloadMessage = 'El módulo vendedor está desactualizado o es incompatible. Recarga completamente la app para restaurar la sesión y vuelve a validar.';
+
+/** Fast Refresh can retain an instance created before a mandatory class method was introduced. */
+function requireSellerSession(session: unknown): asserts session is SellerSessionPort {
+  if (typeof session !== 'object' || !session) throw new ApiError('configuration', sellerSessionReloadMessage);
+  const candidate = session as Record<string, unknown>;
+  if (typeof candidate.sellerOperation !== 'function' || typeof candidate.sellerSubmissionState !== 'function') {
+    throw new ApiError('configuration', sellerSessionReloadMessage);
+  }
+}
+function readSellerSubmissionState(session: unknown): SellerSubmissionState {
+  requireSellerSession(session);
+  let value: unknown;
+  try { value = session.sellerSubmissionState(); }
+  catch { throw new ApiError('configuration', sellerSessionReloadMessage); }
+  if (typeof value !== 'object' || !value) throw new ApiError('configuration', sellerSessionReloadMessage);
+  const state = value as Record<string, unknown>;
+  if (typeof state.received !== 'boolean' || typeof state.uncertain !== 'boolean') throw new ApiError('configuration', sellerSessionReloadMessage);
+  // Only boolean metadata leaves the coordinator; never spread arbitrary runtime fields.
+  return { received: state.received, uncertain: state.uncertain };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session] = useState(createAuthSession);
@@ -34,9 +72,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionError, setSessionError] = useState<string>();
   const revision = useRef(0);
   const pendingCredentials = useRef<{ email: string; password: string } | null>(null);
+  const [sessionProducts, setSessionProducts] = useState<ProductResponse[]>([]);
+  const [orderPreparation, setOrderPreparation] = useState<OrderPreparation | null>(null);
+  const [lastOrder, setLastOrder] = useState<OrderResponse | null>(null);
+  const preparationRef = useRef<OrderPreparation | null>(null);
+  const preparationSequence = useRef(0);
+  const orderSubmitting = useRef(false);
+  const resetCommerce = useCallback(() => {
+    setSessionProducts([]); setOrderPreparation(null); preparationRef.current = null; setLastOrder(null);
+  }, []);
 
   const restoreSession = useCallback(async () => {
     const current = ++revision.current;
+    resetCommerce();
     setUser(null);
     setStatus('restoring');
     setSessionError(undefined);
@@ -50,11 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus('blocked');
       setSessionError(errorMessage(error));
     }
-  }, [session]);
+  }, [session, resetCommerce]);
 
   useEffect(() => {
-    let mounted = true;
     const current = ++revision.current;
+    let mounted = true;
     void session.restore().then((restored) => {
       if (!mounted || current !== revision.current) return;
       setUser(restored);
@@ -69,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     const current = ++revision.current;
+    resetCommerce();
     setUser(null);
     setStatus('anonymous');
     setSessionError(undefined);
@@ -85,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { success: false, error: errorMessage(error) };
     }
-  }, [session]);
+  }, [session, resetCommerce]);
 
   const register = useCallback(async (fullName: string, email: string, password: string): Promise<AuthResult> => {
     try {
@@ -104,7 +153,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       await verifySignupOtp(email.trim().toLowerCase(), otp);
-      // OTP válido consume el único paso que necesita la contraseña temporal.
       pendingCredentials.current = null;
       return await login(credentials.email, credentials.password);
     } catch (error) {
@@ -134,17 +182,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error) {
       if (current === revision.current) {
+        if (error instanceof ApiError && error.status === 401) resetCommerce();
         setUser(null);
         setStatus('blocked');
         setSessionError(errorMessage(error));
       }
       return { success: false, error: errorMessage(error) };
     }
-  }, [session]);
+  }, [session, resetCommerce]);
 
   const logout = useCallback(async (): Promise<AuthResult> => {
     const current = ++revision.current;
-    pendingCredentials.current = null;
+    resetCommerce();
     setUser(null);
     setStatus('anonymous');
     setSessionError(undefined);
@@ -159,24 +208,129 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { success: false, error: errorMessage(error) };
     }
-  }, [session]);
+  }, [session, resetCommerce]);
 
   const refreshProfile = useCallback(() => loadProfile(), [loadProfile]);
+  const runSeller = useCallback(async (input?: SellerActivationRequest): Promise<SellerOperationResult> => {
+    const current = revision.current;
+    if (status !== 'authenticated') return { success: false, error: 'Se requiere una sesión validada.' };
+    let submission: SellerSubmissionState = { received: false, uncertain: false };
+    let contractChecked = false;
+    let operationStarted = false;
+    try {
+      submission = readSellerSubmissionState(session);
+      contractChecked = true;
+      operationStarted = true;
+      const response = await session.sellerOperation(input);
+      if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
+      submission = readSellerSubmissionState(session);
+      if (!response || (response.kind !== 'missing' && response.kind !== 'active') || typeof response.roleSynced !== 'boolean') {
+        throw new ApiError('configuration', sellerSessionReloadMessage);
+      }
+      if (response.user) setUser(response.user);
+      return { success: true, ...response, ...submission };
+    } catch (error) {
+      if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
+      if (error instanceof ApiError && error.status === 401) {
+        ++revision.current; resetCommerce(); setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));
+      }
+      if (contractChecked) {
+        try { submission = readSellerSubmissionState(session); }
+        catch {
+          // Never throw from the error handler or declare an attempted activation safe to repeat.
+          submission = { ...submission, uncertain: submission.uncertain || !!(input && operationStarted) };
+        }
+      }
+      if (input && operationStarted && error instanceof ApiError && error.kind === 'configuration') {
+        submission = { ...submission, uncertain: true };
+      }
+      return { success: false, error: errorMessage(error), status: error instanceof ApiError ? error.status : undefined, ...submission };
+    }
+  }, [session, status, resetCommerce]);
+  const requestSellerActivation = useCallback((input: SellerActivationRequest) => runSeller(input), [runSeller]);
+  const consultSeller = useCallback(() => runSeller(), [runSeller]);
+  const runCommerce = useCallback(async <T,>(operation: () => Promise<T>): Promise<CommerceResult<T>> => {
+    const current = revision.current;
+    if (status !== 'authenticated') return { success: false, error: 'Se requiere una sesión validada.' };
+    try {
+      const data = await operation();
+      if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
+      return { success: true, data };
+    } catch (error) {
+      if (current === revision.current && error instanceof ApiError && error.status === 401) {
+        ++revision.current; resetCommerce(); setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));
+      }
+      return { success: false, error: errorMessage(error) };
+    }
+  }, [status, resetCommerce]);
+  const rememberProduct = useCallback((product: ProductResponse) => {
+    setSessionProducts((items) => [product, ...items.filter((item) => item.id !== product.id)]);
+  }, []);
+  const createProduct = useCallback(async (input: CreateProductRequest) => {
+    const current = revision.current;
+    const result = await runCommerce(() => session.createProduct(input));
+    if (current !== revision.current) return { success: false as const, error: 'La operación de sesión fue cancelada.' };
+    if (result.success) rememberProduct(result.data);
+    return result;
+  }, [session, runCommerce, rememberProduct]);
+  const consultProduct = useCallback(async (id: string, patch?: ProductPatch) => {
+    const current = revision.current;
+    const result = await runCommerce(() => session.ownProduct(id, patch));
+    if (current !== revision.current) return { success: false as const, error: 'La operación de sesión fue cancelada.' };
+    if (result.success) rememberProduct(result.data);
+    return result;
+  }, [session, runCommerce, rememberProduct]);
+  const updateProductStatus = useCallback(async (id: string, input: ProductAvailabilityRequest) => {
+    const current = revision.current;
+    const result = await runCommerce(() => session.updateProductStatus(id, input));
+    if (current !== revision.current) return { success: false as const, error: 'La operación de sesión fue cancelada.' };
+    if (result.success) rememberProduct(result.data);
+    return result;
+  }, [session, runCommerce, rememberProduct]);
+  const prepareOrder = useCallback((product: ProductResponse, quantity: number): AuthResult => {
+    if (orderSubmitting.current) return { success: false, error: 'Espera el resultado del pedido en curso.' };
+    if (status !== 'authenticated' || !user) return { success: false, error: 'Inicia sesión para preparar tu pedido.' };
+    if (!product.isAvailable || product.status !== 'Active' || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > product.stock) return { success: false, error: 'Cantidad no disponible.' };
+    // One preparation is one product. Reopening the same preparation keeps its duplicate-protection key.
+    const previous = preparationRef.current;
+    const prepared = previous?.product.id === product.id && previous.quantity === quantity ? { ...previous, product } :
+      { product, quantity, key: String(++preparationSequence.current), notes: '' };
+    preparationRef.current = prepared; setOrderPreparation(prepared); setLastOrder(null);
+    return { success: true };
+  }, [status, user]);
+  const updateOrderNotes = useCallback((notes: string): AuthResult => {
+    if (status !== 'authenticated' || !preparationRef.current) return { success: false, error: 'Prepara un producto en tu sesión antes de añadir notas.' };
+    if (orderSubmitting.current) return { success: false, error: 'Espera el resultado del pedido en curso.' };
+    try {
+      const updated = { ...preparationRef.current, notes: orderNotes(notes) };
+      preparationRef.current = updated; setOrderPreparation(updated);
+      return { success: true };
+    } catch (error) { return { success: false, error: errorMessage(error) }; }
+  }, [status]);
+  const submitOrder = useCallback(async () => {
+    if (orderSubmitting.current) return { success: false as const, error: 'Ya hay un pedido en curso.' };
+    const prepared = preparationRef.current;
+    if (!prepared) return { success: false as const, error: 'Prepara un producto antes de confirmar.' };
+    const current = revision.current;
+    orderSubmitting.current = true;
+    try {
+      const result = await runCommerce(() => session.createOrder({ productId: prepared.product.id, quantity: prepared.quantity,
+        ...(prepared.notes ? { notes: prepared.notes } : {}) }, prepared.key));
+      if (current !== revision.current) return { success: false as const, error: 'La operación de sesión fue cancelada.' };
+      if (result.success) {
+        setLastOrder(result.data);
+        if (preparationRef.current?.key === prepared.key) { preparationRef.current = null; setOrderPreparation(null); }
+      }
+      return result;
+    } finally { orderSubmitting.current = false; }
+  }, [session, runCommerce]);
   const value = useMemo<AuthContextValue>(() => ({
-    user,
-    role: user?.role ?? null,
-    status,
-    sessionError,
+    user, role: user?.role ?? null, status, sessionError,
     isAuthenticated: status === 'authenticated' && user !== null,
-    login,
-    register,
-    verifyEmail,
-    resendEmailCode,
-    restoreSession,
-    refreshProfile,
-    updateProfile: loadProfile,
-    logout,
-  }), [user, status, sessionError, login, register, verifyEmail, resendEmailCode, restoreSession, refreshProfile, loadProfile, logout]);
+    login, register, verifyEmail, resendEmailCode, restoreSession, refreshProfile, updateProfile: loadProfile, logout, requestSellerActivation, consultSeller,
+    sessionProducts, createProduct, consultProduct, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder,
+  }), [user, status, sessionError, login, register, verifyEmail, resendEmailCode, restoreSession, refreshProfile, loadProfile, logout, requestSellerActivation, consultSeller,
+    sessionProducts, createProduct, consultProduct, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder]);
 
   // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
