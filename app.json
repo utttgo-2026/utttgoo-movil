@@ -2,7 +2,7 @@
   "expo": {
     "name": "UTTT-GO",
     "slug": "utttgoo",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/uttgo-icon.png",
     "scheme": "uttgo",
