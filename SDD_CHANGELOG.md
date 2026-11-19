@@ -31,6 +31,12 @@
 - Evidencia confirmada: `645/645` tests en `46` suites, TypeScript sin errores, lint sin errores, Expo Doctor `20/20`, npm audit sin vulnerabilidades Critical/High, CI/Security/CodeQL/Gitleaks exitosos y prueba física Android aprobada.
 - Estado de release: `V12_PHYSICAL_TEST_PASSED`; se prepara Production AAB `1.2.0` con versionado remoto EAS. QR backend, S3 completo, notificaciones remotas e historial AWS completo permanecen pendientes.
 
+## Legal y evidencia Production V1.2.0 (2026-11-19)
+
+- Se agregaron enlaces accesibles desde `Perfil > Privacidad y seguridad` para la política de privacidad y la solicitud de eliminación de cuenta, usando el navegador seguro de Expo.
+- Se verificó el AAB Production EAS `cd4516ec-4d0c-451b-a77b-2b776380bbc1`: `FINISHED`, versión `1.2.0`, versionCode `3`, paquete `mx.edu.utt.uttgo`.
+- La carga a Google Play Closed Testing sigue siendo manual; la URL oficial de Landing continúa pendiente de documentación.
+
 ## EAS Production AAB Gate (2026-11-14)
 
 - Se registra `PREVIEW_PHYSICAL_TEST_PASSED` para el build EAS `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, commit validado `6b407e8`.

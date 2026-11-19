@@ -6,7 +6,7 @@
 - [x] Preservar OTP, SecureStore, sesión única, CI/CD y EAS de `eas-google-play`.
 - [x] Documentar límites: `QR_VISUAL_ONLY`, S3/fotografías, historial/seguimiento, notificaciones, dashboard y listado Seller privado.
 - [ ] Validar físicamente en Expo Go el recorrido completo y confirmar persistencia backend.
-- [ ] Generar Production AAB o publicar en Google Play Closed Testing; bloqueado hasta aprobación física explícita.
+- [x] Generar Production AAB `1.2.0` (versionCode `3`); queda pendiente la carga manual en Google Play Closed Testing.
 
 ## Hotfix runSeller — EN PRUEBAS
 - [x] Localizar expresión176: sellerSubmissionState() dentro de catch; métodoexiste en claseactual/factory, instanciaretenida poruseState no se recrea al renderizar.

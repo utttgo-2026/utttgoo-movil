@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Avatar, Screen, Surface } from '@/components';
+import { legalUrls } from '@/config/legal';
 import { useAuth } from '@/context/AuthContext';
 import { colors, layout, spacing } from '@/theme';
 import { RequireSession } from '@/components/navigation/RequireSession';
@@ -25,6 +27,14 @@ function ProfileContent() {
     setLoggingOut(false);
     if (result.success) router.replace('/welcome');
     else setLogoutError(result.error);
+  };
+
+  const openLegalDocument = async (url: string, title: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Alert.alert(title, 'No fue posible abrir el documento. Intenta nuevamente más tarde.');
+    }
   };
 
   return (
@@ -78,6 +88,33 @@ function ProfileContent() {
           </View>
         </Surface>
 
+        <Surface style={styles.legalCard} bordered>
+          <AppText variant="subtitle">Privacidad y seguridad</AppText>
+          <AppText variant="caption" color={colors.textMuted}>
+            Consulta cómo se usan tus datos y cómo solicitar la eliminación de tu cuenta.
+          </AppText>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Abrir política de privacidad"
+            onPress={() => void openLegalDocument(legalUrls.privacy, 'Política de privacidad')}
+            style={styles.legalRow}
+          >
+            <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+            <AppText variant="body" color={colors.primary} style={styles.legalLabel}>Política de privacidad</AppText>
+            <Ionicons name="open-outline" size={16} color={colors.primary} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Abrir eliminación de cuenta"
+            onPress={() => void openLegalDocument(legalUrls.accountDeletion, 'Eliminación de cuenta')}
+            style={styles.legalRow}
+          >
+            <Ionicons name="trash-outline" size={20} color={colors.primary} />
+            <AppText variant="body" color={colors.primary} style={styles.legalLabel}>Eliminar cuenta y datos</AppText>
+            <Ionicons name="open-outline" size={16} color={colors.primary} />
+          </Pressable>
+        </Surface>
+
         <View style={styles.logoutContainer}>
           <AppButton
             label="Cerrar sesión"
@@ -128,6 +165,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
+  },
+  legalCard: {
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  legalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: 44,
+  },
+  legalLabel: {
+    flex: 1,
   },
   logoutContainer: {
     marginTop: spacing.xl,

@@ -5,6 +5,6 @@ URLs oficiales proporcionadas por el equipo:
 - Política de privacidad: https://utttgo-2026.github.io/utttgo-legal/privacidad.html
 - Eliminación de cuenta: https://utttgo-2026.github.io/utttgo-legal/eliminar-cuenta.html
 
-La aplicación todavía requiere una spec funcional para exponer estos enlaces desde una pantalla o acción accesible. Estado: `PENDIENTE`.
+La aplicación expone ambos enlaces desde `Perfil > Privacidad y seguridad` mediante el navegador seguro de Expo. Estado: `IMPLEMENTADO`.
 
-No se modifica la Landing Page ni se crea una copia dentro del repositorio móvil.
+La Landing Page no se modifica ni se crea una copia dentro del repositorio móvil. La URL legal pública debe mantenerse disponible y documentarse en la ficha de publicación.

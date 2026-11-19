@@ -3,11 +3,11 @@
 Estado de auditoría inicial:
 
 - Package Android: `COMPLETADO`, `mx.edu.utt.uttgo`.
-- AAB Production: `READY_FOR_CLOSED_TEST_BUILD`, pendiente de ejecutar el release Production.
+- AAB Production: `FINISHED`, build `cd4516ec-4d0c-451b-a77b-2b776380bbc1`, versión `1.2.0`, versionCode `3`, pendiente de carga manual.
 - Project ID EAS: configurado y usado por el proyecto `@utttgoo/uttgoo`.
 - `EXPO_TOKEN`: validado en CI para el Preview y requerido por el release Production.
 - Backend Production HTTPS: `RESOLVED`, verificado el 2026-11-12 mediante TLS válido, `GET /health` `200` y OpenAPI accesible.
-- Política de privacidad: `PENDIENTE`, debe exponerse desde la aplicación mediante una spec funcional.
+- Política de privacidad: `IMPLEMENTADA_EN_APP`, accesible desde `Perfil > Privacidad y seguridad`; URLs públicas verificadas.
 - Landing Netlify: `PENDING_LANDING_URL_DOCUMENTATION`.
 - Carga a Google Play: `MANUAL_GOOGLE_PLAY_UPLOAD`.
 - Demo invitado: `COMPLETADO` en código; requiere validación manual en Android.
@@ -20,4 +20,4 @@ Estado de auditoría inicial:
 - Production gate: `PROD-EAS-001` a `PROD-EAS-008`; no se ejecuta `eas submit`.
 - Destino inicial: Google Play Closed Testing mediante carga manual del AAB.
 
-El release Production sigue siendo manual y requiere CI/Security verdes, ejecución del workflow y confirmación del AAB `FINISHED`.
+El release Production sigue siendo manual; el AAB está `FINISHED` y requiere carga en Google Play Closed Testing. La URL real de Landing continúa pendiente de documentación.
