@@ -23,7 +23,13 @@
 - Se conservaron CI/CD, Security, CodeQL, Gitleaks, Dependabot, EAS, package `mx.edu.utt.uttgo`, Node `22.13.1` y el versionado remoto EAS. No se integraron configuraciones antiguas de V1.2.
 - Se integró SDD 007 y se documentan como pendientes `QR_VISUAL_ONLY`, fotografías/S3, historial/seguimiento AWS, notificaciones remotas, dashboard Seller y listado privado no respaldado.
 - La versión canónica de Expo queda en `1.2.0`; `versionCode` continúa delegado a EAS `autoIncrement` remoto.
-- Estado: EN PRUEBAS. Falta validación física en Expo Go; no se genera Production AAB ni se ejecuta `eas submit` en esta fase.
+- Estado: `V12_PHYSICAL_TEST_PASSED`. Preview V1.2.0 aprobado en prueba física Android; queda autorizada la preparación del Production AAB. No se ejecuta `eas submit` ni se publica automáticamente en Google Play.
+
+## Preparación Production AAB V1.2.0 (2026-11-19)
+
+- Preview EAS V1.2.0 aprobado: build `4095ca00-b95e-4990-bceb-64ba7561f1a5`, commit `a33041eb166e3a1c47919a77395cc6f3e9e68677`.
+- Evidencia confirmada: `645/645` tests en `46` suites, TypeScript sin errores, lint sin errores, Expo Doctor `20/20`, npm audit sin vulnerabilidades Critical/High, CI/Security/CodeQL/Gitleaks exitosos y prueba física Android aprobada.
+- Estado de release: `V12_PHYSICAL_TEST_PASSED`; se prepara Production AAB `1.2.0` con versionado remoto EAS. QR backend, S3 completo, notificaciones remotas e historial AWS completo permanecen pendientes.
 
 ## EAS Production AAB Gate (2026-11-14)
 

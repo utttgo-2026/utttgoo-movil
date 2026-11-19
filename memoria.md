@@ -12,6 +12,8 @@ La fase `004-ci-cd` concentra la preparación de calidad, seguridad y release. N
 - El pedido productivo es directo por producto, cantidad, notas y efectivo. `CartContext` se conserva como deuda histórica y no participa en el flujo AWS.
 - El QR del recibo es `QR_VISUAL_ONLY`; fotografías/S3, historial/seguimiento completo, dashboard Seller, notificaciones remotas y listado privado permanecen bloqueados hasta contratos/backend y evidencia física.
 - `app.json` es la única versión canónica y queda en `1.2.0`; EAS mantiene `appVersionSource: remote` y `autoIncrement: true`.
+- Preview V1.2.0 aprobado en prueba física Android: `V12_PHYSICAL_TEST_PASSED`, build EAS `4095ca00-b95e-4990-bceb-64ba7561f1a5`, commit `a33041eb166e3a1c47919a77395cc6f3e9e68677`.
+- La evidencia de release registra 645/645 tests en 46 suites, CI/Security/CodeQL/Gitleaks exitosos y Expo Doctor 20/20; Production AAB queda como siguiente gate y no se ejecuta `eas submit`.
 
 ## Fase 005: demo y onboarding
 
