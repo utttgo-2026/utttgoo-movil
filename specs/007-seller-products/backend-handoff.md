@@ -1,5 +1,31 @@
 # Contratos faltantes y prueba manual007
 
+## Reapertura188 — informe vigente y repetición pendiente
+**NORESUELTO físicamente.** Usuario informa persistencia deTypeError188:59 en consulta/alta y no puede repetirtrazas ahora. No usar como aceptación el reporte anterior.
+
+### Qué se pudo comprobar
+- Archivo inicialc606435188: `if (status !== 'authenticated') return { success: false, error: 'Se requiere una sesión validada.' };`. Allí no se llama ninguna función; no es evidencia de sellerSubmissionStateundefined ni de otro método concreto.
+- Metro8081: projectRootcorrecto, SDK58, una fuenteAuthContext y su sourceContent coincide conHEADantes deeditar. No había targetsdeinspector en la consulta inicial; no se pudo comprobar el bundle/ExpoGoversion delteléfono. Posible diferencia de simbolicación/bundle/cierreantiguo queda abierta, no diagnosticada comohecho.
+- Se corrigió la verificación: usar manifiestoExpoGo con enginehermes/reactCompilertrue/hermes-stable; smokeantiguo usaba querygenérica. Módulos realesMetro compilados ejecutan lookup404→alta201→GETActive/roles→lookup200 enVMNode con bridges/red/storagefake y todas las dependencias consultadas como function. No se replicó el TypeErrorfísico ni se consultóAWSprivado.
+- InstrumentaciónDEV temporal [seller-probe-r2] fue retirada del código de aplicación. Solo recogió operación/etapa/typeof/status en entorno aislado; no hay logs de secretos/sessionobj ni datosfísicos para afirmar siAWSrespondió antes delerrorreal.
+
+### Cambios candidatos y seguridad
+@refreshreset obliga a renovar la instancia tras actualizar AuthContext en desarrollo y restaurarla por el flujohabitual. Cleanup cancela revision/generación y vacía solo tokenenmemoria del objeto viejo; no borraSecureStore. Vida tardía de consultas/401 de unContextdesmontado no afecta al nuevo. No se cambiaUIFigma/publicación/catálogo.
+Si POSTfalla por transporte/interpretación, un únicoGETdeverificación confirma el negocio antes decontinuar; si hayActive y rolesválidos retorna confirmaciónGET200/reconciledtrue. Si no puede verificarse, conservauncertain y nunca reenvíaPOSTautomáticamente. No es promesa deidempotencia delservidor ni201inventado.
+
+### Cómo repetir cuando esté disponible el teléfono
+1. Guardar los cambioslocales actuales: NO actualizar desdeGitHub para probar este candidato, porque deliberadamente no haycommit/push.
+2. Detener únicamente el Metro que usa este proyecto, ejecutar `npx expo start -c` desde la raíz indicada enentorno y abrir el QR nuevo enExpoGo. Hacer Reloadcompleto una vez para cargar el nuevo ciclo delcoordinador; no borrarSecureStore ni desinstalar.
+3. Anotar versiónExpoGo/Android y servidor delproyecto (host/puerto, sin parámetros privados). Probar primero SOLOConsultar/Reconsultar. Active+roleshabilitaMisproductos; missingexacto404 muestraformulario; red/5xx devuelveerror/reintento y401/403 autorización, sin Uncaught.
+4. Si una activación anterior pudo llegar aAWS, NO enviarlaotra vez. ReconsultarGET; siActive continuar. Probar alta manual nueva solo si el equipo confirma que no existe y no hay activaciónincierta. Nunca publicar datos automáticamente para diagnosticar.
+5. Si persiste, compartir captura con **codeframe completo** (texto exacto señalado, no solo número de línea), stack y versiones. No copiar sesión, JWT, headers, OTP ni cuerpos. Será necesario correlacionar esa captura con el bundle efectivamente recibido por ese dispositivo para identificar la funciónundefined.
+6. Confirmar resultado físico de ambas acciones antes de considerar resuelto/commit. Las regresiones locales nuevas prueban Refresh/cancelación/reconciliación, no una reproducción del TypeError188 delcelular.
+
+### Verificación candidata actual
+649/649tests/41suites, TypeScript0errores, ESLint0errores/27warnings, ExpoDoctor20/20 y gitdiffchecklimpio. MetroAndroid200/12,938,102bytes siguiendo enginehermes/reactCompilertrue/hermes-stable delmanifiesto, lazyfalse para validar graphcompleto y bytecode0 para inspecciónJS. Módulos reales ejecutados con puente/red/storagefake, sin instrumentaciónfinal. No se dispone de reproducción del TypeErrorfísico: la prueba roja es de retención/resultado tras unmount, no prueba de queésa fuera la funciónundefined delteléfono.
+
+---
+
 ## Repetición física urgente — hotfix runSeller176
 El usuario reportó TypeError físico al consultar vendedor. Expresión identificada/reproducida: sellerSubmissionState() dentro del catch, ausente en una instancia incompatible aunque exista en claseactual. useState retiene instancias; retención compatible conFastRefresh reproducida en tests, no inspección del objeto real del teléfono.
 

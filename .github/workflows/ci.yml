@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, HRDCORE]
   push:
-    branches: [main, HRDCORE]
+    branches: [main, HRDCORE, V1.2]
 
 permissions:
   contents: read

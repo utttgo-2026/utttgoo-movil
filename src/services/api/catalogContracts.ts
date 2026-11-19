@@ -10,22 +10,23 @@ export function object(value: unknown): Record<string, unknown> {
 export function text(value: unknown): value is string { return typeof value === 'string' && value.trim().length > 0 && !/[\u0000-\u001f\u007f]/.test(value); }
 export function pageResponse<T>(data: unknown, decode: (item: unknown) => T): ApiPage<T> {
   const value = object(data);
-  if (!Array.isArray(value.items) || !Number.isSafeInteger(value.page) || Number(value.page) < 1 ||
-      !Number.isSafeInteger(value.pageSize) || Number(value.pageSize) < 1 || Number(value.pageSize) > 100 ||
-      !Number.isSafeInteger(value.total) || Number(value.total) < value.items.length || value.items.length > Number(value.pageSize)) return invalidContract();
-  return { items: value.items.map(decode), page: Number(value.page), pageSize: Number(value.pageSize), total: Number(value.total) };
+  const page = schemaNumber(value.page, true), pageSize = schemaNumber(value.pageSize, true), totalCount = schemaNumber(value.totalCount, true);
+  if (!Array.isArray(value.items) || page < 1 || pageSize < 1 || pageSize > 100 ||
+      totalCount < value.items.length || value.items.length > pageSize) return invalidContract();
+  return { items: value.items.map(decode), page, pageSize, totalCount };
 }
 export function categoryResponse(data: unknown): ApiCategory {
   const value = object(data);
-  if (!text(value.id) || !text(value.name) || !Number.isSafeInteger(value.sortOrder)) return invalidContract();
-  return { id: value.id, name: value.name, sortOrder: Number(value.sortOrder) };
+  const sortOrder = schemaNumber(value.sortOrder, true);
+  if (!text(value.id) || !text(value.name)) return invalidContract();
+  return { id: value.id, name: value.name, sortOrder };
 }
 export function sellerActiveResponse(data: unknown): SellerActiveResponse {
   const v = object(data);
-  if (!text(v.sellerId) || !text(v.businessName) || typeof v.description !== 'string' || !text(v.pickupPoint) ||
+  if (!text(v.sellerId) || !text(v.storeName) || typeof v.description !== 'string' || !text(v.phone) ||
       v.status !== 'Active' || v.isActive !== true || !validRoles(v.roles) || v.roles.length !== 2 ||
       !text(v.createdAt) || !Number.isFinite(Date.parse(v.createdAt)) || !text(v.updatedAt) || !Number.isFinite(Date.parse(v.updatedAt))) return invalidContract();
-  return { sellerId: v.sellerId, businessName: v.businessName, description: v.description, pickupPoint: v.pickupPoint,
+  return { sellerId: v.sellerId, storeName: v.storeName, description: v.description, phone: v.phone,
     status: 'Active', isActive: true, roles: ['Buyer', 'Seller'], createdAt: v.createdAt, updatedAt: v.updatedAt };
 }
 
@@ -63,8 +64,7 @@ export function productResponse(data: unknown): ProductResponse {
 }
 export function productPageResponse(data: unknown): ProductPage {
   const v = object(data);
-  if ('totalCount' in v) return invalidContract();
-  const page = pageResponse({ ...v, page: schemaNumber(v.page, true), pageSize: schemaNumber(v.pageSize, true), total: schemaNumber(v.total, true) }, productResponse);
+  const page = pageResponse(v, productResponse);
   if (new Set(page.items.map((item) => item.id)).size !== page.items.length) return invalidContract();
   return page;
 }

@@ -15,6 +15,14 @@
 
 # Historial de cambios
 
+## Reapertura runSeller188 — candidato estructural, TypeError físico NO confirmado como resuelto
+- Usuario reporta persistencia tras640tests. En HEADc606435 la línea188exacta es un if/return de sesión no autenticada, sin invocaciones; no se puede atribuir a sellerSubmissionState ni otrafunción delteléfono con ese stack. Metro8081/rootcorrecto/SDK58/sourceúnicaAuthContext con hash inicialcoincidenteGit.0targetsinspector al consultar, y usuario no puede repetirahora; versión/bundle/callframe deldispositivo no comprobados.
+- Detectada brecha de verificación: manifiesto real usa Hermes/ReactCompiler/hermes-stable; smokeanterior construía querygenérica. Se corrigió herramienta temporal decompilación para seguir manifiesto (graphcompleto, JSsinbytecode) y se ejecutaron módulos reales delMetro enVMNode confetch/storage/bridge sintéticos. Consulta404, alta201→GETActive/roles yconsulta200 funcionan. Esto noejecutaHermes delcelular ni reproduce suTypeError.
+- Instrumentación temporalDEV de operación/etapa/typeof/status se añadió y retiró porcompleto de src; comprobación final sin seller-probe-r2. No sesióncompleta/JWT/OTP/contraseñas/cuerpos/IDs enlogs. No backendmutacionesreales.
+- Dos defectos locales demostrados rojo→verde: firmaReactRefresh retenía familia/estado delProvider; @refreshreset fuerza remount/factoryactual. Consulta delcoordinadorREAL resolvíasuccess después de desmontaje; cleanuprevision/generación ahora cancela y401tardío no limpiaJWTdelContextnuevo. cancelPendingOperations limpia solo tokenenmemoria, no SecureStore. Inicialización verifica restore/cancel obligatorios y captura fallo como estado, sin optionalcalls ni cualquieréxito ficticio.
+- POSTincierto antes deGETperfil se reconcilia por GETuna vez, nuncapor otroPOST; siActive y rolesválidos se devuelve estadoGET200/reconciledtrue, no simular que el POSTseinterpretó. Missing/red mantieneunknown ybloqueaPOST;401 conserva revocación. Cleanup delGETcoalescido usa then enambosresultados preservando promesaoriginal en lugar de uncatchvacío.
+- Nuevos sellerRefresh.test conBabel/ReactRefresh ycreateAuthSession reales, red/storagefixture; pruebas dePOSTDTOinválido/GET/missing/red/401/no-duplicados. Total649/649/41suites (+9), TypeScript0, ESLint0errores/27warnings, Doctor20/20,diffchecklimpio. MetroAndroid200/12,938,102bytes conHermes+ReactCompiler delmanifiesto; proceso8106propio detenido,8081delusuario preservado. Documentación005/007/memoriaactualizada. Cambios SINCOMMIT/SINPUSH; error físico permanece abierto hasta codeframe y nueva validación.
+
 ## V1.2 — guía y configuración para colaborador remoto
 - Usuario solicita subir lo necesario para que un compañero clone y ejecute el cliente desde casa. READMEactualizado, docs/COLABORACION.md añadido, .nvmrc24 y comentarios de .env.example con clavespúblicas a completar localmente. .gitignore ignora todaslas variantes.env salvo ejemplo; sin cambiar códigoapp/dependencias/lock/backend ni compartir sesión.
 - Clonación remota limpia deV1.2 baseb6a8890 en temporal independiente: npmci exitoso, tsc0errores,640/640tests/40suites, Doctor20/20, manifest/lock/appconfigsin cambios. BundleAndroidHTTP200/14,057,550bytes con plantilla pública sin Supabasekey, Metrodetenido. Node25.4/npm11.7local dieron advertenciasengines; Node24LTS sigue recomendado porCI. Esto no prueba OTP ni computadora/teléfono delcompañero.
@@ -576,3 +584,46 @@ npx expo start --android  # Android directo
 **Fecha**: 2025-11-06
 **Branch**: `HRDCORE` → `origin/HRDCORE` sincronizado
 **Commits**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`
+# Migración PR27 — checkpoint parcial
+
+Vendedor usa `storeName`/`phone`, alta 201 y listas de catálogo `totalCount`; fixtures y pruebas ajustados. TypeScript sin errores, Jest 650/650 (41 suites), lint sin errores con 27 advertencias, `git diff --check` sin errores; Expo Doctor 19/20 por cinco versiones Expo recomendadas diferentes. Pedido y fixtures todavía son legacy y no deben considerarse compatibles con PR27. Error físico `runSeller` sigue abierto; no commit/push ni validación física.
+# PR27 — validadores de pedidos preparados
+
+Se agregan validadores aislados de DTO completo y resumen paginado PR27 con fixtures sintéticos; aún no conectados a servicios ni pantallas. TypeScript limpio; Jest 658/658, 42 suites; lint 0 errores/27 advertencias; Expo Doctor 19/20 por versiones; diff --check limpio. No se efectuaron mutaciones reales ni prueba física.
+# PR27 — compras de comprador en pruebas
+
+Servicios POST/mine/detalle usan validadores PR27; sesión valida identidad, páginas y respuesta antes de mostrarlas. Recibo, lista paginada y seguimiento usan orderId real. Pendiente validación física, verificación visual Figma y funcionamiento real privado. No se hicieron mutaciones AWS automatizadas.
+TypeScript limpio; suite completa 663/663 antes de agregar una prueba de ownership, que pasa aisladamente; lint 0 errores/27 advertencias; Expo Doctor 19/20 (cinco paquetes recomendados distintos). `expo install --check` confirma las mismas diferencias.
+# Creación consecutiva de alimentos — EN PRUEBAS
+
+Confirmación accesible, nuevo formulario explícito, consulta de productos de sesión y validación por campo sin interpretación HTML. TypeScript limpio; Jest 681/681 en 44 suites; lint 0 errores/27 advertencias; Expo Doctor 19/20 por versiones; diff --check sin errores. Sin publicaciones reales ni validación física en esta iteración.
+# Media PR28 — BLOQUEADO
+
+Inspección GET de OpenAPI desplegado y código público b79fa80; identificados bloqueos de asociación y verificación/ownership de assets. Sin cambios runtime, dependencias ni mutaciones AWS; no se declara integración S3 funcional. Ver tasks007 y memoria.
+# Media: validación aislada
+
+Se agregan parsers de respuestas presigned/confirm con hosts explícitos, vencimiento, coincidencia de asset y Ready; sin red, selector, subida ni publicación con imagen. Tests sintéticos y suite 684/684, TypeScript limpio, lint 0 errores/27 advertencias, Expo Doctor 19/20, diff --check sin errores. GET productos actual sin imageUrl en cuatro elementos. Pendientes SHA desplegado/hosts y resolución de discrepancias backend.
+# Correcciones físicas vendedor/pedido — EN PRUEBAS
+
+Panel de éxito visible en la misma pantalla; separar bloqueo de pedido confirmado e incierto y ofrecer historial sin declarar reconciliación. Conservación de marcas al restaurar la misma instancia. Falta prueba Expo Go y estrategia de incertidumbre entre procesos/cuentas; no hubo mutaciones reales.
+Comprobaciones: TypeScript sin errores, Jest 689/689 en 45 suites, lint 0 errores/27 advertencias, Expo Doctor 19/20 por versiones recomendadas y diff --check sin errores.
+# Foto local de vendedor — EN PRUEBAS
+
+Se agregaron expo-image-picker y expo-file-system, vista previa local, cámara/galería, validación de tamaño/formato/dimensiones y eliminación; POST sin foto envía imageUrl null. Con foto seleccionada publicación bloqueada. S3 no implementado ni habilitado. TypeScript limpio, Jest 696/696 (46 suites), lint 0 errores/27 avisos, Expo Doctor 19/20, diff --check limpio. Expo Go físico pendiente; instalación con Node25 emitió avisos de engines y npm informó 79 vulnerabilidades de dependencias.
+# Adaptador Media aislado — EN PRUEBAS
+
+Presigned, PUT binario sin Bearer y confirmación usando hosts concretos y mismo assetId; no conectado a pantalla ni publicación. Tests simulados 700/700, TypeScript limpio, lint 0 errores/27 avisos, Doctor19/20, diff check limpio; bundle Android HTTP200 con perfil Hermes/React Compiler, Metro propio detenido. Sin mutaciones AWS ni validación física. HEAD público 281c19f mantiene rechazo de ImageUrl; OpenAPI actual inaccesible.
+# Mis alimentos públicos — EN PRUEBAS
+
+Listado público paginado y filtrado por vendedor autenticado; búsqueda, refresco, confirmación antes de pausar y PATCH solo de precio/stock cambiados. No representa todo el inventario propio ni habilita S3/DELETE. TypeScript limpio; 702/702 tests, lint 0 errores/27 avisos, Expo Doctor 19/20, diff --check limpio y bundle Android HTTP200. Sin prueba Expo Go ni mutaciones reales.
+# Fotografía de borrador — EN PRUEBAS
+
+Vista previa local muestra la foto elegida con etiqueta explícita; ningún archivo se sube y asociación continúa bloqueada por evidencia backend. GET público: seis productos sin imageUrl; fuente 0e95070 rechaza imageUrl en creación y media en PATCH. TypeScript limpio; 702/702 pruebas, lint 0 errores/27 avisos, Expo Doctor19/20, diff check limpio y bundle Android HTTP200. Sin validación física.
+# Preparación de CI para V1.2 — pendiente de publicación
+
+Expo SDK 58: se ajustaron expo, @expo/ui, expo-router, expo-web-browser y jest-expo a versiones recomendadas; se registró el plugin expo-web-browser y el trigger push V1.2 sin quitar main/HRDCORE. TypeScript limpio, Jest 702/702, lint 0 errores/27 avisos, Expo Doctor 20/20, diff check limpio, bundle Android HTTP200. Node local 25 emitió avisos de engines; CI usa Node24. La prueba física anterior precede la actualización de dependencias y debe repetirse; AGENTS exige CI aprobado antes del push, pero el nuevo SHA no puede ejecutarse en GitHub antes de publicar. No se afirma CI verde del nuevo contenido.
+# Política CI: validación del SHA nuevo
+
+Por autorización del mantenedor se formaliza en AGENTS.md el orden verificaciones locales y evidencia física antes del push; GitHub Actions sobre el SHA nuevo después del push y antes de merge/release. Se conserva el gate de todos los jobs y la revisión de secretos. Motivo: Actions necesita recibir el commit para validarlo. El resultado físico actualizado sigue pendiente de comunicación; no se ha hecho commit ni push.
+
+Actualización: el usuario confirma la prueba física de la versión actual y autoriza la subida a V1.2. La integración de imagen real en AWS sigue pendiente; esta confirmación no acredita un flujo S3 que no está conectado. CI del nuevo SHA debe comprobarse después del push.

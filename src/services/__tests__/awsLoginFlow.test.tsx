@@ -8,7 +8,8 @@ import ProfileScreen from '@/app/buyer/(tabs)/profile';
 import { productService } from '../api/productService';
 import { orderService } from '../api/orderService';
 import { ApiError } from '../api/errors';
-import type { ProductResponse, OrderResponse } from '@/types/api';
+import type { ProductResponse } from '@/types/api';
+import type { OrderPr27 } from '../api/orderContractsPr27';
 import { productMetadata } from '../__fixtures__/product';
 
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
@@ -71,7 +72,7 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
   });
   test('factory real restaurada expone contrato seller completo y consulta Active con mismo JWT, sin POST', async () => {
     storedToken = valid.accessToken;
-    const seller = { sellerId: 'synthetic-seller-id', businessName: 'Negocio fixture', description: 'Comida del campus fixture', pickupPoint: 'Edificio fixture',
+    const seller = { sellerId: 'synthetic-seller-id', storeName: 'Negocio fixture', description: 'Comida del campus fixture', phone: '5551234567',
       status: 'Active', isActive: true, roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' };
     transport.mockImplementation(async (url) => {
       const path = String(url);
@@ -124,8 +125,8 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
   test('preparación de un producto sobrevive403; solo201 válido entrega recibo y limpia preparación', async () => {
     const product: ProductResponse = { id: 'aws-product', sellerId: 'aws-seller', categoryId: 'aws-category', name: 'Alimento AWS', description: 'Descripción',
       ...productMetadata, ingredients: [], price: 35.5, stock: 4, status: 'Active' };
-    const order: OrderResponse = { id: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id,
-      quantity: 2, unitPrice: 35.5, totalAmount: 71, status: 'Pending', createdAt: '2026-11-16T12:00:00Z' };
+    const order: OrderPr27 = { orderId: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id, productName: product.name,
+      quantity: 2, unitPrice: 35.5, totalAmount: 71, status: 'Pending', currency: 'MXN', paymentMethod: 'Cash', pickupPoint: '', deliveredAt: null, completedAt: null, version: 1, updatedAt: '2026-11-16T12:00:00Z', createdAt: '2026-11-16T12:00:00Z' };
     jest.spyOn(productService, 'getById').mockResolvedValue(product);
     const post = jest.spyOn(orderService, 'create').mockRejectedValueOnce(new ApiError('http', 'Fixture forbidden', 403)).mockResolvedValue(order);
     const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
@@ -151,7 +152,7 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     const product: ProductResponse = { id: 'aws-product', sellerId: 'aws-seller', categoryId: 'aws-category', name: 'Alimento AWS', description: 'Descripción',
       ...productMetadata, ingredients: [], price: 35, stock: 4, status: 'Active' };
     jest.spyOn(productService, 'getById').mockResolvedValue(product);
-    let finish!: (order: OrderResponse) => void;
+    let finish!: (order: OrderPr27) => void;
     const post = jest.spyOn(orderService, 'create').mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
     const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
     await act(async () => { await result.current.login(identity.email, 'synthetic-password'); });
@@ -161,8 +162,8 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
     await act(async () => { await result.current.logout(); });
     await act(async () => {
-      finish({ id: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id,
-        quantity: 1, unitPrice: 35, totalAmount: 35, status: 'Pending', createdAt: '2026-11-16T12:00:00Z' });
+      finish({ orderId: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id, productName: product.name,
+        quantity: 1, unitPrice: 35, totalAmount: 35, status: 'Pending', currency: 'MXN', paymentMethod: 'Cash', pickupPoint: '', deliveredAt: null, completedAt: null, version: 1, updatedAt: '2026-11-16T12:00:00Z', createdAt: '2026-11-16T12:00:00Z' });
       expect((await pending).success).toBe(false);
     });
     expect(result.current.lastOrder).toBeNull(); expect(result.current.orderPreparation).toBeNull(); expect(result.current.user).toBeNull();

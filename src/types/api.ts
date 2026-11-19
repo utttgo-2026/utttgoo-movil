@@ -47,9 +47,9 @@ export interface UserPatch {
 }
 
 export interface SellerActivationRequest {
-  businessName: string;
+  storeName: string;
   description: string;
-  pickupPoint: string;
+  phone: string;
 }
 
 export type SellerPatch = Partial<SellerActivationRequest>;
@@ -63,7 +63,7 @@ export interface SellerActiveResponse extends SellerActivationRequest {
   updatedAt: string;
 }
 export interface ApiCategory { id: string; name: string; sortOrder: number }
-export interface ApiPage<T> { items: T[]; page: number; pageSize: number; total: number }
+export interface ApiPage<T> { items: T[]; page: number; pageSize: number; totalCount: number }
 export interface CreateProductRequest {
   name: string; description: string; ingredients: string[]; categoryId: string; price: number; stock: number;
   imageUrl?: null;
@@ -76,7 +76,7 @@ export interface ProductResponse extends Omit<CreateProductRequest, 'imageUrl'> 
   status: ProductStatus; isAvailable: boolean; ratingAverage: number | null; ratingCount: number | null;
   createdAt: string; updatedAt: string;
 }
-export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; total: number }
+export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; totalCount: number }
 export interface ProductPatch { price?: number; stock?: number }
 export interface CreateOrderRequest { productId: string; quantity: number; notes?: string }
 export interface OrderResponse extends CreateOrderRequest {

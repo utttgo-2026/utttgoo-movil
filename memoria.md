@@ -1,5 +1,11 @@
 # Memoria — UTTT-Go Móvil
 
+## Reapertura física runSeller188 — límite de diagnóstico y correcciones locales
+- Nuevo reporte invalida la aceptación previa. En c606435 el188exacto es `if (status !== 'authenticated') return { success: false, error: 'Se requiere una sesión validada.' };`: no invoca funciones, columna59 cae en return/objeto. No se identifica el undefined del teléfono desde ese stack; no asumir176. Metro8081 apunta alworkspacecorrecto/SDK58, mapa con una sola fuenteAuthContext coincide conHEADSHA256cd114344843cdbc38b0439465d6cc412a9eb1cfaa32ecb84170f85a01d9cebd1 en inspección inicial.0targetsinspector y usuario sin posibilidad de repetir/trazarahora impiden correlaciónfísica.
+- ManifiestorealAndroid incluye Hermes/ReactCompiler/hermes-stable, ausentes en smokeanterior. PruebasJestNode y HTTP200deMetro genérico no cubrían eseperfil ni preservaciónReactRefresh. Se ejecutaron módulos reales emitidosporMetro conperfilreal enVMNode y bridges/fetch/storage sintéticos: consulta/alta/verificación/roles completan sinexcepción. No esHermesfísico ni pruebaAWS. ProbesDEVsolo tipos/etapas/status se añadieron y retiraron; no se registró ningún objeto de sesión/credencial ni cuerpo privado.
+- Corregidos dos defectos locales con rojo→verde: ReactRefresh mantenía lafamilia/estado delProvider (Babel/runtime real prueba staleFamiliesfalse antes ytrue con @refreshreset); una consulta real tardía resolvíasuccess después de desmontarContext (ahora cancelada). Provider restaura factorynueva y cleanupcancelageneración/revisión sin borrarJWT; se prueba que401tardío no borraJWTdelContextnuevo. Sin parches de prototipo ni adopción deroleslocales.
+- Reconciliación segura de POSTincierto antes de permitir reintento: GETActive más identidadvalidada produce resultado GET200/reconciledtrue, no201inventado. Missing/error mantieneuncertain y bloqueaPOST;401 conserva invalidación. Lookup libera caché en thenéxito/error y devuelve promesaoriginal, sin catchvacío. TypeErrorfísico sigue NORESUELTO/ENPRUEBAS hasta nueva captura y aceptación; no commit/push.
+
 ## V1.2 — preparación de colaboración desde casa
 - READMEobsoleto sobre login demo/sinbackend reemplazado por estado actual y quickstart para ramaV1.2. Guía docs/COLABORACION.md con Node24/npmci, Windows/macOSLinux, plantilla.env, cuenta institucional propia, LAN/túnel, actualizaciónGit, errores y alcance real. .nvmrc24 añadido como recomendación sin enginesforzados ni cambio de dependencias.
 - .env.example conserva solo orígenes públicos/flags y publishablekey vacía a completar por responsable; se aclara formato público aceptado y flujo beta sin otorgarpermisos. .gitignore protege todaslas variantes.env salvo plantilla. Ninguna lectura/copia del .env privado para preparar el clon ni exposición de credenciales.
@@ -294,3 +300,44 @@ Usuario solicita subir todos los cambios acumulados a V1.2 y confirma en pregunt
 **Última actualización**: 2026-11-13
 **Versión**: 1.4
 **Autor**: Equipo UTTT-Go Móvil
+# Checkpoint PR27 parcial
+
+Los tests de vendedor y paginación migrados pasan, pero el contrato de pedidos antiguo permanece y requiere migración explícita; no inferir compatibilidad PR27 del resultado verde. En el backend 6932990 `/orders/mine` lista solo comprador, y el token de entrega se emite solo al comprador en Ready. La causa del TypeError físico de `runSeller` no se ha identificado; el intento actual del inspector Metro falló antes de verificar el bundle.
+# Pedidos PR27: evidencia adicional
+
+Fuente backend commit 6932990: ListOwnOrdersService usa ListForBuyerAsync y siempre role buyer. CancelOrderService solo autoriza comprador Pending; ConfirmDeliveryService exige vendedor propietario, Ready y token válido no expirado ni usado. OpenAPI declara token para ambas operaciones. El despliegue privado no se verificó con una sesión autorizada. Los nuevos parsers son preparación aislada; la creación actual y sus fixtures siguen legacy.
+# Compras PR27 en pruebas
+
+El listado de comprador conserva paginación del servidor y filtra role buyer sin declarar ausencia definitiva si hay páginas posteriores. El totalCount representa la página del servidor, no necesariamente el total filtrado si en el futuro se mezcla Seller. La creación mantiene protección de duplicados y bloqueo de resultado incierto; la preparación se limpia únicamente tras respuesta validada.
+# Creación consecutiva de productos — en pruebas
+
+UI-036 revisada. El formulario muestra éxito solo tras respuesta validada, reinicia únicamente al elegir crear otro y ofrece los productos conocidos de sesión; no existe listado privado completo. El coordinador existente bloquea nuevos POST si el anterior quedó incierto. Validación de campos y exclusión mutua son defensas cliente, no sustituyen validación ni consultas seguras del backend. Servicio existente mantiene límites locales más restrictivos (nombre 2–100, descripción mínimo 2, precio hasta 999999.99) que los máximos de backend.
+# Media PR28: bloqueo operativo y de seguridad
+
+OpenAPI AWS publica presigned-url y confirm, pero no certifica comportamiento ni SHA desplegado. En el backend público b79fa80, CreateProductService rechaza toda ImageUrl no vacía; el servicio que genera presigned no registra el asset, confirm no comprueba dueño ni existencia/contenido del objeto, y el repositorio registrado es InMemory por scope. S3 puede producir URL mock sin configuración. No se generaron URLs ni recursos AWS. Solicitar al backend evidencia de implementación y despliegue corregidos antes de conectar selección/subida o permitir URLs en productos.
+# Media: nueva comprobación
+
+Consulta GET actual de productos AWS devuelve cuatro elementos sin imageUrl y OpenAPI tampoco lo declara. HEAD backend público sigue b79fa80; no se confirmó SHA de EC2 ni host autorizado. Se prepararon parsers aislados que requieren allowlists explícitas, no conectados a carga ni publicación. Continúan bloqueos de propiedad/persistencia/asociación identificados en fuente pública.
+# Incertidumbre de pedido y creación continua — en pruebas
+
+El mensaje previo mezclaba submitted por clave con uncertain por ámbito. Un POST order despachado seguido de timeout/red/DTO inválido/5xx deja el ámbito incierto, incluso al cambiar preparación; una restauración del mismo coordinador ya no borra sus marcas. Logout/login o reinicio aún pierden estado en memoria: no equivalen a reconciliación. Historial sin correlación/idempotencia no prueba si un intento concreto se creó. Panel de publicación sustituye formulario para mantener acciones visibles; consulta de productos de sesión no es listado privado completo.
+# Fotografía local — en pruebas
+
+Picker cámara/galería y File SDK58 verifican tamaño real ≤5 MiB, firma JPEG/PNG/WebP, MIME y dimensiones decodificadas; el selector no solicita EXIF. La vista previa no sale del dispositivo y bloquea publicar hasta quitarla. POST sin imagen envía imageUrl null. Falta prueba física; la firma no sustituye validación de contenido del backend. El flujo presigned/PUT/confirm no está implementado ni habilitado: pendientes SHA EC2, hosts, ownership, asociación y lectura de imágenes.
+# Adaptador Media aislado — 281c19f
+
+Hosts confirmados de subida y lectura aplicados en mediaService; presigned, PUT binario con expo/fetch y confirmación con mismo assetId probados con mocks, no conectados al formulario ni JWT de sesión. Reintento de confirmación explícito, sin backoff automático. HEAD backend público 281c19f aún rechaza ImageUrl y no demuestra ownership de Media; el OpenAPI no respondió y no se confirmó SHA de EC2. Bundle Android HTTP200 con Hermes/compiler; no acredita S3 físico.
+# Mis alimentos AWS — en pruebas
+
+El listado recorre páginas del catálogo público con sellerId obtenido de /sellers/me bajo sesión autorizada; rechaza datos duplicados o total cambiante. Es una vista parcial: pausados/no visibles pueden faltar y los productos de sesión no equivalen a inventario privado persistente. OpenAPI expone PATCH como JsonElement y código público 0e95070 admite nombre/descripción/ingredientes, pero SHA desplegado es desconocido; se conserva edición verificada de precio/stock. Sin DELETE confirmado ni fotos reales asociables.
+# Media revisión actual — asociación bloqueada
+
+OpenAPI AWS y seis productos públicos no incluyen imageUrl. El HEAD público 0e95070 rechaza imágenes en creación; UpdateProductRequest excluye media y MediaAssetService no comprueba owner ni bytes. SHA EC2 no identificado, por lo que estas observaciones no prueban el código ejecutado en AWS. La vista previa de borrador muestra la foto local sin afirmar subida; adaptador presigned/PUT/confirm sigue aislado.
+# Preparación V1.2: bloqueo de CI previo al push
+
+GitHub informa rama V1.2 sin protección y sin reglas aplicables; hooks locales solo .sample. AGENTS.md exige CI pasando antes del push, mientras el workflow de la nueva revisión solo se ejecutará en GitHub tras publicarla; resultados anteriores pertenecen a c606435. Se agregó trigger push V1.2 localmente sin debilitar checks. Expo Doctor 20/20 tras actualizar cinco paquetes SDK58; Node local25 fuera de engines recomendados, CI Node24. La validación Expo Go anterior a esta actualización no acredita el nuevo bundle.
+# Decisión CI para SHA nuevo
+
+El mantenedor autorizó corregir la condición circular documentada en AGENTS.md: comprobaciones locales, bundle y evidencia física o excepción documentada antes del push; Actions verde del SHA nuevo antes de merge o release. No equivale a una excepción de prueba física ni a CI aprobado. Esperar resultados físicos comunicados antes de publicar.
+
+El usuario confirma posteriormente que revisó la versión física actual y autoriza push de V1.2; la fotografía real S3 permanece sin integrar. No se atribuye todavía un resultado de GitHub Actions al SHA nuevo.

@@ -1,5 +1,12 @@
 # Plan007 — Vendedor/productos
 
+## Reapertura188 — candidato local, no aceptación física
+1. Contrastar188deHEAD ymapaAndroid; no reasignar a sellerSubmissionState por inercia. Inspeccionar servidor/manifiesto/perfilHermes/ReactCompiler y factorycompilada; no guardar ni imprimir bundle completo/.env/sessionobj.
+2. Probetemporal de tipos/etapas/status enDEV, ejecutar flujos con módulosMetro reales y puentefalso; retirarprobes. Si el dispositivo no está disponible, declarar límite y noinventarfunciónundefined.
+3. @refreshreset verificado con Babel/ReactRefresh real y factoryreal. Cleanup deContext cancela generación/revisión sin clearJWT. Test rojo de llamada que devolvía success tras desmontaje debe ser cancelación; test401tardío conservaJWTdeContextnuevo.
+4. POSTincierto→GETreconciliar→roles, nunca repetirPOST; ausencia/falloread conserva bloqueo. Tests de DTOPOSTinválido a través de factory/Contextreales y campo reconciled diferencian confirmaciónGET delPOSTfallido.
+5. Cinco checks y Metro usando perfil delmanifiesto real (no parámetros genéricos antiguos); documentar qué está probado y qué requiere captura física. Sincommit/push.
+
 ## Hotfix runSeller
 1. Añadir reproducciones en Context con instancia sin sellerSubmissionState y con sellerOperation ausente; verificar que la promesa pública debe resolverfailure, no rechazar. Comprobar retención useState y recuperación mediante remount completo con coordinador compatible.
 2. Contrato/snapshot tipado explícito en AuthSession y validación runtime acotada en Context. Leer antes de operar y después de respuesta dentro de try; metadata en catch aislada con errororiginal preservado, incertidumbre conservadora de mutación y cancelación porrevision. No renovar/restaurar automáticamente la sesión para parchear un objeto viejo.
@@ -37,3 +44,26 @@
 3. Productos: servicio GET/list/detail unknown y builder exacto create/name/description/ingredients/categoryId/price/stock, PATCHprice/stock y Paused. Mutaciones bloqueadas antes de fetch por falta de parser respuesta; no crear recurso real que no sabemos confirmar. GET valida envelope y reconoce items vacío; no vacío muestra bloqueo de DTO, no lista ficticia. UI comprador usa estados reales de carga/error/vacío, detalle bloqueado honestamente hasta schema.
 4. Formulario vendedor usa categorías AWS y campos confirmados, sin imagen. Mantener botóncreate/publicación deshabilitado hastaDTO. Registrar id de producto solo cuando haya respuesta validada (no inventado ahora).
 5. Pruebas mocks explícitos en recorridos previos, nuevos casos para fuenteAWS,empty/categories/roles/refreshJWT/contratos incompletos/errores. Todos los checks y commitlocal seguro, sin push.
+# Migración PR27 (en curso)
+
+Actualizar validadores, DTO y pantallas al OpenAPI vigente, manteniendo coordinación de sesión y prevención de duplicados; verificar con fixtures y sin mutaciones AWS. La validación física permanece pendiente.
+# Creación consecutiva (en curso)
+
+Reutilizar pantalla, SellerEntry, categorías AWS y createProduct; validar antes del envío y presentar éxito en línea. Mantener navegación/estado existentes y no alterar transportes AWS. Añadir pruebas UI sin publicaciones reales.
+# Media API017/018 — bloqueado
+
+Preparar validación pura de presigned/confirm sin habilitar requests, respetando hosts suministrados por configuración validada. Añadir pruebas sintéticas; se requiere SHA, origen autorizado y corrección de los bloqueos backend antes de activar el flujo.
+
+Mantener creación sin imagen y no instalar dependencias de cámara ni enviar mutaciones hasta confirmar SHA desplegado, propiedad de assets, persistencia y validación de contenido, origen S3 autorizado y aceptación de imagen confirmada en POST producto. Tras corrección, diseñar subida binaria sin JWT al host presignado y pruebas sintéticas.
+# Selección local de fotografía — en curso
+
+Reutilizar pantalla de vendedor y servicios Expo compatibles con SDK 58; encapsular selector y validación de archivo separado de UI. Pruebas con módulos nativos simulados y sin peticiones mutantes. No habilitar S3 sin confirmar SHA/hosts/ownership/contrato de producto.
+# Adaptador Media aislado — en curso
+
+Encapsular presigned, PUT sin Bearer y confirm con mismo assetId; validar hosts exactos y evitar redirects. Probar con transportes simulados. No habilitar asociación hasta confirmar SHA desplegado y DTO/ownership/media.
+# Mis alimentos públicos — en curso
+
+Recorrer paginación pública mediante AuthSession con comprobaciones de sesión y sellerId; rechazar inconsistencias y no mezclar otros vendedores. Presentar listado parcial explícito, consulta y PATCH autorizado existentes y confirmación de pausa. Mantener estados no publicados como limitación explícita.
+# Vista previa local de imagen — seguimiento
+
+Reutilizar selección validada para la vista previa del borrador, sin conectar presigned ni mutaciones mientras los contratos de ownership y asociación sigan sin evidencia.

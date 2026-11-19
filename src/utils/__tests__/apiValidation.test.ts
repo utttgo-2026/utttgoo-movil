@@ -21,13 +21,13 @@ describe('Validaciones del contrato conocido', () => {
     expect(() => userPatchBody(value as Parameters<typeof userPatchBody>[0])).toThrow();
   });
 
-  test.each([{}, { description: null }, { businessName: 42 }, { pickupPoint: 'Fixture', status: 'active' }])
+  test.each([{}, { description: null }, { storeName: 42 }, { phone: '5551234567', status: 'active' }])
   ('PATCH vendedor rechaza %j', (value) => {
     expect(() => sellerBody(value as Parameters<typeof sellerBody>[0])).toThrow();
   });
 
   test('activación requiere todos los campos', () => {
-    expect(() => sellerBody({ businessName: 'Fixture' }, true)).toThrow();
+    expect(() => sellerBody({ storeName: 'Fixture' }, true)).toThrow();
   });
 
   test.each([{ page: 0 }, { page: 1.5 }, { pageSize: -1 }, { pageSize: NaN }, { filter: 'invented' }])

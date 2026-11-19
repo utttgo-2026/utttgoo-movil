@@ -16,7 +16,7 @@ export const categoryService = {
     for (let page = 1; page <= 100; page++) {
       const response = await categoryService.getPage(page);
       items.push(...response.items);
-      if (items.length >= response.total) {
+      if (items.length >= response.totalCount) {
         if (new Set(items.map((item) => item.id)).size !== items.length) throw new ApiError('invalid_response', 'AWS devolvió categorías duplicadas.');
         return items.sort((a, b) => a.sortOrder - b.sortOrder);
       }

@@ -10,7 +10,7 @@ import { colors, radii, spacing } from '@/theme';
 /** Existing activation form shared by both seller entry routes; never creates a local permission. */
 export function SellerActivationForm({ onActivated, onRefresh }: { onActivated: (result: SellerOperationResult) => void; onRefresh: () => void }) {
   const { requestSellerActivation } = useAuth();
-  const [form, setForm] = useState({ businessName: '', description: '', pickupPoint: '' });
+  const [form, setForm] = useState({ storeName: '', description: '', phone: '' });
   const [busy, setBusy] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -43,13 +43,12 @@ export function SellerActivationForm({ onActivated, onRefresh }: { onActivated: 
     <AppText variant="title" align="center">Vende dentro de la comunidad UTTT</AppText>
     <AppText>Todavía no tienes negocio. El alta es inmediata; después verificamos el perfil y los permisos con AWS.</AppText>
     <Surface bordered style={{ gap: spacing.md }}>
-      <AppInput label="Nombre del emprendimiento" accessibilityLabel="Nombre del negocio" value={form.businessName} editable={!busy && !blocked}
-        onChangeText={(businessName) => setForm((value) => ({ ...value, businessName }))} placeholder="Nombre del negocio" />
+      <AppInput label="Nombre del emprendimiento" accessibilityLabel="Nombre del negocio" value={form.storeName} editable={!busy && !blocked}
+        onChangeText={(storeName) => setForm((value) => ({ ...value, storeName }))} placeholder="Nombre del negocio" />
       <AppInput label="Descripción" accessibilityLabel="Descripción del negocio" value={form.description} multiline editable={!busy && !blocked}
         onChangeText={(description) => setForm((value) => ({ ...value, description }))} placeholder="Describe tu negocio" />
-      <AppInput label="Punto de entrega" accessibilityLabel="Punto de entrega" value={form.pickupPoint} editable={!busy && !blocked}
-        onChangeText={(pickupPoint) => setForm((value) => ({ ...value, pickupPoint }))} placeholder="Lugar de entrega" />
-      <AppInput label="Teléfono de contacto" value="" editable={false} placeholder="No incluido en el contrato AWS" />
+      <AppInput label="Teléfono de contacto" accessibilityLabel="Teléfono de contacto" value={form.phone} editable={!busy && !blocked}
+        onChangeText={(phone) => setForm((value) => ({ ...value, phone }))} placeholder="Teléfono de contacto" />
       <AppButton label="Registrar negocio" loading={busy} disabled={blocked} onPress={() => void submit()} />
     </Surface>
     {message ? <AppText accessibilityRole="alert">{message}</AppText> : null}

@@ -1,5 +1,8 @@
 # Specification 005 — AWS-API-INTEGRATION
 
+## Candidato reapertura188 — ciclo de vida
+AuthProvider declara @refreshreset solo paradesarrollo; cambios delmódulo no conservan la clase vieja enuseState. Al desmontar, cancelPendingOperations invalida generación y tokenenmemoria delcoordinador sin borrarSecureStore ni llamarlogout. Contextrevision también se invalida, para descartar respuestastardías. El contrato lifecycle se valida en initializeasíncrono y fallo va a estadoblocked, no error no capturado. Getter obligatorio y autorizaciónAWS mantienen validación previa. El perfil/roles de reconciliación de seller incierto son GETreales de la mismaidentidad/JWT, nunca permisoslocales. No se atribuye a este cambio una solución física todavía no validada.
+
 ## Hotfix contrato interno seller en Context
 Validación runtime de métodos sellerobligatorios y snapshot tipado explícito; la instancia useState puede no coincidir con módulos actualizados. Incompatibilidad es fallo explícito que requiere reloadcompleto y restauración normal, no recreación automática de sesión ni JWT nuevo. El catchseller no propaga fallos del lector de metadata, conserva401 y descarta respuestas de revisiónanterior. User no se actualiza antes de comprobar snapshot/resultado interno. Login/restore/storage/Supabase/serviciosAWS no cambian su contrato por estehotfix.
 
