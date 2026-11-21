@@ -64,7 +64,7 @@ export function AwsCatalog({ title, search = false, category = false }: { title:
       <MotionFeedback trigger={loading ? 'loading' : message ? 'error' : data?.items.length ? 'content' : 'empty'} style={{ gap: spacing.lg }}>
       {loading ? <AppText accessibilityLiveRegion="polite">Consultando productos en AWS…</AppText> : null}
       {message ? <AppText accessibilityRole="alert">{message}</AppText> : null}
-      {data && !data.items.length ? <Surface bordered><AppText>{data.total === 0 ? 'AWS no tiene productos públicos con esta selección.' : 'No hay productos en esta página.'}</AppText></Surface> : null}
+      {data && !data.items.length ? <Surface bordered><AppText>{data.totalCount === 0 ? 'AWS no tiene productos públicos con esta selección.' : 'No hay productos en esta página.'}</AppText></Surface> : null}
       <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
         {data?.items.map((product) => <MotionPressable key={product.id} accessibilityRole="button" accessibilityLabel={`Ver ${product.name}`}
           onPress={() => router.push({ pathname: '/buyer/food/[id]', params: { id: product.id } })}
@@ -78,9 +78,9 @@ export function AwsCatalog({ title, search = false, category = false }: { title:
         </MotionPressable>)}
       </View>
       {data ? <View style={{ gap: spacing.sm }}>
-        <AppText>Página {data.page} · {data.total} productos</AppText>
+        <AppText>Página {data.page} · {data.totalCount} productos</AppText>
         <AppButton label="Página anterior" variant="outline" disabled={page <= 1} onPress={() => setPagination({ selectionKey, page: page - 1 })} />
-        <AppButton label="Página siguiente" variant="outline" disabled={page * data.pageSize >= data.total || !data.items.length} onPress={() => setPagination({ selectionKey, page: page + 1 })} />
+        <AppButton label="Página siguiente" variant="outline" disabled={page * data.pageSize >= data.totalCount || !data.items.length} onPress={() => setPagination({ selectionKey, page: page + 1 })} />
       </View> : null}
       </MotionFeedback>
       <AppButton label="Volver a consultar" loading={loading} onPress={() => { setRevision((value) => value + 1); categories.reload(); }} />

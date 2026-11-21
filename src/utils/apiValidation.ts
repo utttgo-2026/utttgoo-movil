@@ -57,7 +57,7 @@ export function userPatchBody(patch: UserPatch): { [key: string]: string } {
 }
 
 export function sellerBody(patch: SellerPatch, required = false): { [key: string]: string } {
-  const fields: (keyof SellerActivationRequest)[] = ['businessName', 'description', 'pickupPoint'];
+  const fields: (keyof SellerActivationRequest)[] = ['storeName', 'description', 'phone'];
   assertAllowedFields(patch, fields);
   const body: { [key: string]: string } = {};
   for (const field of fields) {

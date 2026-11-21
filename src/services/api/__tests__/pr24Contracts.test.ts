@@ -2,15 +2,16 @@ import { httpClient } from '../httpClient';
 import { backendHttpError } from '../errors';
 import { createProductBody, productAvailabilityBody, productService } from '../productService';
 import { createOrderBody, orderService } from '../orderService';
-import { orderResponse } from '../catalogContracts';
+import { orderPr27 } from '../orderContractsPr27';
 import { getLatestCommerceDiagnostic } from '../commerceDiagnostics';
-import type { DeployedOrderResponse, ProductAvailabilityRequest } from '@/types/api';
+import type { ProductAvailabilityRequest } from '@/types/api';
+import type { OrderPr27 } from '../orderContractsPr27';
 import { productMetadata } from '../../__fixtures__/product';
 
 const input = { categoryId: 'aws-category-fixture', name: 'Alimento fixture', description: 'Descripción fixture', ingredients: ['Maíz'], price: 35.25, stock: 3 };
 const product = { ...input, ...productMetadata, id: 'aws-product-fixture', sellerId: 'aws-seller-fixture', status: 'Active' };
-const wireOrder: DeployedOrderResponse = { orderId: 'aws-order-fixture', productId: product.id, productName: input.name, sellerId: product.sellerId,
-  buyerUserId: 'aws-user-fixture', quantity: 2, unitPrice: 35.25, total: 70.5, currency: 'MXN', paymentMethod: 'Cash', status: 'Pending',
+const wireOrder: OrderPr27 = { orderId: 'aws-order-fixture', productId: product.id, productName: input.name, sellerId: product.sellerId,
+  buyerId: 'aws-user-fixture', quantity: 2, unitPrice: 35.25, totalAmount: 70.5, currency: 'MXN', paymentMethod: 'Cash', status: 'Pending',
   pickupPoint: 'Edificio fixture', deliveredAt: null, completedAt: null, createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z', version: 1, notes: 'Sin cebolla' };
 
 describe('PR24: status, imagen omitida, notas y contrato desplegado', () => {
@@ -27,12 +28,12 @@ describe('PR24: status, imagen omitida, notas y contrato desplegado', () => {
   test.each([{ status: 'Published' }, { availability: 'Paused' }, { status: 'Active', sellerId: 'injected' }, { status: null }])('requeststatus inválido rechazado: %j', (body) => {
     expect(() => productAvailabilityBody(body as ProductAvailabilityRequest)).toThrow();
   });
-  test('alta sinimagen o connull siempre omite imageUrl en JSON y permite consulta porID', async () => {
+  test('alta sinimagen envía imageUrl null y permite consulta porID', async () => {
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 201, headers: {}, data: product });
     expect(createProductBody({ ...input, imageUrl: null }, [input.categoryId])).toEqual(input);
     await productService.create('synthetic.aws.jwt', { ...input, imageUrl: null }, [input.categoryId]);
-    expect(request).toHaveBeenLastCalledWith('/api/v1/products', expect.objectContaining({ body: input }));
-    expect(JSON.stringify(request.mock.calls[0][1]?.body)).not.toContain('imageUrl');
+    expect(request).toHaveBeenLastCalledWith('/api/v1/products', expect.objectContaining({ body: { ...input, imageUrl: null } }));
+    expect(JSON.stringify(request.mock.calls[0][1]?.body)).toContain('"imageUrl":null');
     request.mockResolvedValue({ status: 200, headers: {}, data: product });
     expect(await productService.getById(product.id)).toEqual(product);
   });
@@ -63,7 +64,7 @@ describe('PR24: status, imagen omitida, notas y contrato desplegado', () => {
   test.each(['Sin cebolla', '', 'x'.repeat(250)])('notas válidas se envían sin precios ni total (%s)', async (notes) => {
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 201, headers: {}, data: { ...wireOrder, notes } });
     const result = await orderService.create('synthetic.aws.jwt', { productId: product.id, quantity: 2, notes });
-    expect(result).toMatchObject({ id: wireOrder.orderId, buyerId: wireOrder.buyerUserId, totalAmount: wireOrder.total, notes });
+    expect(result).toMatchObject({ orderId: wireOrder.orderId, buyerId: wireOrder.buyerId, totalAmount: wireOrder.totalAmount, notes });
     expect(request).toHaveBeenCalledWith('/api/v1/orders', expect.objectContaining({ body: { productId: product.id, quantity: 2, notes } }));
   });
   test.each(['x'.repeat(251), '🙂'.repeat(126), 'bad\u0000notes', { $ne: null }])('notas inválidas no alcanzan red: %j', async (notes) => {
@@ -75,9 +76,9 @@ describe('PR24: status, imagen omitida, notas y contrato desplegado', () => {
     for (const extra of [{ unitPrice: 1 }, { total: 1 }, { items: [] }]) expect(() => createOrderBody({ productId: product.id, quantity: 2, ...extra })).toThrow();
   });
   test('parser desplegado rechaza mezclas, total incoherente y metadata inválida', () => {
-    expect(orderResponse(wireOrder)).toMatchObject({ id: wireOrder.orderId, buyerId: wireOrder.buyerUserId, totalAmount: 70.5 });
-    for (const extra of [{ id: 'mixed' }, { buyerId: 'mixed' }, { total: 1 }, { currency: 'USD' }, { version: -1 }, { completedAt: 'bad-date' }]) {
-      expect(() => orderResponse({ ...wireOrder, ...extra })).toThrow();
+    expect(orderPr27(wireOrder)).toMatchObject({ orderId: wireOrder.orderId, buyerId: wireOrder.buyerId, totalAmount: 70.5 });
+    for (const extra of [{ buyerId: '' }, { totalAmount: 1 }, { currency: 'USD' }, { version: -1 }, { completedAt: 'bad-date' }]) {
+      expect(() => orderPr27({ ...wireOrder, ...extra })).toThrow();
     }
   });
 });

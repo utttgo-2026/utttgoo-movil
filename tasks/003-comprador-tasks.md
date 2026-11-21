@@ -1,5 +1,39 @@
 # Tasks 003 — Flujo del Comprador
 
+## Bloqueo físico — EN CURSO
+- [x] Mensaje ambiguo procede de commerce antes del POST: submitted por clave o uncertain por ámbito order; red/timeout/DTO inválido/5xx tras dispatch activan uncertain. OpenAPI actual coincide en campos obligatorios PR27; no se observó la respuesta privada del teléfono.
+- [x] Mensajes separados para confirmado e incierto; tras error incierto se bloquea el botón y se ofrece historial. Restaurar el mismo coordinador no limpia marcas. Pruebas sintéticas de timeout/red/DTO inválido, nueva compra y consulta no concluyente.
+- [ ] Persistencia segura entre logout/reinicio y reconciliación concluyente requieren diseño y contrato de idempotencia/correlación backend; el estado actual en memoria se pierde con logout/login o nuevo proceso. No inferir éxito ni ausencia del pedido.
+- [ ] Validación física del bundle actual y captura de respuesta/status sin credenciales; no se conoce si el caso físico fue 201 rechazado por parser o timeout.
+
+## PR27 — EN PRUEBAS
+- [x] POST y GET mine/detalle usan DTO PR27, orderId, identidad del comprador y paginación del servidor; recibo e historial/seguimiento conectados.
+- [x] TypeScript limpio, suite completa 663/663 y nueva regresión aislada de ownership aprobada; lint 0 errores/27 advertencias, diff --check sin errores.
+- [ ] Pruebas específicas de UI para paginación/refresco, verificación visual Figma y recorrido privado Expo Go; no se acredita persistencia AWS por fixtures.
+- [ ] Expo Doctor 19/20: cinco versiones recomendadas distintas; no se actualizaron dependencias.
+
+## Recuperación por bloques actual
+- [x] CheckpointBloque1 y comparación estática nueva UI015–024 originales vs fuenteAWS (matriz006).
+- [x] B3acotado: panelEfectivo, marcoQRsinpayload ni scanner y avisosAWS sinfixtures;625/625tests/40suites, tsc0, lint0errores/27warnings, Doctor20/20 y diffchecklimpio; sin validación física nueva.
+- [ ] Unidad3.1: integrar GETorders/mine/GETdetail usando schemas ya publicados, ownership/generación y metadatareal; recuperar UI019/020 sin timelineinventado.
+- [ ] Acciones persistentes/QRseguro después de endpoints; no confundir layout local con operación confirmada.
+- [ ] Prueba física Figma/ExpoGo y commit segúnAGENTS. No se marca restaurado historial ni seguimiento con solo recibo dePOST.
+
+## P0 PR #24
+- [x] Notas opcionales≤250 en DTO/builder, preparación de sesión y formulario/revisión, sin importescliente ni multiitem.
+- [x] Conservación de preparación/notas ante fallo, limpieza solo tras201válido y exclusión de duplicados/logouttardío.
+- [x] Lectura de respuestaorden del OpenAPI desplegado normalizada al modelo existente sin campos supuestos ni mezclas.
+- [x] Verificación final automatizada y registro de resultados en007/changelog:562/562tests/36suites, tsc0, ESLint0errores/30warnings, Doctor20/20, diffchecklimpio; bundleAndroid200.
+- [ ] Recorrido ExpoGo/persistencia producto/pedido autorizado. GETmine/detail: schemaahorapublicado, enums e integración/seguimiento pendientes; no mocks productivos.
+
+## Continuación AWS — estado real
+- [x] DTO/servicio de pedido de un producto y request exacto productId/quantity, 201 validado.
+- [x] Preparación por sesión y rutas existentes revisión/confirmación/recibo AWS; catálogo y stock reales, sin carrito multiitem ni cargos inventados.
+- [x] Guardas de sesión, ownership de respuesta, duplicados, errores y logout tardío con pruebas simuladas.
+- [x] Historial/seguimiento/calificación/cancelación sin fallback mock en fuenteAWS, explícitamente pendientes de contratos.
+- [ ] GETorders/mine y detalle: faltan DTOs. No interpretar colección ni estados por suposición.
+- [ ] Prueba física autorizada en Expo Go y comparación visual contra Figma; las marcas históricas siguientes corresponden a maquetas, no a integración real.
+
 ## Información General
 - **Spec**: 003-comprador
 - **Versión**: 1.0

@@ -1,12 +1,65 @@
 # Tasks007 — Vendedor/productos
 
-## Integración V1.2 en `eas-google-play` — EN PRUEBAS
-- [x] Integrar rutas Seller, activación protegida, contratos de categorías/productos/pedidos y validación de ownership.
-- [x] Integrar catálogo AWS y pedido directo con efectivo; source mock limitado a `__DEV__` y configuración explícita.
-- [x] Preservar OTP, SecureStore, sesión única, CI/CD y EAS de `eas-google-play`.
-- [x] Documentar límites: `QR_VISUAL_ONLY`, S3/fotografías, historial/seguimiento, notificaciones, dashboard y listado Seller privado.
-- [ ] Validar físicamente en Expo Go el recorrido completo y confirmar persistencia backend.
-- [x] Generar Production AAB `1.2.0` (versionCode `3`); queda pendiente la carga manual en Google Play Closed Testing.
+## Media revisión despliegue — EN CURSO
+- [x] GET OpenAPI y catálogo (seis productos): ProductResponse sin imageUrl y ninguno de los seis la contiene. HEAD público 0e95070: POST rechaza URL y PATCH no admite media; confirm no comprueba propiedad/archivo. No se conoce el SHA EC2.
+- [x] Foto seleccionada visible también en vista previa local con etiqueta de no subida; pruebas sintéticas, sin mutaciones AWS.
+- [x] TypeScript limpio, Jest 702/702, lint 0 errores/27 advertencias, Doctor19/20, diff check limpio y bundle Android HTTP200 (Hermes/compiler).
+- [ ] Confirmar SHA EC2 y corregir ownership/registro de asset, confirmación de objeto y asociación POST/PATCH antes de conectar S3. ProductResponse y GET público aún no entregan imageUrl.
+
+## Mis alimentos AWS — EN CURSO
+- [x] OpenAPI actual: GET público sin sellerId ni listado privado; PATCH JsonElement; no DELETE; ProductResponse sin imageUrl. Código público 0e95070 permite name/description/ingredients/price/stock en PATCH pero SHA desplegado no confirmado y CreateProductService aún rechaza imagen.
+- [x] Consulta pública paginada desde AuthSession tras Seller Active; filtra sellerId y rechaza páginas inconsistentes, conserva productos conocidos de sesión. UI con búsqueda parcial, pull-to-refresh, reintento y confirmación de pausa; PATCH solo precio/stock modificados.
+- [x] TypeScript limpio, Jest 702/702 (47 suites), lint 0 errores/27 advertencias, Doctor 19/20 y diff --check sin errores; Metro Android HTTP200 Hermes/compiler, proceso propio detenido.
+- [ ] Validar Expo Go y backend privado: listado propio completo/pausados, PATCH nombre/descripción/ingredientes en despliegue, DELETE e imágenes no están confirmados. No se realizaron mutaciones reales.
+
+## Adaptador S3 aislado — EN CURSO
+- [x] Dependencias expo-file-system 58.0.14/expo-image-picker 58.0.10 instaladas; HEAD backend 281c19f mantiene rechazo ImageUrl; OpenAPI no accesible en consulta actual.
+- [x] Adaptador aislado presigned/PUT/confirm con hosts exactos, binario, redirect error y reintento explícito del mismo asset; tests sintéticos sin red ni mutaciones reales.
+- [x] TypeScript limpio, 700/700 pruebas, lint 0 errores/27 avisos, Doctor19/20, diff check limpio; bundle Android HTTP200, Hermes y React Compiler, Metro propio detenido.
+- [ ] Integrar adaptador a sesión/UI y añadir estados/reintentos con política de errores tras validar backend desplegado. El adaptador aislado solo permite reintento explícito y no aplica backoff automático; sin prueba física S3.
+
+## Fotografía local — EN CURSO
+- [x] Instalar expo-image-picker ~58.0.10 y expo-file-system ~58.0.14; selector cámara/galería, bytes/tamaño/dimensiones, vista previa/eliminación; publicación con foto bloqueada y sin foto envía null.
+- [x] TypeScript limpio, 696/696 pruebas en 46 suites, lint 0 errores/27 advertencias, Expo Doctor 19/20 y diff --check sin errores. Pruebas con picker/archivos simulados, sin subida real.
+- [ ] Validar en Expo Go: permisos, cámara/galería y lectura nativa. Preparación S3 limitada a mediaContracts aislado: faltan cliente presigned, PUT binario y confirm; siguen bloqueados SHA EC2, hosts, propiedad/asociación y ProductResponse.
+
+## Creación continua — seguimiento físico
+- [x] La confirmación sustituye temporalmente el formulario en la misma pantalla, dejando visibles Crear otro alimento y Ver mis alimentos; crear otro restablece campos y categoría. Sin confirmación física todavía.
+- [ ] Mis alimentos sigue limitado a productos conocidos en sesión y consulta por ID; no hay listado privado completo verificado. Un producto idéntico confirmado conserva protección por cuerpo en esta sesión.
+
+## Media API017/018 — BLOQUEADO
+- [x] Nueva comprobación GET: OpenAPI no incluye `imageUrl` en ProductResponse y los cuatro productos devueltos tampoco; el HEAD público sigue en b79fa80. Sin identificación de SHA desplegado ni hosts autorizados.
+- [x] Parsers aislados presigned/confirm: HTTPS con allowlist explícita, expiración, assetId coincidente y Ready; pruebas sintéticas. No están conectados a red o pantalla. TypeScript limpio, 684/684 pruebas, lint 0 errores/27 avisos, Doctor 19/20 y diff --check sin errores.
+- [x] OpenAPI desplegado confirma nombres de DTO media y ProductResponse sin imageUrl; GET público sin mutaciones.
+- [x] Backend público PR28 `b79fa80` inspeccionado: CreateProductService rechaza ImageUrl no vacío; SignedUrlService genera ID sin registrar asset, MediaAssetService no comprueba dueño ni objeto y repositorio es InMemory por scope; S3 tiene fallback URL mock si no está configurado. No se ha probado que ese SHA sea el desplegado.
+- [ ] Backend debe confirmar SHA, autorización y ownership, persistencia por asset, comprobación del objeto y contenido, orígenes S3 autorizados y aceptación/publicación de imagen. No habilitar flujos S3 ni crear recursos reales hasta verificar.
+
+## Creación consecutiva — EN CURSO
+- [x] Referencia UI-036 inspeccionada; bloqueo causado por `published` sin acción de reinicio. Fuente backend limita nombre 1–120, descripción 1–500, ingredientes ≤20 de 1–60, precio hasta 1,000,000 y stock 0–1,000,000. OpenAPI no expresa estos límites.
+- [x] Confirmación en línea y reinicio explícito; datos conservados ante fallo, validación por campo, navegación a productos de sesión y pruebas sintéticas.
+- [x] TypeScript limpio, Jest 681/681 (44 suites), lint 0 errores/27 advertencias, diff --check sin errores. Expo Doctor 19/20 por cinco versiones recomendadas distintas.
+- [ ] Validar físicamente en Expo Go y contrastar UX/Figma. El validador existente del servicio limita nombre 2–100, descripción mínimo 2 y precio máximo 999999.99, más restrictivos que backend; no se alteró el servicio AWS.
+
+## Migración PR27 — EN CURSO
+- [x] Reinspección fuente 6932990: listado usa ListForBuyerAsync y role buyer; cancelación solo buyer Pending; confirmación delivery seller propietario y Ready. OpenAPI no confirma listado seller y sin JWT autorizado no se ha comprobado el despliegue privado.
+- [x] Parsers aislados PR27 para respuesta completa y resumen paginado, pruebas con DTO sintéticos de ambos roles y rechazo de campos inválidos. TypeScript limpio y 658/658 pruebas; todavía no conectados a la aplicación.
+- [x] OpenAPI y GET públicos confirman `storeName`/`phone`, perfil propio y paginación `totalCount`; backend commit 6932990 confirma efectivo `Cash` y estados de pedido.
+- [x] Código backend `ListOwnOrdersService`: `/orders/mine` lista solo comprador (`role: buyer`), no pedidos recibidos del vendedor. `CreateDeliveryTokenService`: solo comprador y estado `Ready`.
+- [x] Fixtures vendedor/catálogo migrados; TypeScript 0 errores y Jest 650/650, 41 suites. El primer intento había fallado por fixtures anteriores.
+- [ ] Fixtures y adaptador de pedidos siguen siendo legacy; las pruebas verdes no acreditan compatibilidad POST PR27. No probar compras hasta migrarlos.
+- [ ] Expo Doctor 19/20: expo, expo-router, @expo/ui, jest-expo y expo-web-browser desalineados con las versiones recomendadas actualmente. No se han actualizado dependencias.
+- [ ] El inspector Metro de la sesión actual no pudo iniciarse (TypeError en el helper); no acredita bundle ni source map del teléfono.
+- [ ] Migrar vendedor y paginación, órdenes y pantallas; verificar contratos y regresiones sin mutaciones reales.
+- [ ] Investigar TypeError físico con evidencia del dispositivo; prueba Expo Go y autorización antes de cualquier commit.
+
+## Reapertura188 — EN PRUEBAS / causa física abierta
+- [x] Registrar188exacto deHEADc606435: if/return sin llamadas; fuenteúnica delMetro8081 coincide conGit inicialmente, rootcorrecto/SDK58. No identificarfunciónundefined por inercia desde176.
+- [x] Inspeccionar perfilreal delmanifiesto (Hermes/ReactCompiler/hermes-stable) y ejecutarmódulos realesMetro enVMNode con red/storage/bridge sintéticos. Missing→alta→GETActive→roles→consulta funcionan; no se reprodujo el TypeErrorfísico ni se conocióversión delcliente.
+- [x] ProbesDEV seguros temporales añadidos/retirados. Usuario no puede probarahora;0targetsinspectoreninspeccióninicial. No logs deobjetos/credenciales ni datosrealAWS.
+- [x] Rojo→verde: BabelReactRefresh preservabaestado viejo; @refreshreset fuerza descartarlo. ConsultaREALdespuésdeunmount devolvíasuccess; ahora cancelada. Lifecycle invalida generación/revisión sin clearJWT,401tardío no borra sesiónnueva.
+- [x] POSTincierto→GETde reconciliación una vez; Active/roles confirmanGET200/reconciledtrue, missing/error conservauncertain. No POSTautomático ni fake201. Cleanup lookup con thenambosresultados conserva errororiginal.
+- [x]649/649tests/41suites (+9), TypeScript0errores, ESLint0errores/27warnings previos, Doctor20/20 y diffchecklimpio. BundleAndroid200/12,938,102bytes con perfil delmanifiesto/graphcompleto yMetro8106detenido;8081delusuario no se detiene. Solo códigoJScompilado, no Hermesfísico.
+- [ ] Identificar funciónundefined/capturarcodeframe real188 en el teléfono y crear reproducción de ESAexcepción: no se afirma conseguida. Nueva prueba física de ambosrecorridos antes decierre. Sincommit/push.
 
 ## Hotfix runSeller — EN PRUEBAS
 - [x] Localizar expresión176: sellerSubmissionState() dentro de catch; métodoexiste en claseactual/factory, instanciaretenida poruseState no se recrea al renderizar.

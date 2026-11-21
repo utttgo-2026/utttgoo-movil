@@ -5,6 +5,7 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
+  type RefreshControlProps,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ interface ScreenProps {
   keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
   header?: React.ReactNode;
   constrained?: boolean;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 }
 
 export function Screen({
@@ -34,6 +36,7 @@ export function Screen({
   keyboardShouldPersistTaps = 'handled',
   header,
   constrained = false,
+  refreshControl,
 }: ScreenProps) {
   return (
     <SafeAreaView edges={Array.from(new Set<Edge>([...edges, 'left', 'right']))} style={[styles.safeArea, { backgroundColor }, style]}>
@@ -47,6 +50,7 @@ export function Screen({
             contentContainerStyle,
           ]}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+          refreshControl={refreshControl}
           showsVerticalScrollIndicator={false}
           style={styles.viewport}
         >

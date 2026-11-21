@@ -1,25 +1,6 @@
 /** Contratos confirmados. Las respuestas aún no conocidas permanecen unknown. */
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
-export interface ApiError {
-  correlationId: string;
-  status: number;
-  code: string;
-  message: string;
-}
-
-export function isApiError(value: unknown): value is ApiError {
-  if (!value || typeof value !== 'object') return false;
-  const candidate = value as Record<string, unknown>;
-  return typeof candidate.correlationId === 'string' && typeof candidate.status === 'number' &&
-    typeof candidate.code === 'string' && typeof candidate.message === 'string';
-}
-
-export function parseApiError(value: unknown, status = 500): ApiError {
-  if (isApiError(value)) return value;
-  return { correlationId: '', status, code: 'UNKNOWN_ERROR', message: 'Ocurrió un error inesperado.' };
-}
-
 export interface ApiResponse<T = unknown> {
   status: number;
   headers: Readonly<Record<string, string>>;
@@ -66,9 +47,9 @@ export interface UserPatch {
 }
 
 export interface SellerActivationRequest {
-  businessName: string;
+  storeName: string;
   description: string;
-  pickupPoint: string;
+  phone: string;
 }
 
 export type SellerPatch = Partial<SellerActivationRequest>;
@@ -82,7 +63,7 @@ export interface SellerActiveResponse extends SellerActivationRequest {
   updatedAt: string;
 }
 export interface ApiCategory { id: string; name: string; sortOrder: number }
-export interface ApiPage<T> { items: T[]; page: number; pageSize: number; total: number }
+export interface ApiPage<T> { items: T[]; page: number; pageSize: number; totalCount: number }
 export interface CreateProductRequest {
   name: string; description: string; ingredients: string[]; categoryId: string; price: number; stock: number;
   imageUrl?: null;
@@ -95,7 +76,7 @@ export interface ProductResponse extends Omit<CreateProductRequest, 'imageUrl'> 
   status: ProductStatus; isAvailable: boolean; ratingAverage: number | null; ratingCount: number | null;
   createdAt: string; updatedAt: string;
 }
-export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; total: number }
+export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; totalCount: number }
 export interface ProductPatch { price?: number; stock?: number }
 export interface CreateOrderRequest { productId: string; quantity: number; notes?: string }
 export interface OrderResponse extends CreateOrderRequest {

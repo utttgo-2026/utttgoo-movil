@@ -5,6 +5,12 @@ import * as SecureStore from 'expo-secure-store';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { createAuthSession } from '../authSession';
 import ProfileScreen from '@/app/buyer/(tabs)/profile';
+import { productService } from '../api/productService';
+import { orderService } from '../api/orderService';
+import { ApiError } from '../api/errors';
+import type { ProductResponse } from '@/types/api';
+import type { OrderPr27 } from '../api/orderContractsPr27';
+import { productMetadata } from '../__fixtures__/product';
 
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
@@ -64,6 +70,26 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     expect(transport).toHaveBeenCalledWith('https://aws.example.test/api/v1/users/me', expect.objectContaining({ headers: expect.objectContaining({ Authorization: `Bearer ${valid.accessToken}` }) }));
     expect(JSON.stringify(secure.setItemAsync.mock.calls)).not.toContain('synthetic-password');
   });
+  test('factory real restaurada expone contrato seller completo y consulta Active con mismo JWT, sin POST', async () => {
+    storedToken = valid.accessToken;
+    const seller = { sellerId: 'synthetic-seller-id', storeName: 'Negocio fixture', description: 'Comida del campus fixture', phone: '5551234567',
+      status: 'Active', isActive: true, roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' };
+    transport.mockImplementation(async (url) => {
+      const path = String(url);
+      const body = path.endsWith('/sellers/me') ? seller : path.endsWith('/auth/me') ? { ...identity, roles: ['Buyer', 'Seller'] } :
+        path.endsWith('/users/me') ? { ...profile, roles: ['Buyer', 'Seller'] } : null;
+      return new Response(JSON.stringify(body), { status: body ? 200 : 404 });
+    });
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+    await act(async () => {
+      await expect(result.current.consultSeller()).resolves.toMatchObject({ success: true, kind: 'active', seller, roleSynced: true, received: false, uncertain: false });
+    });
+    expect(result.current.role).toBe('seller'); expect(storedToken).toBe(valid.accessToken);
+    expect(transport).toHaveBeenCalledWith('https://aws.example.test/api/v1/sellers/me', expect.objectContaining({ method: 'GET', headers: expect.objectContaining({ Authorization: `Bearer ${valid.accessToken}` }) }));
+    expect(transport.mock.calls.every(([, options]) => options?.method === 'GET')).toBe(true);
+    expect(secure.setItemAsync).not.toHaveBeenCalled();
+  });
 
   test.each([
     ['token vacío', { ...valid, accessToken: '' }], ['expiración inválida', { ...valid, expiresIn: 0 }],
@@ -94,6 +120,53 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     expect(secure.deleteItemAsync).toHaveBeenCalledWith('uttgo.aws.jwt', { keychainAccessible: 'fixture-device-only' });
     expect(await createAuthSession().restore()).toBeNull();
     expect(transport).toHaveBeenCalledTimes(3);
+  });
+
+  test('preparación de un producto sobrevive403; solo201 válido entrega recibo y limpia preparación', async () => {
+    const product: ProductResponse = { id: 'aws-product', sellerId: 'aws-seller', categoryId: 'aws-category', name: 'Alimento AWS', description: 'Descripción',
+      ...productMetadata, ingredients: [], price: 35.5, stock: 4, status: 'Active' };
+    const order: OrderPr27 = { orderId: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id, productName: product.name,
+      quantity: 2, unitPrice: 35.5, totalAmount: 71, status: 'Pending', currency: 'MXN', paymentMethod: 'Cash', pickupPoint: '', deliveredAt: null, completedAt: null, version: 1, updatedAt: '2026-11-16T12:00:00Z', createdAt: '2026-11-16T12:00:00Z' };
+    jest.spyOn(productService, 'getById').mockResolvedValue(product);
+    const post = jest.spyOn(orderService, 'create').mockRejectedValueOnce(new ApiError('http', 'Fixture forbidden', 403)).mockResolvedValue(order);
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    await act(async () => { await result.current.login(identity.email, 'synthetic-password'); });
+    await act(async () => { expect(result.current.prepareOrder(product, 2).success).toBe(true); });
+    await act(async () => {
+      expect(result.current.updateOrderNotes('x'.repeat(251)).success).toBe(false);
+      expect(result.current.updateOrderNotes('Sin cebolla').success).toBe(true);
+    });
+    await act(async () => { expect((await result.current.submitOrder()).success).toBe(false); });
+    expect(result.current.orderPreparation?.quantity).toBe(2); expect(result.current.lastOrder).toBeNull();
+    expect(result.current.orderPreparation?.notes).toBe('Sin cebolla');
+    await act(async () => { expect((await result.current.submitOrder()).success).toBe(true); });
+    expect(result.current.orderPreparation).toBeNull(); expect(result.current.lastOrder).toEqual(order);
+    expect(post).toHaveBeenLastCalledWith(valid.accessToken, { productId: product.id, quantity: 2, notes: 'Sin cebolla' });
+    await act(async () => { expect((await result.current.submitOrder()).success).toBe(false); });
+    expect(post).toHaveBeenCalledTimes(2);
+    await act(async () => { await result.current.logout(); });
+    expect(result.current.lastOrder).toBeNull(); expect(result.current.sessionProducts).toEqual([]);
+  });
+
+  test('logout durantePOST pedido descarta respuesta tardía y no repuebla recibo ni preparación', async () => {
+    const product: ProductResponse = { id: 'aws-product', sellerId: 'aws-seller', categoryId: 'aws-category', name: 'Alimento AWS', description: 'Descripción',
+      ...productMetadata, ingredients: [], price: 35, stock: 4, status: 'Active' };
+    jest.spyOn(productService, 'getById').mockResolvedValue(product);
+    let finish!: (order: OrderPr27) => void;
+    const post = jest.spyOn(orderService, 'create').mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
+    await act(async () => { await result.current.login(identity.email, 'synthetic-password'); });
+    await act(async () => { result.current.prepareOrder(product, 1); });
+    let pending!: ReturnType<typeof result.current.submitOrder>;
+    await act(async () => { pending = result.current.submitOrder(); });
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+    await act(async () => { await result.current.logout(); });
+    await act(async () => {
+      finish({ orderId: 'aws-order', buyerId: valid.user.id, sellerId: product.sellerId, productId: product.id, productName: product.name,
+        quantity: 1, unitPrice: 35, totalAmount: 35, status: 'Pending', currency: 'MXN', paymentMethod: 'Cash', pickupPoint: '', deliveredAt: null, completedAt: null, version: 1, updatedAt: '2026-11-16T12:00:00Z', createdAt: '2026-11-16T12:00:00Z' });
+      expect((await pending).success).toBe(false);
+    });
+    expect(result.current.lastOrder).toBeNull(); expect(result.current.orderPreparation).toBeNull(); expect(result.current.user).toBeNull();
   });
 
   test('JWT persistido restaura únicamente después de validar ambos /me', async () => {

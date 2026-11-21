@@ -42,10 +42,9 @@ export function SellerEntry({ activationRoute = false, authorizedChildren }: { a
           <AppText accessibilityLiveRegion="polite">Negocio Active confirmado por GET AWS. {authorized ? 'Seller revalidado.' : 'El JWT actual todavía no confirma Seller. Vuelve a iniciar sesión.'}</AppText>
         </MotionFeedback>
         <Surface bordered style={{ gap: spacing.md }}>
-          <AppInput label="Nombre del negocio" value={active.seller.businessName} editable={false} />
+          <AppInput label="Nombre del negocio" value={active.seller.storeName} editable={false} />
           <AppInput label="Descripción" value={active.seller.description} editable={false} multiline />
-          <AppInput label="Punto de entrega" value={active.seller.pickupPoint} editable={false} />
-          <AppText variant="caption">Foto y teléfono no forman parte del contrato de edición acordado.</AppText>
+          <AppInput label="Teléfono de contacto" value={active.seller.phone} editable={false} />
           <AppButton label="Guardar cambios" disabled />
         </Surface>
         {!authorized ? <AppButton label="Actualizar permisos en login" variant="outline" onPress={() => router.push('/login')} /> : null}

@@ -23,9 +23,9 @@ describe('DTO producto completo del OpenAPI desplegado', () => {
     for (const stock of [true, ' 4 ', '04', '4e1', '4.0', { $gt: 0 }, '9007199254740993']) expect(() => productResponse({ ...product, stock })).toThrow();
     for (const extra of [{ ratingCount: -1 }, { ratingAverage: {} }, { createdAt: 'bad-date' }, { isAvailable: null }]) expect(() => productResponse({ ...product, ...extra })).toThrow();
   });
-  test('página usa únicamente total y metadata comprobada', () => {
-    expect(productPageResponse({ items: [product], page: '1', pageSize: '20', total: '1' })).toEqual({ items: [product], page: 1, pageSize: 20, total: 1 });
-    for (const extra of [{ totalCount: 1 }, { total: 1, totalCount: 1 }, { total: '9007199254740993' }, { total: -1 }])
+  test('página exige totalCount y metadata comprobada', () => {
+    expect(productPageResponse({ items: [product], page: '1', pageSize: '20', totalCount: '1' })).toEqual({ items: [product], page: 1, pageSize: 20, totalCount: 1 });
+    for (const extra of [{ total: 1 }, { totalCount: '9007199254740993' }, { totalCount: -1 }])
       expect(() => productPageResponse({ items: [product], page: 1, pageSize: 20, ...extra })).toThrow();
   });
   test('created_desc se bloquea sin petición; no inventa un sort sustituto', async () => {

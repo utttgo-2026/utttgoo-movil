@@ -1,5 +1,10 @@
 # Plan 001 — Inicialización del Proyecto
 
+## Continuación V1.2 — onboarding remoto
+1. Auditar README/.env.example/ignore/lock/assets/appconfig/EAS y accesopúblicoGitHub. Node24 indicado porCI; usar .nvmrc como recomendación, sin forzar engines ni actualizar dependencias.
+2. READMEconcisoactual, guía docs/COLABORACION.md con clonebranch/npmci/copiaenv/completarclavepublica/ExpoGoLAN/túnel y troubleshooting. Actualizar comentarios deplantilla y proteger todaslas variantes.env salvo ejemplo.
+3. Verificar desde checkout limpio de archivos versionados sin claveslocales; cotejar variablesdocumentadas con código, lock e ignores. Ejecutar checks apropiados antes decommit y pushV1.2 autorizado. Appactual conserva prueba física delhotfix confirmada; nueva computadora queda pendiente de prueba porcompañero.
+
 ## Información General
 - **Spec**: 001-inicializacion
 - **Versión**: 1.0

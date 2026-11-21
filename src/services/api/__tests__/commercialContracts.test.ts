@@ -1,6 +1,7 @@
 import { httpClient } from '../httpClient';
 import { categoryService } from '../categoryService';
-import { categoryResponse, pageResponse, sellerActiveResponse, productResponse, productPageResponse, orderResponse } from '../catalogContracts';
+import { categoryResponse, pageResponse, sellerActiveResponse, productResponse, productPageResponse } from '../catalogContracts';
+import { orderPr27 } from '../orderContractsPr27';
 import { createProductBody, productPatchBody, productAvailabilityBody, productService } from '../productService';
 import { sellerService } from '../sellerService';
 import { backendHttpError } from '../errors';
@@ -9,13 +10,13 @@ import { usesMockCatalog } from '@/config/catalogSource';
 import { createOrderBody, orderService } from '../orderService';
 import { productMetadata } from '../../__fixtures__/product';
 
-const seller = { sellerId: 'server-seller-fixture', businessName: 'Cocina fixture', description: 'Comida del campus', pickupPoint: 'Edificio fixture',
+const seller = { sellerId: 'server-seller-fixture', storeName: 'Cocina fixture', description: 'Comida del campus', phone: '5551234567',
   status: 'Active', isActive: true, roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' };
 const category = { id: 'server-category-fixture', name: 'Categoría AWS fixture', sortOrder: 10 };
 const product = { name: 'Alimento fixture', description: 'Descripción fixture', ingredients: ['Piña', 'Carne'], categoryId: category.id, price: 55.50, stock: 10 };
 const persisted = { ...product, ...productMetadata, id: 'server-product', sellerId: seller.sellerId, status: 'Active' };
-const order = { id: 'server-order', buyerId: 'server-buyer', sellerId: seller.sellerId, productId: persisted.id,
-  quantity: 2, unitPrice: 55.50, totalAmount: 111, status: 'Pending', createdAt: '2026-11-16T12:00:00Z' };
+const order = { orderId: 'server-order', buyerId: 'server-buyer', sellerId: seller.sellerId, productId: persisted.id, productName: persisted.name,
+  quantity: 2, unitPrice: 55.50, totalAmount: 111, currency: 'MXN', paymentMethod: 'Cash', pickupPoint: '', deliveredAt: null, completedAt: null, updatedAt: '2026-11-16T12:00:00Z', version: 1, status: 'Pending', createdAt: '2026-11-16T12:00:00Z' };
 
 describe('Contratos comerciales confirmados, sin requests reales', () => {
   afterEach(() => jest.restoreAllMocks());
@@ -27,23 +28,23 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
   });
   test.each([{ ...seller, status: 'Pending' }, { ...seller, isActive: false }, { ...seller, roles: ['Seller'] }, { ...seller, sellerId: '' }, { ...seller, createdAt: 'invalid' }])
   ('rechaza vendedor no confirmado: %j', (value) => expect(() => sellerActiveResponse(value)).toThrow());
-  test('activación201 confirmada y200 publicado requieren DTO Active', async () => {
+  test('activación201 requiere DTO Active', async () => {
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 201, headers: {}, data: seller });
-    expect((await sellerService.requestActivation('synthetic.aws.jwt', { businessName: seller.businessName, description: seller.description, pickupPoint: seller.pickupPoint })).data.sellerId).toBe(seller.sellerId);
-    expect(request).toHaveBeenCalledWith('/api/v1/sellers/activation-requests', expect.objectContaining({ expectedStatuses: [200, 201], token: 'synthetic.aws.jwt' }));
+    expect((await sellerService.requestActivation('synthetic.aws.jwt', { storeName: seller.storeName, description: seller.description, phone: seller.phone })).data.sellerId).toBe(seller.sellerId);
+    expect(request).toHaveBeenCalledWith('/api/v1/sellers/activation-requests', expect.objectContaining({ expectedStatuses: [201], token: 'synthetic.aws.jwt' }));
   });
   test('categorías paginadas se cargan sin IDs locales y ordenadas', async () => {
     const request = jest.spyOn(httpClient, 'request')
-      .mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [category], page: 1, pageSize: 20, total: 2 } })
-      .mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [{ ...category, id: 'second-server-id', sortOrder: 1 }], page: 2, pageSize: 20, total: 2 } });
+      .mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [category], page: 1, pageSize: 20, totalCount: 2 } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [{ ...category, id: 'second-server-id', sortOrder: 1 }], page: 2, pageSize: 20, totalCount: 2 } });
     expect((await categoryService.getAll()).map((item) => item.id)).toEqual(['second-server-id', category.id]);
     expect(request).toHaveBeenLastCalledWith('/api/v1/categories', expect.objectContaining({ query: { page: 2, pageSize: 20 } }));
   });
   test('categorías items vacío es respuesta real sin fallback', async () => {
-    jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, total: 0 } });
+    jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, totalCount: 0 } });
     expect(await categoryService.getAll()).toEqual([]);
   });
-  test.each([null, { items: [], page: 0, pageSize: 20, total: 0 }, { items: [], page: 1, pageSize: 0, total: 0 }, { items: [{}], page: 1, pageSize: 20, total: 1 }])
+  test.each([null, { items: [], page: 0, pageSize: 20, totalCount: 0 }, { items: [], page: 1, pageSize: 0, totalCount: 0 }, { items: [{}], page: 1, pageSize: 20, totalCount: 1 }])
   ('schema de categoría/página inválido no se convierte en vacío: %j', (value) => expect(() => pageResponse(value, categoryResponse)).toThrow());
   test('create body usa solo campos confirmados y no exige media', () => {
     expect(createProductBody(product, [category.id])).toEqual(product);
@@ -61,12 +62,12 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
     expect(request).not.toHaveBeenCalled();
   });
   test('GET productos respeta página/filtros confirmados', async () => {
-    const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 2, pageSize: 10, total: 0 } });
+    const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 2, pageSize: 10, totalCount: 0 } });
     expect((await productService.getPage({ search: 'tacos', categoryId: category.id, minPrice: 10, maxPrice: 60, page: 2, pageSize: 10 })).items).toEqual([]);
     expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: { search: 'tacos', categoryId: category.id, minPrice: 10, maxPrice: 60, page: 2, pageSize: 10 } }));
   });
   test('producto incompleto se rechaza en lista y detalle', async () => {
-    jest.spyOn(httpClient, 'request').mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [{ ...product, id: 'server-product' }], page: 1, pageSize: 20, total: 1 } })
+    jest.spyOn(httpClient, 'request').mockResolvedValueOnce({ status: 200, headers: {}, data: { items: [{ ...product, id: 'server-product' }], page: 1, pageSize: 20, totalCount: 1 } })
       .mockResolvedValueOnce({ status: 200, headers: {}, data: { ...product, id: 'server-product' } });
     await expect(productService.getPage()).rejects.toMatchObject({ kind: 'invalid_response' });
     await expect(productService.getById('server-product')).rejects.toMatchObject({ kind: 'invalid_response' });
@@ -74,25 +75,24 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
   test('create201 y PATCH200 usan Bearer y whitelist, devuelven IDs reales', async () => {
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 201, headers: {}, data: persisted });
     expect(await productService.create('synthetic.aws.jwt', product, [category.id])).toEqual(persisted);
-    expect(request).toHaveBeenLastCalledWith('/api/v1/products', expect.objectContaining({ method: 'POST', token: 'synthetic.aws.jwt', body: product, expectedStatuses: [201] }));
+    expect(request).toHaveBeenLastCalledWith('/api/v1/products', expect.objectContaining({ method: 'POST', token: 'synthetic.aws.jwt', body: { ...product, imageUrl: null }, expectedStatuses: [201] }));
     request.mockResolvedValue({ status: 200, headers: {}, data: { ...persisted, stock: 0 } });
     expect((await productService.update('synthetic.aws.jwt', persisted.id, { stock: 0 })).stock).toBe(0);
     expect(request).toHaveBeenLastCalledWith(`/api/v1/products/${persisted.id}`, expect.objectContaining({ body: { stock: 0 }, expectedStatuses: [200] }));
     await expect(productService.update('synthetic.aws.jwt', persisted.id, { stock: 4 })).rejects.toMatchObject({ kind: 'invalid_response' });
   });
   test.each(['price_asc', 'price_desc', 'name_asc'] as const)('sort confirmado %s y total', async (sortBy) => {
-    const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [persisted], page: 1, pageSize: 20, total: 1 } });
+    const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [persisted], page: 1, pageSize: 20, totalCount: 1 } });
     expect((await productService.getPage({ sortBy })).items).toEqual([persisted]);
     expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: expect.objectContaining({ sortBy }) }));
   });
   test.each([{ ...persisted, status: 'Published' }, { ...persisted, price: 1.001 }, { ...persisted, stock: -1 }, { ...persisted, ingredients: [4] }, { ...persisted, sellerId: '' }, { ...persisted, isAvailable: 'true' }])
   ('producto inválido no se presenta como válido: %j', (value) => expect(() => productResponse(value)).toThrow());
-  test('response no exige imagen; solo total se admite y Paused es válido', () => {
+  test('response no exige imagen; totalCount obligatorio y Paused válido', () => {
     expect(productResponse({ ...persisted, status: 'Paused' })).toMatchObject({ status: 'Paused' });
-    expect(productPageResponse({ items: [], page: 1, pageSize: 20, total: 0 }).total).toBe(0);
-    expect(() => productPageResponse({ items: [], page: 1, pageSize: 20, total: 0, totalCount: 3 })).toThrow();
-    expect(() => productPageResponse({ items: [], page: 1, pageSize: 20, totalCount: 0 })).toThrow();
-    expect(() => productPageResponse({ items: [persisted, persisted], page: 1, pageSize: 20, total: 2 })).toThrow();
+    expect(productPageResponse({ items: [], page: 1, pageSize: 20, totalCount: 0 }).totalCount).toBe(0);
+    expect(() => productPageResponse({ items: [], page: 1, pageSize: 20, total: 0 })).toThrow();
+    expect(() => productPageResponse({ items: [persisted, persisted], page: 1, pageSize: 20, totalCount: 2 })).toThrow();
   });
   test('pedido producto/cantidad/notas, 201 y total en centavos; sin fee', async () => {
     const body = { productId: persisted.id, quantity: 2 };
@@ -102,8 +102,9 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
     expect(createOrderBody({ ...body, notes: 'Sin cebolla' })).toEqual({ ...body, notes: 'Sin cebolla' });
     expect(() => createOrderBody({ ...body, totalAmount: 1 } as typeof body)).toThrow();
     expect(() => createOrderBody({ ...body, quantity: 0 })).toThrow();
-    expect(() => orderResponse({ ...order, totalAmount: 112 })).toThrow();
-    expect(() => orderResponse({ ...order, status: 'Delivered' })).toThrow();
+    expect(() => orderPr27({ ...order, totalAmount: 112 })).toThrow();
+    request.mockResolvedValueOnce({ status: 201, headers: {}, data: { ...order, status: 'Delivered' } });
+    await expect(orderService.create('synthetic.aws.jwt', body)).rejects.toMatchObject({ kind: 'invalid_response' });
     request.mockResolvedValue({ status: 201, headers: {}, data: { ...order, productId: 'wrong-product' } });
     await expect(orderService.create('synthetic.aws.jwt', body)).rejects.toMatchObject({ kind: 'invalid_response' });
   });

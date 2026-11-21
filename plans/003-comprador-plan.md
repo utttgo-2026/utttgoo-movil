@@ -1,5 +1,21 @@
 # Plan 003 — Flujo del Comprador
 
+## PR27 — integración en pruebas
+Crear pedido único usando decoder completo PR27; conservar preparación si falla. Consultar página y detalle mediante AuthSession con propiedad comprador, sin exponer JWT. Refrescar al foco; pendientes tests UI específicos, Figma físico y comprobación AWS privada.
+
+## Bloque3 acotado
+Después de checkpointBloque1 y auditoría22PNG006, reutilizar AwsOrderReview/Receipt para tarjetas efectivo y marcoQRsinpayload. Extraer tarjeta QRpresentacional que solo muestra orderId válido de recibo y estado pendiente; no aceptar/generar credencial hasta DTOseguro. Mantenercallbacks/envíos/guards y no tocar APIórdenes. Avisos conservaRequireSession y diseñoMockdev, fuenteAWS devuelve pendiente de contrato sin fixtures. Pruebas nofabricaciónQR/no-notificacionesmock/efectivo, más suitecompleta y cinco checks. HistoriaGETmine/detail y dashSeller permanecen unidades siguientes expresas.
+
+## P0 PR #24
+Notas opcionales≤250 validadas en builder reutilizable y en edición de preparación en AuthContext. Formulario datos permite escribirlas, confirmación muestra texto de sesión, POST envía solo productId/quantity/notes. Mantener lock, generación, cantidad/stock y conservación ante error; mostrar recibo solo de respuesta201 válida. Normalizar ambas respuestas documentadas (contrato previo y schema desplegado) con validación estricta e identidad. Probar límites, navegación atrás/errores/duplicados y auth; no convertir pedido simple a carrito múltiple.
+
+## Continuación AWS — pedido simple
+1. Separar DTOs AWS de modelos mock. Reutilizar rutas detalle→order-data→confirm-order→order-created con fuente AWS por defecto; maquetas históricas solo con mock explícito de desarrollo.
+2. Preparación de un producto en el AuthContext existente, acotada a sesión, sin reutilizar carrito mock multiitem ni mezclar IDs. Validar Active/stock/cantidad y reconsultar producto antes del POST.
+3. POST privado con JWT dentro de AuthSession, whitelist productId/quantity, decoder201 y comparación de buyerId/sellerId/productId/cantidad/importes. Conservar preparación ante fallo; limpiar solo tras éxito validado. Rechazar simultáneos y resultados tardíos.
+4. Recibo solo de respuesta validada e ID coincidente en sesión; sin QR/fee/notas/plazo/pago inventados. Historial/seguimiento/calificación/cancelación muestran pendiente de contrato en AWS, sin pedidos mock. No GETmine hastaDTO.
+5. Tests unitarios/Context/UI y checks obligatorios; manual comercial y fidelidad visual en Expo Go pendientes.
+
 ## Información General
 - **Spec**: 003-comprador
 - **Versión**: 1.0
@@ -266,3 +282,6 @@ Implementar el flujo principal del comprador con catálogo de productos, categor
 - `ANALISIS_FIGMA.md` (UI-006 a UI-025)
 - `MAPA_NAVEGACION.md` (flujos buyer)
 - `ANALISIS_FIGMA.md` (UI-012 Categoría.png - pendiente verificación)
+# Diagnóstico físico de confirmación — en curso
+
+Separar mensajes confirmados/resultado incierto, exponer razón controlada al contexto, ofrecer acceso a historial y conservar los bloqueos existentes. Pruebas con errores y respuestas simulados; no crear pedidos reales.

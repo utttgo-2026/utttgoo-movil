@@ -31,7 +31,7 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
     Object.keys(mockParams).forEach((key) => delete mockParams[key]); jest.clearAllMocks();
     mockAuthenticated = true; mockPrepare.mockReturnValue({ success: true });
     request = jest.spyOn(httpClient, 'request').mockImplementation(async (path: string) => ({
-      status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [], page: 1, pageSize: 20, total: path === '/api/v1/categories' ? 1 : 0 },
+      status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [], page: 1, pageSize: 20, totalCount: path === '/api/v1/categories' ? 1 : 0 },
     }));
   });
   afterEach(() => { if (previous === undefined) delete process.env.EXPO_PUBLIC_CATALOG_SOURCE; else process.env.EXPO_PUBLIC_CATALOG_SOURCE = previous; jest.restoreAllMocks(); });
@@ -51,7 +51,7 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
     await waitFor(() => expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: expect.objectContaining({ search: 'tacos' }) })));
   });
   test('categorías vacías se informan honestamente', async () => {
-    request.mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, total: 0 } });
+    request.mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, totalCount: 0 } });
     const view = await render(<Home />);
     await waitFor(() => expect(view.getByText('AWS no tiene categorías configuradas.')).toBeTruthy());
     expect(view.queryByText('Vegano')).toBeNull();
@@ -92,7 +92,7 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
   });
   test('catálogo renderiza producto persistente y navega con su ID; paginación remota', async () => {
     request.mockImplementation(async (path: string, options: { query?: { page?: number } }) => ({ status: 200, headers: {}, data: path === '/api/v1/categories' ?
-      { items: [category], page: 1, pageSize: 20, total: 1 } : { items: [product], page: options.query?.page ?? 1, pageSize: 20, total: 21 } }));
+      { items: [category], page: 1, pageSize: 20, totalCount: 1 } : { items: [product], page: options.query?.page ?? 1, pageSize: 20, totalCount: 21 } }));
     const view = await render(<Home />);
     await waitFor(() => expect(view.getByRole('button', { name: `Ver ${product.name}` })).toBeTruthy());
     await fireEvent.press(view.getByRole('button', { name: `Ver ${product.name}` }));
@@ -113,7 +113,7 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
   test('total desplegado es válido sin sort implícito; sort400 explícito no se oculta con otra consulta', async () => {
     request.mockImplementation(async (path: string, options: { query?: { sortBy?: string } }) => {
       if (path === '/api/v1/products' && options.query?.sortBy) throw new ApiError('http', 'Orden rechazado por backend (fixture).', 400);
-      return { status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [], page: 1, pageSize: 20, total: path === '/api/v1/categories' ? 1 : 0 } };
+      return { status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [], page: 1, pageSize: 20, totalCount: path === '/api/v1/categories' ? 1 : 0 } };
     });
     const view = await render(<Home />);
     await waitFor(() => expect(view.getByText('AWS no tiene productos públicos con esta selección.')).toBeTruthy());

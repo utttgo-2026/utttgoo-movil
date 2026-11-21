@@ -1,5 +1,15 @@
 # Specification 003 — Flujo del Comprador
 
+## Bloque3 acotado tras auditoría actual006
+Se inspeccionaron originales UI015/016/017/019/020/021/022/024 contra `AwsOrderFlow` y pantallas actuales. Recuperar panel exclusivamenteEfectivo en Datos/Confirmación sin añadir campo request ni afirmar pago confirmado; conservar precios estimados antes dePOST y totalbackend después. Recibo con IDpersistente puede mostrar marco de CódigoQRdeentrega, pero solo placeholder/credencialpendiente: ningún QR real se genera con orderId, JSONlocal o secreto inventado. No scanner/validación/entrega hasta contrato. AvisosAWS no deben presentar mockNotifications como si fueran eventosdelservidor; maqueta solo fuenteMockdev explícita y mensaje honesto sin API. GETmine/detail schemas publicados quedan siguiente unidad3.1, no bloqueados por faltaendpoint; no se declara restaurado historial/seguimiento en este bloque.
+
+## P0 PR #24 — notas y respuesta desplegada
+Request pedido simple añade notes opcional (máximo250 unidadesUTF16 para coincidir con .NET; no truncar silenciosamente ni enviar precios/totales). Preparación en sesión conserva notas al volver/errores y las revisa antes de confirmar. Campos permitidos productId/quantity/notes; validar antes de red. Carrito mock no participa ni se vacía por esta operación; preparación se limpia solo tras éxito validado.
+OpenAPI GET desplegado publica OrderResponse orderId/buyerUserId/total frente id/buyerId/totalAmount del contrato anterior, con productName/currency/paymentMethod/pickupPoint/fechas/version. Adaptador explícito de lectura valida ambas formas y normaliza al modelo existente, sin inventar valores de negocio; rechaza mezcla incoherente. Estado inicial Pending confirmado, otros estados no inferidos. GETmine/detail tienen schemas publicados pero sus enums/recorrido quedan fuera del P0 de creación, sin historial/seguimiento simulado. PR24 resuelve status/notes/imageUrl; validación física de creación sigue pendiente.
+
+## Continuación AWS: pedido de un producto
+Las marcas históricas de maquetas no acreditan integración real. Catálogo/detalle consumen DTO007. POST /api/v1/orders admite exclusivamente {productId,quantity}; 201 devuelve {id,buyerId,sellerId,productId,unitPrice,quantity,totalAmount,status:Pending,createdAt}. Validar IDs/cantidad/importes/fecha e identidad. Preparación en memoria por sesión con un producto; no transformar carrito mock multiitem en varios POST, ni enviar notas, fee o datos de pago no contratados. Conservar preparación ante errores y aceptar éxito solo tras201 válido. Bloquear duplicados y reenvío de resultado ambiguo; invalidar respuestas tardías al salir de sesión. GET /orders/mine existe sin DTO listado/detalle: no simular historial ni seguimiento real. Precio/stock finales son autoridad del backend.
+
 ## Información General
 - **ID**: 003-comprador
 - **Nombre**: Flujo del Comprador (Catálogo, Categorías, Productos, Pedidos, Perfil)
@@ -284,3 +294,11 @@ Tipos: order, chat, system. read/unread, timestamps.
 - `SDD_CHANGELOG.md` (historial correcciones)
 - `CONSTITUTION.md` (principios navegación, datos, categorías)
 - `ANALISIS_FIGMA.md` (inventario UI-012 Categoría.png)
+# PR27 — contratos de lectura en curso
+
+Implementación en pruebas: POST de un producto valida respuesta completa PR27; GET mine y detalle pasan por la sesión AWS, comprueban identidad compradora y actualizan historial/seguimiento. Sin validación física ni mutaciones reales automatizadas.
+
+La lectura de pedidos debe validar DTO completo, identificador `orderId`, `Cash`/`MXN`, propiedad y paginación `totalCount`. El backend fuente 6932990 lista solo comprador aunque se ha comunicado un listado unificado; OpenAPI no confirma su semántica. Las mutaciones y el QR requieren pruebas y validación física antes de habilitarse.
+# Diagnóstico físico de confirmación — en curso
+
+El coordinador distingue intentos confirmados y resultados inciertos posteriores al despacho. El historial es evidencia consultable, pero una coincidencia por producto/fecha sin identificador idempotente no prueba qué POST la creó; no liberar automáticamente el bloqueo ni fabricar reconciliación.

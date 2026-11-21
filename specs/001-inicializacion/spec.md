@@ -1,5 +1,9 @@
 # Specification 001 — Inicialización del Proyecto
 
+## Continuación V1.2 — colaboración desde otra computadora
+Usuario solicita archivos e instrucciones para que un compañero clone V1.2 y ejecute Expo Go desde casa. Reemplazar READMEobsoleto de autenticación demo por estado actual y arranque con Node24/npmci/plantilla pública. Conservar lock y dependencias, assetsruntime versionados, backendHTTPS remoto y configuraciónestática existente. .envlocal nunca se versiona; solo URLs públicas y nombres de variables en .env.example, publishablekey a completar por equipo sin clavesprivadas. No duplicarbackend ni copiarSecureStore/cuentaslocales.
+GuíaWindows y macOS/Linux, LAN/túnel, cuenta institucional propia, flagsdesarrollo, chequeos y colaboraciónGit. APKpreview se documenta como preparaciónmanual EAS con accesos/proyecto/env; workflowactual no construye APK y no se activa en esta tarea. Sin cambios de runtime, builds/publicación automática, UI o contratosAWS. Registrar comprobaciones sin afirmar prueba del equipo remoto.
+
 ## Información General
 - **ID**: 001-inicializacion
 - **Nombre**: Inicialización del Proyecto UTTT-Go Móvil

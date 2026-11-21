@@ -1,5 +1,12 @@
 # Tasks 001 — Inicialización
 
+## Continuación V1.2 — colaboración remota
+- [x] Auditar clonación pública, env/SDK/Node/lock/assets y configuraciónEAS; READMEdescribeestadohistórico yworkflowAPKsoloesplaceholder.
+- [x] Actualizar README y guíaWindows/macOSLinux/ExpoGo; .nvmrc24 y plantilla pública sin claves.
+- [x] ClonaciónremotaV1.2 independiente b6a8890, npmci sin cambiardependencias/lock, tsc0errores,640/640tests/40suites, Doctor20/20 y bundleAndroid200 con plantilla pública sin clave. Metrodetenido. Node25.4local emitió engines; guía recomienda24LTS/CI, no afirma pruebaNode24local ni equipo remoto.
+- [x] Comprobar ignores de variantes.env y excepción.env.example; TypeScript/lint previos acommit y documentación delresultado. Publicación solicitada enV1.2; hash/estado se entrega alterminar.
+- [ ] Confirmación de arranque desde computadora delcompañero; no declararlo realizado desde la máquinaoriginal.
+
 ## Información General
 - **Spec**: 001-inicializacion
 - **Versión**: 1.0

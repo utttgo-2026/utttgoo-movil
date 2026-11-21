@@ -4,12 +4,12 @@ Esta guía permite clonar el cliente móvil, instalar las versiones del lock y a
 
 ## 1. Preparar el equipo
 
-- **Node.js 22.13.1** y npm. Verifica `node --version` y `npm --version`.
+- **Node.js 24 LTS** y npm. Verifica `node --version` y `npm --version`.
 - Git: verifica `git --version`.
 - Expo Go para Android compatible con **Expo SDK 58**. Si Expo Go informa otro SDK, instala una versión Android compatible desde la fuente oficial de Expo: <https://expo.dev/go>.
 - Internet, computadora y teléfono en la misma red Wi-Fi local.
 
-En macOS/Linux con nvm, después de clonar usa `nvm install` y `nvm use`; `.nvmrc` indica `22.13.1`. En Windows selecciona esa versión con el administrador de Node que utilices. No se requiere instalar el antiguo `expo-cli` global: los comandos usan `npx expo` del proyecto.
+En macOS/Linux con nvm, después de clonar usa `nvm install` y `nvm use`; `.nvmrc` indica 24. En Windows instala Node 24 LTS o selecciónalo con el administrador de Node que utilices. No se requiere instalar el antiguo `expo-cli` global: los comandos usan `npx expo` del proyecto.
 
 El repositorio es público: se puede clonar sin invitación. Para subir cambios, el propietario debe conceder acceso de escritura a tu cuenta de GitHub. Cada integrante usa su propia cuenta GitHub/Expo y sus propias credenciales institucionales en la app.
 
@@ -18,7 +18,7 @@ El repositorio es público: se puede clonar sin invitación. Para subir cambios,
 En PowerShell o una terminal:
 
 ```powershell
-git clone --branch eas-google-play --single-branch https://github.com/utttgo-2026/utttgoo-movil.git
+git clone --branch V1.2 --single-branch https://github.com/utttgo-2026/utttgoo-movil.git
 cd utttgoo-movil
 git branch --show-current
 npm ci
@@ -123,7 +123,7 @@ Cuando se modifique `.env` o el coordinador de sesión, detén/reinicia Metro y 
 | Síntoma | Comprobación |
 |---|---|
 | `package.json` no encontrado | Ejecutar desde la raíz `utttgoo-movil` clonada |
-| Versiones/engines incompatibles | Seleccionar Node 22.13.1 y repetir `npm ci`; no actualizar todas las dependencias |
+| Versiones/engines incompatibles | Seleccionar Node 24 LTS y repetir `npm ci`; no actualizar todas las dependencias |
 | Expo Go pide otro SDK | Comprobar compatibilidad SDK 58 y versión oficial de Expo Go Android |
 | QR de Metro no abre | Misma Wi-Fi, firewall privado de Node y reinicio; después probar túnel |
 | Error de URL/API | Revisar origen HTTPS de `.env`, sin `/api/v1`; reiniciar Metro. Abrir `/health` del origen compartido desde el navegador del teléfono para comprobar conectividad |
@@ -158,7 +158,7 @@ Prueba físicamente en Expo Go antes del commit, según `AGENTS.md`. Incluye sol
 
 ## 9. APK interno con EAS: preparación adicional
 
-Para colaborar como estamos desarrollando, el recorrido anterior de Expo Go es suficiente. Un APK independiente requiere cuenta Expo autorizada, el proyecto EAS del equipo vinculado y las variables públicas configuradas en el entorno EAS utilizado. `app.json` conserva el projectId productivo `52014672-c800-4cf6-af6a-330cb13986e8`, y `eas.json` mantiene los ambientes `preview`/`production`, `autoIncrement` remoto y el AAB de producción.
+Para colaborar como estamos desarrollando, el recorrido anterior de Expo Go es suficiente. Un APK independiente requiere cuenta Expo autorizada, proyecto EAS del equipo vinculado y las variables públicas configuradas en el entorno EAS utilizado. Actualmente `app.json` no incorpora un `extra.eas.projectId` y el workflow `Build Android Preview` solo muestra información: su comando real de build está comentado.
 
 El responsable debe confirmar/vincular el proyecto correcto y los accesos antes de generar APKs. Después puede comprobarlo y solicitar un build interno manual:
 
@@ -170,12 +170,12 @@ npx eas-cli@latest build --platform android --profile preview
 
 Completa las mismas variables públicas en EAS; no dependas de que `.env` ignorado se envíe por Git. Para el perfil beta interno existente usa `beta-registration` únicamente si el equipo autoriza ese recorrido. No configures un token Expo como variable `EXPO_PUBLIC_*`.
 
-Esta guía no ejecuta builds ni publica en tiendas. La actualización se prepara desde `eas-google-play`; no se crea otra aplicación, package, pista ni lista de testers.
+Esta guía no ejecuta builds, no activa el workflow placeholder, no publica en tiendas y no garantiza un APK ya generado. CI actual corre en `main`/`HRDCORE` o PR hacia esas ramas; subir únicamente `V1.2` no lo dispara automáticamente.
 
 ## 10. Comprobación de clonación realizada
 
-La integración de V1.2 se realizó selectivamente sobre `eas-google-play`, conservando CI/CD, EAS y seguridad de release. En esta revisión TypeScript terminó sin errores, Jest pasó **645/645 pruebas en 46 suites** y Expo Doctor reportó **19/20** por cinco parches SDK58 disponibles.
+Se hizo una clonación nueva de la rama remota `V1.2` (base `b6a8890`) en una carpeta temporal independiente del workspace. Se ejecutó `npm ci` desde el lock sin cambiar `package.json`, `package-lock.json` ni `app.json`; TypeScript terminó sin errores, Jest pasó **640/640 pruebas en 40 suites** y Expo Doctor **20/20**.
 
 Después se comprobó el bundle Android de Metro con una copia de los valores públicos de la plantilla: **HTTP 200**, con los módulos comerciales y de animaciones presentes. No se copió el `.env` privado ni se rellenó una clave Supabase; eso no valida OTP ni permisos reales del equipo nuevo. Metro se detuvo al terminar y no se crearon datos en AWS.
 
-La validación se ejecutó con Node `22.13.1`. La prueba física en Expo Go sigue pendiente y no se afirma persistencia real de Seller, productos, pedidos o permisos sin backend disponible.
+La prueba aislada se ejecutó con el Node local 25.4.0 y npm 11.7.0, que emitieron advertencias de engines. **Para el compañero se recomienda Node 24 LTS**, alineado con CI y admitido por las dependencias; no se afirma haber probado físicamente su computadora o teléfono. Los archivos de esta entrega son documentación/configuración de desarrollo, sin cambios en el código de la app.
