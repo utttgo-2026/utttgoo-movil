@@ -64,3 +64,6 @@ tsc, lint, Jest, Doctor, diff check y pruebas de rutas/acceso/categorías/listas
 
 ## Dependencia de integración007 P0
 Las categorías persistentes ahora proceden de AWS y no se fuerzan a los6ids/nombres mock. Fuente mock/composición visual006 se conserva exclusivamente bajo configuración explícita de desarrollo; producción usaAWS sinfallback. Mismas rutas y componentes temáticos, estados carga/error/vacío/contrato incompleto para no mostrar FoodItem/medios ficticios mientras falte DTOproducto. No cambios de tabs/back/fallback/globalresponsiveness; pruebas de recorridos previos declaran fuente fixture expresamente. Media y publicación real siguen pendientes, no se presenta catálogo vacío como fidelidad visual concluida.
+# PR27 — pedidos y QR en curso
+
+Las pantallas comerciales solo deben mostrar pedidos validados por AWS y el QR únicamente un token recibido del backend, vigente y restringido al comprador de un pedido Ready. Las acciones se habilitarán únicamente al integrar roles y transiciones comprobadas.

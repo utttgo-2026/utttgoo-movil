@@ -1,5 +1,5 @@
 import type { User } from '@/types/models';
-import type { SellerActivationRequest, SellerActiveResponse, UserPatch, CreateProductRequest, ProductPatch, CreateOrderRequest, ProductAvailabilityRequest } from '@/types/api';
+import type { SellerActivationRequest, SellerActiveResponse, UserPatch, CreateProductRequest, ProductResponse, ProductPatch, CreateOrderRequest, ProductAvailabilityRequest } from '@/types/api';
 import { institutionalEmail, requirePassword } from '@/utils/apiValidation';
 
 import { authService } from './api/authService';
@@ -24,7 +24,7 @@ interface AuthSessionDependencies {
   assertSecureTransport: () => void;
 }
 export type SellerSessionResult = { kind: 'missing'; status: 404; roleSynced: false; seller?: never; user?: never } |
-  { kind: 'active'; status: number; seller: SellerActiveResponse; roleSynced: boolean; user?: User };
+  { kind: 'active'; status: number; seller: SellerActiveResponse; roleSynced: boolean; user?: User; reconciled?: true };
 export interface SellerSubmissionState { received: boolean; uncertain: boolean }
 
 /** Coordinador del único AuthContext. No mantiene una segunda copia de User ni sesión demo. */
@@ -49,6 +49,12 @@ export class AuthSession {
     }
   }
 
+  /** Provider/Refresh teardown invalidates this coordinator's work without deleting the persisted JWT. */
+  cancelPendingOperations(): void {
+    ++this.generation;
+    this.token = null;
+  }
+
   private async validatedUser(token: string, contract: SessionContract, generation: number, expected?: User, profileRevision?: number): Promise<User> {
     const profileContract = requireProfileContract(contract);
     const authResponse = await this.deps.auth.getMe(token);
@@ -65,7 +71,7 @@ export class AuthSession {
   async restore(): Promise<User | null> {
     const generation = ++this.generation;
     this.sellerSubmitted = false; this.sellerOutcomeUnknown = false;
-    this.submitted.clear(); this.uncertain.clear();
+    // Restoring the same coordinator is not evidence that an uncertain POST failed.
     this.productOwners.clear();
     this.token = null;
     const token = await this.deps.storage.read();
@@ -163,7 +169,16 @@ export class AuthSession {
     this.deps.assertSecureTransport();
     if (!this.token) throw new ApiError('unauthenticated', 'Inicia sesión para continuar.');
     if (this.commerceBusy) throw new ApiError('validation', 'Ya hay una operación comercial en curso.');
-    if (postKey && (this.submitted.has(postKey) || this.uncertain.has(scope))) throw new ApiError('validation', 'Este envío ya fue recibido o su resultado es incierto. Verifica con backend antes de repetirlo.');
+    if (postKey && this.uncertain.has(scope)) {
+      const error = new ApiError('validation', 'El resultado de un envío anterior no se pudo confirmar. Consulta tus pedidos o verifica con backend antes de repetir.');
+      error.code = scope === 'order' ? 'ORDER_OUTCOME_UNCERTAIN' : 'PRODUCT_OUTCOME_UNCERTAIN';
+      throw error;
+    }
+    if (postKey && this.submitted.has(postKey)) {
+      const error = new ApiError('validation', 'Este intento ya fue confirmado. No se enviará nuevamente.');
+      error.code = scope === 'order' ? 'ORDER_ALREADY_CONFIRMED' : 'PRODUCT_ALREADY_CONFIRMED';
+      throw error;
+    }
     const generation = this.generation;
     const token = this.token;
     const check = () => this.checkCurrent(generation);
@@ -178,7 +193,14 @@ export class AuthSession {
       return result;
     } catch (error) {
       check();
-      if (postKey && dispatched && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) this.uncertain.add(scope);
+      if (postKey && dispatched && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) {
+        this.uncertain.add(scope);
+        if (scope === 'order') {
+          const uncertainError = new ApiError('invalid_response', 'No se pudo confirmar si AWS creó el pedido. Consulta Mis pedidos y verifica antes de intentar nuevamente.');
+          uncertainError.code = 'ORDER_OUTCOME_UNCERTAIN';
+          throw uncertainError;
+        }
+      }
       if (error instanceof ApiError && error.status === 401) { this.token = null; await this.deps.storage.clear(); }
       throw error;
     } finally { this.commerceBusy = false; }
@@ -221,6 +243,29 @@ export class AuthSession {
     });
   }
 
+  /** Public catalogue is only a partial view of the seller inventory, never a private listing. */
+  async visibleSellerProducts() {
+    return this.commerce('product', async (token, user, check) => {
+      const seller = await this.activeSeller(token, user, check);
+      const products: ProductResponse[] = [];
+      const ids = new Set<string>();
+      let total: number | undefined;
+      for (let page = 1; page <= 100; page++) {
+        const result = await productService.getPage({ page, pageSize: 100 }); check();
+        if (total !== undefined && total !== result.totalCount) throw new ApiError('invalid_response', 'El catálogo cambió durante la consulta. Actualiza e intenta de nuevo.');
+        total = result.totalCount;
+        for (const item of result.items) {
+          if (ids.has(item.id)) throw new ApiError('invalid_response', 'El catálogo cambió durante la consulta. Actualiza e intenta de nuevo.');
+          ids.add(item.id);
+          if (item.sellerId === seller.sellerId) products.push(item);
+        }
+        if (ids.size === total) return products;
+        if (ids.size > total || !result.items.length) break;
+      }
+      throw new ApiError('invalid_response', 'No se pudo consultar todo el catálogo público. Intenta de nuevo.');
+    });
+  }
+
   async updateProductStatus(id: string, input: ProductAvailabilityRequest) {
     const body = productAvailabilityBody(input);
     return this.commerce('product', async (token, user, check, dispatch) => {
@@ -249,6 +294,22 @@ export class AuthSession {
     }, `order:${preparationId}`);
   }
 
+  async listBuyerOrders(page: number) {
+    return this.commerce('order', async (token, user, check) => {
+      const result = await orderService.mine(token, page); check();
+      if (result.items.some((item) => item.role === 'buyer' && item.buyerId !== user.id)) throw new ApiError('invalid_response', 'El historial no corresponde a la sesión.');
+      return { ...result, items: result.items.filter((item) => item.role === 'buyer') };
+    });
+  }
+
+  async buyerOrder(orderId: string) {
+    return this.commerce('order', async (token, user, check) => {
+      const result = await orderService.detail(token, orderId); check();
+      if (result.buyerId !== user.id) throw new ApiError('invalid_response', 'El pedido no corresponde a la sesión.');
+      return result;
+    });
+  }
+
   sellerSubmissionState(): SellerSubmissionState { return { received: this.sellerSubmitted, uncertain: this.sellerOutcomeUnknown }; }
 
   /** Coalesce the complete lookup (including identity checks), not just its first HTTP request. */
@@ -264,7 +325,9 @@ export class AuthSession {
     if (body) return this.performSellerOperation(body);
     const promise = this.performSellerOperation();
     this.sellerLookup = { generation: this.generation, promise };
-    void promise.finally(() => { if (this.sellerLookup?.promise === promise) this.sellerLookup = undefined; }).catch(() => undefined);
+    const releaseLookup = () => { if (this.sellerLookup?.promise === promise) this.sellerLookup = undefined; };
+    // Handle both outcomes of the cleanup branch while returning the ORIGINAL promise to its caller.
+    void promise.then(releaseLookup, releaseLookup);
     return promise;
   }
 
@@ -274,6 +337,7 @@ export class AuthSession {
     const token = this.token;
     if (!token) throw new ApiError('unauthenticated', 'Inicia sesión para consultar tu negocio.');
     if (body) this.sellerBusy = true;
+    let profileChecked = false;
     try {
       let accepted: SellerActiveResponse | undefined;
       let status = 200;
@@ -283,6 +347,7 @@ export class AuthSession {
         this.sellerSubmitted = true;
         accepted = response.data; status = response.status;
       }
+      profileChecked = true;
       const lookup = await sellerService.lookupMe(token);
       this.checkCurrent(generation);
       if (lookup.kind === 'missing') {
@@ -290,22 +355,48 @@ export class AuthSession {
         return { kind: 'missing', status: 404, roleSynced: false };
       }
       if (accepted && accepted.sellerId !== lookup.seller.sellerId) throw new ApiError('invalid_response', 'El perfil consultado no coincide con el negocio creado.');
-      let user: User | undefined;
-      try {
-        user = await this.validatedUser(token, requireSessionContract(this.deps.contract), generation);
-        this.checkCurrent(generation);
-      } catch (error) {
-        this.checkCurrent(generation);
-        if (error instanceof ApiError && error.status === 401) throw error;
-        // Business activation succeeded but this JWT may still lack Seller; never replace it locally.
-      }
-      return { kind: 'active', status, seller: lookup.seller, roleSynced: user?.role === 'seller', user };
+      return await this.confirmedSellerResult(lookup.seller, status, token, generation);
     } catch (error) {
       this.checkCurrent(generation);
-      if (body && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) this.sellerOutcomeUnknown = true;
       if (error instanceof ApiError && error.status === 401) { this.token = null; await this.deps.storage.clear(); }
+      const uncertainActivation = body && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500);
+      if (uncertainActivation) {
+        this.sellerOutcomeUnknown = true;
+        if (!profileChecked) {
+          // POST may have persisted or its DTO may have failed. Reconcile once with GET, NEVER retry POST.
+          try {
+            const lookup = await sellerService.lookupMe(token);
+            this.checkCurrent(generation);
+            if (lookup.kind === 'active') {
+              this.sellerSubmitted = true;
+              const confirmed = await this.confirmedSellerResult(lookup.seller, lookup.status, token, generation);
+              return { ...confirmed, reconciled: true };
+            }
+          } catch (verificationError) {
+            this.checkCurrent(generation);
+            if (verificationError instanceof ApiError && verificationError.status === 401) {
+              this.token = null; await this.deps.storage.clear();
+              throw verificationError;
+            }
+            // Preserve the POST failure and the uncertain marker when the read cannot verify persistence.
+          }
+        }
+      }
       throw error;
     } finally { if (body) this.sellerBusy = false; }
+  }
+
+  private async confirmedSellerResult(seller: SellerActiveResponse, status: number, token: string, generation: number): Promise<Extract<SellerSessionResult, { kind: 'active' }>> {
+    let user: User | undefined;
+    try {
+      user = await this.validatedUser(token, requireSessionContract(this.deps.contract), generation);
+      this.checkCurrent(generation);
+    } catch (error) {
+      this.checkCurrent(generation);
+      if (error instanceof ApiError && error.status === 401) throw error;
+      // A confirmed seller profile alone is insufficient to grant Seller privileges.
+    }
+    return { kind: 'active', status, seller, roleSynced: user?.role === 'seller', user };
   }
 }
 

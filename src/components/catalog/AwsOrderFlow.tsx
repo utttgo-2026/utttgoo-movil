@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { AppButton, AppHeader, AppInput, AppText, Badge, Screen, Surface } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { formatCurrency } from '@/utils/format';
@@ -8,6 +8,8 @@ import { colors, spacing } from '@/theme';
 import { AwsProductImage } from './AwsProductImage';
 import { MotionFeedback } from '@/components/ui/MotionFeedback';
 import { DeliveryQrCard } from './DeliveryQrCard';
+import type { OrderPr27, OrderSummaryPr27 } from '@/services/api/orderContractsPr27';
+import type { ApiPage } from '@/types/api';
 
 export function AwsOrderReview({ confirm = false }: { confirm?: boolean }) {
   const router = useRouter();
@@ -15,14 +17,15 @@ export function AwsOrderReview({ confirm = false }: { confirm?: boolean }) {
   const [notes, setNotes] = useState(orderPreparation?.notes ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [uncertain, setUncertain] = useState(false);
   const lock = useRef(false);
   const submit = async () => {
     if (lock.current) return;
     lock.current = true; setBusy(true); setError(undefined);
     try {
       const response = await submitOrder();
-      if (response.success) router.push({ pathname: '/buyer/order-created', params: { id: response.data.id } });
-      else setError(response.error);
+      if (response.success) router.push({ pathname: '/buyer/order-created', params: { id: response.data.orderId } });
+      else { setError(response.error); setUncertain(response.reason === 'uncertain'); }
     } finally { lock.current = false; setBusy(false); }
   };
   const product = orderPreparation?.product;
@@ -54,7 +57,9 @@ export function AwsOrderReview({ confirm = false }: { confirm?: boolean }) {
         <AppText variant="caption">{notes.length}/250 caracteres</AppText>
       </> : null}
       {error ? <AppText accessibilityRole="alert">{error}</AppText> : null}
-      <AppButton label={confirm ? 'Confirmar pedido' : 'Continuar'} loading={busy} disabled={!product || (!confirm && notes.length > 250)}
+      {uncertain ? <><AppText>Revisa el historial. Una coincidencia no confirma por sí sola este intento; si no puedes identificarlo, consulta con backend.</AppText>
+        <AppButton label="Revisar mis pedidos" variant="outline" onPress={() => router.push('/buyer/orders')} /></> : null}
+      <AppButton label={confirm ? 'Confirmar pedido' : 'Continuar'} loading={busy} disabled={!product || uncertain || (!confirm && notes.length > 250)}
         onPress={() => {
           if (confirm) void submit();
           else {
@@ -70,23 +75,96 @@ export function AwsOrderReceipt() {
   const { lastOrder } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
-  const order = lastOrder && lastOrder.id === id ? lastOrder : null;
+  const order = lastOrder && lastOrder.orderId === id ? lastOrder : null;
   return <Screen scroll constrained header={<AppHeader title="Pedido generado" backFallback="/buyer" />}>
     <View style={{ gap: spacing.lg, paddingVertical: spacing.lg }}>
       {order ? <>
-        <MotionFeedback trigger={order.id}><AppText variant="title">¡Pedido generado!</AppText></MotionFeedback>
+        <MotionFeedback trigger={order.orderId}><AppText variant="title">¡Pedido generado!</AppText></MotionFeedback>
         <Surface bordered style={{ gap: spacing.md }}>
-          <AppText>Número de pedido: {order.id}</AppText><Badge label="Pendiente" tone="info" />
-          <AppText>Producto: {order.productId}</AppText><AppText>Cantidad: {order.quantity}</AppText>
+          <AppText>Número de pedido: {order.orderId}</AppText><Badge label={statusLabel(order.status)} tone="info" />
+          <AppText>Producto: {order.productName}</AppText><AppText>Cantidad: {order.quantity}</AppText>
           <AppText>Precio unitario: {formatCurrency(order.unitPrice)}</AppText>
-          <AppText variant="title">Total: {formatCurrency(order.totalAmount)}</AppText>
+          <AppText variant="title">Total: {formatCurrency(order.totalAmount)} MXN</AppText><AppText>Pago: Efectivo</AppText>
           <AppText>{order.createdAt}</AppText>
           {order.notes ? <AppText>Notas: {order.notes}</AppText> : null}
         </Surface>
-        <DeliveryQrCard orderId={order.id} />
-        <AppText>Recibo de la respuesta AWS en esta sesión. Historial y seguimiento pendientes de integración y verificación.</AppText>
+        <DeliveryQrCard orderId={order.orderId} />
+        <AppButton label="Seguimiento" onPress={() => router.push({ pathname: '/buyer/order-tracking', params: { orderId: order.orderId } })} />
       </> : <AppText>No hay un recibo AWS validado para este ID en la sesión actual.</AppText>}
       <AppButton label="Volver al inicio" onPress={() => router.push('/buyer')} />
+    </View>
+  </Screen>;
+}
+
+const labels: Record<OrderPr27['status'], string> = { Pending: 'Pendiente', Accepted: 'Aceptado', InPreparation: 'En preparación', Ready: 'Listo', Delivered: 'Entregado', Rejected: 'Rechazado', CancelledByBuyer: 'Cancelado' };
+function statusLabel(status: OrderPr27['status']) { return labels[status]; }
+
+export function AwsBuyerOrders() {
+  const { listBuyerOrders } = useAuth();
+  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<ApiPage<OrderSummaryPr27>>();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [revision, setRevision] = useState(0);
+  useFocusEffect(useCallback(() => {
+    void revision;
+    let current = true; setBusy(true); setError(undefined); setData(undefined);
+    void listBuyerOrders(page).then((result) => {
+      if (!current) return;
+      if (result.success) setData(result.data); else setError(result.error);
+      setBusy(false);
+    });
+    return () => { current = false; };
+  }, [listBuyerOrders, page, revision]));
+  return <Screen scroll constrained header={<AppHeader title="Mis pedidos" showBack={false} />}>
+    <View style={{ gap: spacing.md, paddingVertical: spacing.lg }}>
+      {busy ? <AppText>Cargando pedidos…</AppText> : null}
+      {error ? <AppText accessibilityRole="alert">{error}</AppText> : null}
+      {data?.items.map((order) => <Surface key={order.orderId} bordered style={{ gap: spacing.sm }}>
+        <AppText variant="bodyStrong">Pedido {order.orderId}</AppText><Badge label={statusLabel(order.status)} tone="info" />
+        <AppText>{order.productName} × {order.quantity}</AppText>
+        <AppText>{formatCurrency(order.totalAmount)} MXN · {new Date(order.createdAt).toLocaleDateString('es-MX')}</AppText>
+        <AppButton label="Ver seguimiento" variant="outline" onPress={() => router.push({ pathname: '/buyer/order-tracking', params: { orderId: order.orderId } })} />
+      </Surface>)}
+      {data && !data.items.length ? <AppText>{data.totalCount === 0 ? 'No tienes pedidos.' : 'No hay compras en esta página.'}</AppText> : null}
+      {data ? <><AppText>Página {data.page} · {data.totalCount} pedidos</AppText>
+        <AppButton label="Página anterior" variant="outline" disabled={busy || page === 1} onPress={() => setPage(page - 1)} />
+        <AppButton label="Página siguiente" variant="outline" disabled={busy || page * data.pageSize >= data.totalCount} onPress={() => setPage(page + 1)} /></> : null}
+      <AppButton label="Actualizar" variant="outline" disabled={busy} onPress={() => setRevision((n) => n + 1)} />
+    </View>
+  </Screen>;
+}
+
+export function AwsBuyerTracking() {
+  const { orderId } = useLocalSearchParams<{ orderId?: string }>();
+  const { buyerOrder } = useAuth();
+  const [order, setOrder] = useState<OrderPr27>();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [revision, setRevision] = useState(0);
+  useFocusEffect(useCallback(() => {
+    void revision;
+    let current = true; setOrder(undefined); setError(undefined);
+    if (!orderId || typeof orderId !== 'string') { setError('Falta el identificador del pedido.'); return () => { current = false; }; }
+    setBusy(true);
+    void buyerOrder(orderId).then((result) => {
+      if (!current) return;
+      if (result.success) setOrder(result.data); else setError(result.error);
+      setBusy(false);
+    });
+    return () => { current = false; };
+  }, [buyerOrder, orderId, revision]));
+  return <Screen scroll constrained header={<AppHeader title="Seguimiento de pedido" backFallback="/buyer/orders" />}>
+    <View style={{ gap: spacing.lg, paddingVertical: spacing.lg }}>
+      {busy ? <AppText>Consultando pedido…</AppText> : null}
+      {error ? <AppText accessibilityRole="alert">{error}</AppText> : null}
+      {order ? <><AppText variant="title">Pedido {order.orderId}</AppText>
+        <Surface bordered style={{ gap: spacing.md }}><AppText>Estado actual: {statusLabel(order.status)}</AppText>
+          <AppText>{order.productName} × {order.quantity}</AppText><AppText>Entrega: {order.pickupPoint || 'Sin especificar'}</AppText>
+          <AppText>Pago: Efectivo</AppText><AppText variant="bodyStrong">Total: {formatCurrency(order.totalAmount)} MXN</AppText>
+          <AppText>{order.createdAt}</AppText>{order.notes ? <AppText>Notas: {order.notes}</AppText> : null}</Surface></> : null}
+      <AppButton label="Actualizar" variant="outline" disabled={busy || !orderId} onPress={() => setRevision((n) => n + 1)} />
     </View>
   </Screen>;
 }

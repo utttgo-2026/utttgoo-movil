@@ -294,3 +294,11 @@ Tipos: order, chat, system. read/unread, timestamps.
 - `SDD_CHANGELOG.md` (historial correcciones)
 - `CONSTITUTION.md` (principios navegación, datos, categorías)
 - `ANALISIS_FIGMA.md` (inventario UI-012 Categoría.png)
+# PR27 — contratos de lectura en curso
+
+Implementación en pruebas: POST de un producto valida respuesta completa PR27; GET mine y detalle pasan por la sesión AWS, comprueban identidad compradora y actualizan historial/seguimiento. Sin validación física ni mutaciones reales automatizadas.
+
+La lectura de pedidos debe validar DTO completo, identificador `orderId`, `Cash`/`MXN`, propiedad y paginación `totalCount`. El backend fuente 6932990 lista solo comprador aunque se ha comunicado un listado unificado; OpenAPI no confirma su semántica. Las mutaciones y el QR requieren pruebas y validación física antes de habilitarse.
+# Diagnóstico físico de confirmación — en curso
+
+El coordinador distingue intentos confirmados y resultados inciertos posteriores al despacho. El historial es evidencia consultable, pero una coincidencia por producto/fecha sin identificador idempotente no prueba qué POST la creó; no liberar automáticamente el bloqueo ni fabricar reconciliación.

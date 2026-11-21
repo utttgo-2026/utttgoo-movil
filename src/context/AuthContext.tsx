@@ -1,8 +1,11 @@
+// @refresh reset
+// Recreate the class coordinator on module refresh; JWT restoration still follows the existing flow.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ApiError, errorMessage } from '@/services/api/errors';
 import { createAuthSession, type SellerSessionResult, type SellerSubmissionState } from '@/services/authSession';
-import type { SellerActivationRequest, UserPatch, CreateProductRequest, ProductResponse, ProductPatch, OrderResponse, ProductAvailabilityRequest } from '@/types/api';
+import type { SellerActivationRequest, UserPatch, CreateProductRequest, ProductResponse, ProductPatch, ApiPage, ProductAvailabilityRequest } from '@/types/api';
+import type { OrderPr27, OrderSummaryPr27 } from '@/services/api/orderContractsPr27';
 import { orderNotes } from '@/services/api/orderService';
 import type { User, UserRole } from '@/types/models';
 
@@ -10,7 +13,7 @@ type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
 export type SellerOperationResult = ({ success: true; received: boolean; uncertain: boolean } & SellerSessionResult) |
   { success: false; error: string; status?: number; received?: boolean; uncertain?: boolean };
-export type CommerceResult<T> = { success: true; data: T } | { success: false; error: string };
+export type CommerceResult<T> = { success: true; data: T } | { success: false; error: string; reason?: 'uncertain' | 'confirmed' };
 export interface OrderPreparation { product: ProductResponse; quantity: number; key: string; notes: string }
 
 interface AuthContextValue {
@@ -30,12 +33,15 @@ interface AuthContextValue {
   sessionProducts: ProductResponse[];
   createProduct: (input: CreateProductRequest) => Promise<CommerceResult<ProductResponse>>;
   consultProduct: (id: string, patch?: ProductPatch) => Promise<CommerceResult<ProductResponse>>;
+  visibleSellerProducts: () => Promise<CommerceResult<ProductResponse[]>>;
   updateProductStatus: (id: string, input: ProductAvailabilityRequest) => Promise<CommerceResult<ProductResponse>>;
   orderPreparation: OrderPreparation | null;
-  lastOrder: OrderResponse | null;
+  lastOrder: OrderPr27 | null;
   prepareOrder: (product: ProductResponse, quantity: number) => AuthResult;
   updateOrderNotes: (notes: string) => AuthResult;
-  submitOrder: () => Promise<CommerceResult<OrderResponse>>;
+  submitOrder: () => Promise<CommerceResult<OrderPr27>>;
+  listBuyerOrders: (page: number) => Promise<CommerceResult<ApiPage<OrderSummaryPr27>>>;
+  buyerOrder: (orderId: string) => Promise<CommerceResult<OrderPr27>>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -70,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const revision = useRef(0);
   const [sessionProducts, setSessionProducts] = useState<ProductResponse[]>([]);
   const [orderPreparation, setOrderPreparation] = useState<OrderPreparation | null>(null);
-  const [lastOrder, setLastOrder] = useState<OrderResponse | null>(null);
+  const [lastOrder, setLastOrder] = useState<OrderPr27 | null>(null);
   const preparationRef = useRef<OrderPreparation | null>(null);
   const preparationSequence = useRef(0);
   const orderSubmitting = useRef(false);
@@ -97,9 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session, resetCommerce]);
 
   useEffect(() => {
-    const current = ++revision.current;
+    const revisionCounter = revision;
+    const current = ++revisionCounter.current;
     let mounted = true;
-    void session.restore().then((restored) => {
+    let cancelPending: (() => void) | undefined;
+    const initialize = async () => {
+      if (typeof session.restore !== 'function' || typeof session.cancelPendingOperations !== 'function') {
+        throw new ApiError('configuration', sellerSessionReloadMessage);
+      }
+      cancelPending = session.cancelPendingOperations.bind(session);
+      return session.restore();
+    };
+    void initialize().then((restored) => {
       if (!mounted || current !== revision.current) return;
       setUser(restored);
       setStatus(restored ? 'authenticated' : 'anonymous');
@@ -108,7 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setStatus('blocked');
       setSessionError(errorMessage(error));
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false; ++revisionCounter.current;
+      // No session work started if initialization rejected its mandatory lifecycle contract.
+      if (cancelPending !== undefined) cancelPending();
+    };
   }, [session]);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
@@ -232,7 +251,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (current === revision.current && error instanceof ApiError && error.status === 401) {
         ++revision.current; resetCommerce(); setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));
       }
-      return { success: false, error: errorMessage(error) };
+      const reason = error instanceof ApiError && error.code === 'ORDER_OUTCOME_UNCERTAIN' ? 'uncertain' :
+        error instanceof ApiError && error.code === 'ORDER_ALREADY_CONFIRMED' ? 'confirmed' : undefined;
+      return { success: false, error: errorMessage(error), ...(reason ? { reason } : {}) };
     }
   }, [status, resetCommerce]);
   const rememberProduct = useCallback((product: ProductResponse) => {
@@ -252,6 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (result.success) rememberProduct(result.data);
     return result;
   }, [session, runCommerce, rememberProduct]);
+  const visibleSellerProducts = useCallback(() => runCommerce(() => session.visibleSellerProducts()), [runCommerce, session]);
   const updateProductStatus = useCallback(async (id: string, input: ProductAvailabilityRequest) => {
     const current = revision.current;
     const result = await runCommerce(() => session.updateProductStatus(id, input));
@@ -296,13 +318,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return result;
     } finally { orderSubmitting.current = false; }
   }, [session, runCommerce]);
+  const listBuyerOrders = useCallback((page: number) => runCommerce(() => session.listBuyerOrders(page)), [runCommerce, session]);
+  const buyerOrder = useCallback((orderId: string) => runCommerce(() => session.buyerOrder(orderId)), [runCommerce, session]);
   const value = useMemo<AuthContextValue>(() => ({
     user, role: user?.role ?? null, status, sessionError,
     isAuthenticated: status === 'authenticated' && user !== null,
     login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout, requestSellerActivation, consultSeller,
-    sessionProducts, createProduct, consultProduct, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder,
+    sessionProducts, createProduct, consultProduct, visibleSellerProducts, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
   }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout, requestSellerActivation, consultSeller,
-    sessionProducts, createProduct, consultProduct, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder]);
+    sessionProducts, createProduct, consultProduct, visibleSellerProducts, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder]);
 
   // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

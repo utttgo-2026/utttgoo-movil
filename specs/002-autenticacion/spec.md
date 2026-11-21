@@ -5,7 +5,7 @@
 - **Nombre**: Flujo de Autenticación
 - **Versión**: 1.0
 - **Fecha**: 2025-11-05
-- **Estado**: COMPLETADO
+- **Estado**: EN IMPLEMENTACION — OTP Supabase y login lazy Backend
 
 ---
 
@@ -28,7 +28,7 @@ Implementar el flujo completo de autenticación local con persistencia, incluyen
 | — | Verificación correo | `src/app/(auth)/verify-email.tsx` | COMPLETADO |
 
 ### Funcionalidades
-- **Splash**: Logo UTTT-GO, tagline "Del campus a tus manos", auto-navegación a Bienvenida tras 2.5s
+- **Splash**: Logo UTTT-GO, tagline "Del campus a tus manos", auto-navegación a Demo 1 tras 2.5s
 - **Bienvenida**: Hero image (UI-002), headline, 3 feature cards, botones Iniciar sesión/Crear cuenta/Seguir explorando
 - **Login**: Header "Acceso UTTT", campos email/contraseña, "¿Olvidaste contraseña?", botón primario, info box acceso institucional, link a registro
 - **Registro**: Header "Crear cuenta", campos nombre/email/contraseña/confirmar, botón primario, texto términos
@@ -39,6 +39,7 @@ Implementar el flujo completo de autenticación local con persistencia, incluyen
 - **Logout**: Redirige a Welcome reseteando stack (`router.replace('/welcome')`)
 
 ### Correcciones Realizadas (Post-Implementación)
+- **Flujo inicial**: Splash navega directamente a Demo 1; Welcome permanece disponible, pero fuera del arranque.
 - **Expo Router rutas extráneas**: Eliminadas declaraciones `Stack.Screen` redundantes para rutas de auth; Expo Router descubre automáticamente desde sistema de archivos
 - **Resolución de imágenes**: Cambio de `require('@/assets/...')` a rutas relativas `require('../../assets/...')` para compatibilidad con Metro
 - **Navegación back**: `router.replace` → `router.push` en login/verify-email para mantener historial (back va a login, no a welcome)
@@ -89,9 +90,13 @@ Implementar el flujo completo de autenticación local con persistencia, incluyen
 ## 5. Navegación
 
 ```
-Splash (/) 
-  → auto 2.5s → Bienvenida (/welcome)
-    → "Iniciar sesión" → Login (/login)
+Splash (/)
+  → auto 2.5s → Demo 1 (/demo-one)
+    → "Ya tengo cuenta" → Login (/login)
+    → CTA principal → Demo 2 (/demo-two)
+      → "Continuar para pedir" → Login (/login)
+  Welcome (/welcome) permanece disponible como pantalla de compatibilidad
+  Login (/login)
       → éxito → Buyer Home (/buyer)
       → "¿Olvidaste?" → Recuperar (/forgot-password)
         → éxito → Verificación (/verify-email)
@@ -99,10 +104,6 @@ Splash (/)
       → "Crear cuenta" → Registro (/register)
         → éxito → Verificación (/verify-email)
           → éxito → Buyer Home (/buyer)
-    → "Crear cuenta" → Registro (/register)
-      → éxito → Verificación (/verify-email)
-        → éxito → Buyer Home (/buyer)
-    → "Seguir explorando" → Buyer Home (/buyer) [guest]
 ```
 
 ### Correcciones de Navegación Aplicadas
@@ -181,3 +182,14 @@ Splash (/)
 - `MAPA_NAVEGACION.md` (flujos auth)
 - `SDD_CHANGELOG.md` (historial correcciones)
 - `CONSTITUTION.md` (principios navegación, persistencia)
+
+## 9. Extension OTP Supabase
+
+- Registro canónico: `POST /api/v1/auth/register`; no crea sesión móvil.
+- Supabase envía un OTP de seis dígitos mediante la plantilla `Confirm sign up`.
+- La aplicación usa `supabase.auth.verifyOtp({ email, token, type: 'signup' })`.
+- El reenvío usa `supabase.auth.resend({ type: 'signup', email })`; no existe endpoint Backend OTP.
+- Después de verificar OTP, el móvil ejecuta inmediatamente el login Backend para activar de forma lazy la cuenta `PendingEmailVerification -> Active` y obtener el JWT.
+- La contraseña permanece solamente en memoria durante Registro -> OTP -> Login y nunca se guarda en SecureStore, AsyncStorage, URL o logs.
+- El JWT Backend es el único token persistido, mediante SecureStore.
+- `/api/v1/auth/me` y `/api/v1/users/me` se decodifican como contratos separados.

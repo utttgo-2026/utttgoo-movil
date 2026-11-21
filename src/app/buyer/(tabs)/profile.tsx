@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Avatar, Screen, Surface } from '@/components';
+import { legalUrls } from '@/config/legal';
 import { useAuth } from '@/context/AuthContext';
 import { colors, layout, spacing } from '@/theme';
 import { RequireSession } from '@/components/navigation/RequireSession';
@@ -25,6 +27,11 @@ function ProfileContent() {
     setLoggingOut(false);
     if (result.success) router.replace('/welcome');
     else setLogoutError(result.error);
+  };
+
+  const openLegalDocument = async (url: string, title: string) => {
+    try { await WebBrowser.openBrowserAsync(url); }
+    catch { Alert.alert(title, 'No fue posible abrir el documento. Intenta nuevamente más tarde.'); }
   };
 
   return (
@@ -78,6 +85,15 @@ function ProfileContent() {
           </View>
         </Surface>
 
+        <Surface style={styles.legalCard} bordered>
+          <AppText variant="subtitle">Privacidad y seguridad</AppText>
+          <AppText variant="caption" color={colors.textMuted}>
+            Consulta cómo se usan tus datos y cómo solicitar la eliminación de tu cuenta.
+          </AppText>
+          <AppButton label="Política de privacidad" variant="outline" onPress={() => void openLegalDocument(legalUrls.privacy, 'Política de privacidad')} />
+          <AppButton label="Eliminar cuenta y datos" variant="outline" onPress={() => void openLegalDocument(legalUrls.accountDeletion, 'Eliminación de cuenta')} />
+        </Surface>
+
         <View style={styles.logoutContainer}>
           <AppButton
             label="Cerrar sesión"
@@ -118,6 +134,10 @@ const styles = StyleSheet.create({
   },
   settingsCard: {
     gap: 0,
+  },
+  legalCard: {
+    gap: spacing.md,
+    padding: spacing.lg,
   },
   settingsRow: {
     flexDirection: 'row',

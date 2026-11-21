@@ -4,96 +4,88 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'EAS Build profile'
+        description: EAS Build profile
         type: choice
         required: true
-        default: 'preview'
-        options:
-          - preview
-          - development
-  push:
-    branches: [HRDCORE]
+        default: preview
+        options: [preview, development]
 
 permissions:
   contents: read
 
+concurrency:
+  group: build-android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22.13.1'
+
 jobs:
-  build-android:
-    name: Build Android Preview
+  gates:
+    name: Preview Gates
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          node-version: '20'
-          cache: 'npm'
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:coverage
+      - run: npx expo-doctor
+      - run: npx expo export --platform android --clear
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Configure EAS
-        run: |
-          echo "Configuring EAS..."
-          # EAS project ID should be configured in eas.json or via EXPO_TOKEN
-          # If project is not linked, this will fail with instructions
-
-      - name: Build Android Preview
+  build:
+    name: EAS Android Preview
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Validate EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN"
+      - name: Validate EAS Preview environment
+        if: inputs.profile == 'preview'
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          echo "Building Android preview..."
-          # This will work once the project is linked to EAS (eas build:configure)
-          # eas build --platform android --profile preview --non-interactive
-          echo "EAS build would run here when project is linked to Expo Services"
-          echo "Current status: Project needs to be linked to Expo Services via 'eas build:configure'"
-
-      - name: Build Status
-        run: |
-          echo "=== Build Android Preview Status ==="
-          echo "Status: Configuration ready"
-          echo "Next step: Run 'eas build:configure' locally to link project to Expo Services"
-          echo "Then push to trigger build or use workflow_dispatch"
-          echo "Profile: preview"
-          echo "Platform: android"
-
-  # TODO: Descomentar cuando el proyecto esté vinculado a Expo Services
-  # - name: Build Android Preview
-  #   env:
-  #     EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-  #   run: eas build --platform android --profile preview --non-interactive --wait
-
-      - name: Upload Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-info
-          path: |
-            eas.json
-            app.json
-          retention-days: 7
-
-  notify:
-    name: Notify Build Status
-    needs: build-android
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Build Result
-        run: |
-          echo "Build Android Preview: ${{ needs.build-android.result }}"
-          if [[ "${{ needs.build-android.result }}" == "success" ]]; then
-            echo "✅ Build preview listo"
-          else
-            echo "❌ Build falló - revisar logs"
-          fi
+          set -euo pipefail
+          npx eas-cli@latest env:list --environment preview --format short | node -e '
+          let input = "";
+          process.stdin.setEncoding("utf8");
+          process.stdin.on("data", (chunk) => { input += chunk; });
+          process.stdin.on("end", () => {
+            const required = [
+              "EXPO_PUBLIC_API_BASE_URL",
+              "EXPO_PUBLIC_SUPABASE_URL",
+              "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+            ];
+            const names = new Set(input.split(/\r?\n/).map((line) => line.split("=", 1)[0].trim()));
+            for (const name of required) {
+              if (!names.has(name)) {
+                console.error("Missing required EAS Preview environment variable: " + name);
+                process.exitCode = 1;
+              }
+            }
+          });
+          '
+      - run: npx eas-cli@latest --version
+      - name: Build Android with EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform android --profile "${{ inputs.profile }}" --non-interactive --wait

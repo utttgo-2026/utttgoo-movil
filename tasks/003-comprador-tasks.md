@@ -1,5 +1,17 @@
 # Tasks 003 — Flujo del Comprador
 
+## Bloqueo físico — EN CURSO
+- [x] Mensaje ambiguo procede de commerce antes del POST: submitted por clave o uncertain por ámbito order; red/timeout/DTO inválido/5xx tras dispatch activan uncertain. OpenAPI actual coincide en campos obligatorios PR27; no se observó la respuesta privada del teléfono.
+- [x] Mensajes separados para confirmado e incierto; tras error incierto se bloquea el botón y se ofrece historial. Restaurar el mismo coordinador no limpia marcas. Pruebas sintéticas de timeout/red/DTO inválido, nueva compra y consulta no concluyente.
+- [ ] Persistencia segura entre logout/reinicio y reconciliación concluyente requieren diseño y contrato de idempotencia/correlación backend; el estado actual en memoria se pierde con logout/login o nuevo proceso. No inferir éxito ni ausencia del pedido.
+- [ ] Validación física del bundle actual y captura de respuesta/status sin credenciales; no se conoce si el caso físico fue 201 rechazado por parser o timeout.
+
+## PR27 — EN PRUEBAS
+- [x] POST y GET mine/detalle usan DTO PR27, orderId, identidad del comprador y paginación del servidor; recibo e historial/seguimiento conectados.
+- [x] TypeScript limpio, suite completa 663/663 y nueva regresión aislada de ownership aprobada; lint 0 errores/27 advertencias, diff --check sin errores.
+- [ ] Pruebas específicas de UI para paginación/refresco, verificación visual Figma y recorrido privado Expo Go; no se acredita persistencia AWS por fixtures.
+- [ ] Expo Doctor 19/20: cinco versiones recomendadas distintas; no se actualizaron dependencias.
+
 ## Recuperación por bloques actual
 - [x] CheckpointBloque1 y comparación estática nueva UI015–024 originales vs fuenteAWS (matriz006).
 - [x] B3acotado: panelEfectivo, marcoQRsinpayload ni scanner y avisosAWS sinfixtures;625/625tests/40suites, tsc0, lint0errores/27warnings, Doctor20/20 y diffchecklimpio; sin validación física nueva.

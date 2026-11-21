@@ -1,17 +1,5 @@
 # Specification 005 — AWS-API-INTEGRATION
 
-## Hotfix contrato interno seller en Context
-Validación runtime de métodos sellerobligatorios y snapshot tipado explícito; la instancia useState puede no coincidir con módulos actualizados. Incompatibilidad es fallo explícito que requiere reloadcompleto y restauración normal, no recreación automática de sesión ni JWT nuevo. El catchseller no propaga fallos del lector de metadata, conserva401 y descarta respuestas de revisiónanterior. User no se actualiza antes de comprobar snapshot/resultado interno. Login/restore/storage/Supabase/serviciosAWS no cambian su contrato por estehotfix.
-
-## Dependencia Bloque1 vendedor
-El coordinador de sesión y Context existentes incorporan lookupSeller missing/active, coalescingGET por generación y confirmación GET posterior al alta. Missing solo de GETseller404/códigoexacto, nunca de identidad/perfil. User/roles siguen exclusivamente decodificados de authme/usersme con JWT actual, sin otra sesión ni cambio de SecureStore/OTP/Supabase. POST recibido no se reintenta por fallo de verificación;401 conserva invalidación. Cambios funcionales de007 requieren regresiónauth completa.
-
-## Dependencia PR24
-La capacidad de productos incorpora PATCHstatus Active/Paused con JWT interno, SellerActive y ownership. Ownercache por sesión solo de respuestas validadas permite reactivar Paused no público, se limpia al cambiar/restaurar/cerrar sesión; cada mutación sigue autorizada por backend. Preparación añade notes≤250, no cambia autoridadJWT/OTP/roles. 422IMAGE_NOT_AVAILABLE genera diagnóstico fijo sin bodies/headers/IDs/secretos; frontend no implementaS3. Regresiónauth incluye texto422 genérico reutilizable para formularios y ausencia de datos sensibles.
-
-## Dependencia comercial007/003
-AuthSession y el único AuthContext incorporan capacidades privadas createProduct/ownProduct/createOrder. JWT permanece exclusivamente en coordinador/SecureStore; antes de operar revalidar identidad/perfil y, para seller, rol Seller y GETsellers/me Active. Ownership producto por sellerId (distinto de user.id), pedido por buyerId y sellerId. Bloqueo simultáneo comercial, generación contra respuestas tardías y bloqueo conservador de POST ambiguo. Preparación/recibo e IDs consultados de productos solo memoria por sesión; login/restauración/logout limpian datos comerciales, 401 limpia sesión con política existente. Sin cambio de flujo OTP, almacenamiento JWT ni endpoints de autenticación.
-
 ## Información General
 - **ID**: 005-aws-api-integration
 - **Nombre**: AWS-API-INTEGRATION
@@ -56,9 +44,11 @@ Conectar progresivamente el cliente Expo SDK 58 con la API AWS usando fetch, Typ
 
 ## 4. Dependencias y bloqueos
 - HTTPS/TLS verificados desde PC2026-11-12 en https://3.129.142.54.nip.io; validación Android pendiente. No enviar credenciales ni JWT mientras la URL configurada sea HTTP. OpenAPI publica servers HTTP: no usarlo como configuración ni seguir redirects.
-- Contratos de login, /auth/me y /users/me confirmados por el equipo. Mantener DTOs distintos y comprobar coherencia id MongoDB/email/roles; identidad Active a cargo de /auth/me, campos editables de /users/me. Solo Buyer está confirmado, sin permisos derivados de roles desconocidos.
+- Contratos de login, /auth/me y /users/me confirmados contra el Backend. Mantener DTOs distintos y comprobar coherencia id MongoDB/email/roles; identidad Active a cargo de /auth/me, campos editables de /users/me. Roles respaldados: Buyer, Seller y Admin.
 - Contrato OTP confirmado por el equipo: AWS crea identidad Supabase y perfil MongoDB vinculado al sub, Buyer/PendingEmailVerification. SMTP Gmail configurado y plantilla Confirm sign up con Token reportados por backend; recepción real y transición lazy Active todavía sin validación física.
 - Faltan límites de longitud, formato de phone y política de contraseña. Validación local estructural solamente; no afirmar validación completa de formatos/límites.
+- OpenAPI actual publica `register` como 200, aunque el código Backend devuelve 202; el cliente usa el contrato implementado y acepta únicamente 202.
+- OpenAPI no documenta schemas de respuesta, pero los DTOs y servicios del Backend confirman `accessToken`, `expiresIn`, `tokenType`, `user`, `/auth/me` y `/users/me`; `decodeLogin` está habilitado con ese contrato.
 - Falta contrato de recuperación y refresh; no implementar endpoints supuestos.
 - Expo Go físico: no marcar integración COMPLETADA hasta prueba manual y flujos HTTPS reales.
 
@@ -116,11 +106,6 @@ Verificación técnica2026-11-13:337/337pruebas/26suites, tsc0errores, lint0erro
 La bandera Beta ahora dirige directamente a login con acuse pendiente y correo efímero, sin auto-login. False conserva OTP. Ninguna navegación equivale a confirmar correo o Active. Backend debe aprobar un mecanismo de titularidad sin pantalla OTP (enlace o SSO) antes de producción; no existe contrato publicado para ello.
 Validación local: nombre Unicode2–100 caracteres, letras/marcas/espacios/apóstrofos/guiones/punto, NFC y espacios normalizados, controles rechazados; correo string máximo254/local64 y dominio exacto; contraseña sin transformación, mínimo backend aún no publicado (recomendación12, no regla inventada), techo local4096 caracteres para solicitudes. Estos límites son política del cliente a alinear con AWS, no evidencia de protección de consultas backend.
 Se autoriza commit local del conjunto auth005 seguro acumulado y su configuración/tests/SDD; no push/build/release. Excepción explícita para ese commit técnico con prueba física pendiente, sin marcar005 COMPLETADA. No incluir .env ni trabajo006 ajeno. Auditoría Play y requisitos backend documentados, sin endpoints de borrado/SSO inventados.
-
-## Dependencia007 — vendedor
-La nueva etapa007 autoriza capacidades acotadas POST solicitud/GET negocio mediante el único coordinador/token existente. No exportar JWT al Context/UI ni modificar roles Buyer confirmados, contratos /me o auth005 para simular Seller. Cuerpos de respuesta vendedor siguen unknown hasta contrato; acceso007 usa guarda autenticada existente y publicación no se habilita.401 aplica política existente y respuestas tardías se rechazan por generación; resto de auth permanece sin reconstrucción.
-
-Actualización contractual posterior: usuario confirma SellerActiveDTO y combinación exacta [Buyer,Seller], además de [Buyer]. Se amplían parsers login/authme/usersme coherentemente (sin Admin), conservando OTP/login/almacenamiento. Activación no rota JWT: /me se revalida con tokenactual y solo entonces actualiza rol; si no confirmaSeller, pedirlogin explícito. No conceder permisos del DTOnegocio a sesión sin esa revalidación. Evidencia nueva en continuaciónP0 de007.
 
 ## Referencias
 CONSTITUTION.md, AGENTS.md, plans/005-aws-api-integration-plan.md, tasks/005-aws-api-integration-tasks.md.

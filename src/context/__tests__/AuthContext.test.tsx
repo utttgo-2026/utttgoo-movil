@@ -16,6 +16,7 @@ const user: User = { id: 'fixture-user', role: 'buyer', fullName: 'Fixture', ema
 const mockSession = {
   restore: jest.fn(), login: jest.fn(), register: jest.fn(), refreshProfile: jest.fn(), logout: jest.fn(), sellerOperation: jest.fn(),
   sellerSubmissionState: () => ({ received: false, uncertain: false }),
+  cancelPendingOperations: jest.fn(),
 };
 
 describe('AuthContext como única autoridad de sesión', () => {
@@ -113,7 +114,7 @@ describe('AuthContext como única autoridad de sesión', () => {
     mockSession.restore.mockResolvedValueOnce(user);
     mockSession.sellerOperation.mockResolvedValueOnce({ kind: 'active', status: 201, seller: { sellerId: 'seller-fixture' }, roleSynced: false });
     const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
-    await act(async () => { expect(await result.current.requestSellerActivation({ businessName: 'Fixture', description: 'Synthetic business', pickupPoint: 'Fixture building' }))
+    await act(async () => { expect(await result.current.requestSellerActivation({ storeName: 'Fixture', description: 'Synthetic business', phone: '5551234567' }))
       .toEqual({ success: true, kind: 'active', status: 201, seller: { sellerId: 'seller-fixture' }, roleSynced: false, received: false, uncertain: false }); });
     expect(result.current.role).toBe('buyer'); expect(result.current.user).toEqual(user);
   });
@@ -192,7 +193,7 @@ describe('AuthContext como única autoridad de sesión', () => {
     jest.mocked(createAuthSession).mockReturnValueOnce(failed as unknown as ReturnType<typeof createAuthSession>);
     const { result } = await renderHook(useAuth, { wrapper: AuthProvider });
     await act(async () => {
-      await expect(result.current.requestSellerActivation({ businessName: 'Fixture', description: 'Synthetic business', pickupPoint: 'Fixture building' }))
+      await expect(result.current.requestSellerActivation({ storeName: 'Fixture', description: 'Synthetic business', phone: '5551234567' }))
         .resolves.toMatchObject({ success: false, uncertain: true, error: expect.stringContaining('Recarga') });
     });
     expect(result.current.role).toBe('buyer'); expect(failed.sellerOperation).toHaveBeenCalledTimes(1);

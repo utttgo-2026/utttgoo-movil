@@ -40,18 +40,18 @@ describe('Servicios: construcción de solicitudes documentadas', () => {
   });
 
   test('vendedores: activación201, me, PATCH y público sin token', async () => {
-    const input = { businessName: 'Fixture', description: 'Synthetic description', pickupPoint: 'Fixture point' };
+    const input = { storeName: 'Fixture', description: 'Synthetic description', phone: '5551234567' };
     request.mockResolvedValue({ status: 201, headers: {}, data: { ...input, sellerId: 'seller-fixture', status: 'Active', isActive: true,
       roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' } });
     await sellerService.requestActivation('synthetic.jwt', input);
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/activation-requests', {
-      method: 'POST', token: 'synthetic.jwt', body: input, expectedStatuses: [200, 201],
+      method: 'POST', token: 'synthetic.jwt', body: input, expectedStatuses: [201],
     });
     await sellerService.getMe('synthetic.jwt');
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/me', { token: 'synthetic.jwt', expectedStatuses: [200] });
-    await sellerService.updateMe('synthetic.jwt', { pickupPoint: 'New point' });
+    await sellerService.updateMe('synthetic.jwt', { phone: '5559876543' });
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/me', {
-      method: 'PATCH', token: 'synthetic.jwt', body: { pickupPoint: 'New point' }, expectedStatuses: [200],
+      method: 'PATCH', token: 'synthetic.jwt', body: { phone: '5559876543' }, expectedStatuses: [200],
     });
     await sellerService.getById('seller/fixture');
     expect(request).toHaveBeenLastCalledWith('/api/v1/sellers/seller%2Ffixture', { expectedStatuses: [200] });

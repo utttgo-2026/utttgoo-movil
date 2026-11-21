@@ -7,7 +7,7 @@
 - **Framework**: React Native + Expo
 - **Lenguaje**: TypeScript
 - **Navegación**: Expo Router
-- **Estado actual**: Etapas005/006/007 en pruebas; catálogo/productos y pedido simple AWS implementados en cliente, recorrido físico pendiente; maquetas solo fuente mock explícita en desarrollo
+- **Estado actual**: Etapa006 P0/P1/P2 y registro P3 en pruebas;11 fotos pendientes; etapa005 continúa en pruebas; catálogo/pedidos mock
 - **Backend**: /health HTTPS/TLS verificado desde PC; contratos login/identidad/perfil implementados, recorrido real OTP/login/restauración pendiente de Expo Go
 - **Fuente principal de UI**: Figma
 
@@ -15,72 +15,126 @@
 
 # Historial de cambios
 
-## V1.2 — guía y configuración para colaborador remoto
-- Usuario solicita subir lo necesario para que un compañero clone y ejecute el cliente desde casa. READMEactualizado, docs/COLABORACION.md añadido, .nvmrc24 y comentarios de .env.example con clavespúblicas a completar localmente. .gitignore ignora todaslas variantes.env salvo ejemplo; sin cambiar códigoapp/dependencias/lock/backend ni compartir sesión.
-- Clonación remota limpia deV1.2 baseb6a8890 en temporal independiente: npmci exitoso, tsc0errores,640/640tests/40suites, Doctor20/20, manifest/lock/appconfigsin cambios. BundleAndroidHTTP200/14,057,550bytes con plantilla pública sin Supabasekey, Metrodetenido. Node25.4/npm11.7local dieron advertenciasengines; Node24LTS sigue recomendado porCI. Esto no prueba OTP ni computadora/teléfono delcompañero.
-- Guía cubre LAN/túnel/Reloadcompleto, cuenta institucional propia, permisosGitHub y troubleshooting. Assetsruntime ya versionados; originalesFigma se compartenaparte para trabajo visual. EAS/APKrequiere accesos/proyecto/env; workflowactual no ejecutabuildreal y no se activa. ActualizadoSDD001/memoria, checksdocs/ignore y pruebas previas acommit; publicación solicitada sobreV1.2, sin despliegue de aplicación ni tiendas.
+## Integración V1.2 en `eas-google-play` (2026-11-18)
 
-## Publicación autorizada V1.2
-- Usuario autoriza subir todos los cambios acumulados en una nueva ramaV1.2 y confirma explícitamente prueba física del hotfixrunSeller tras reloadcompleto enExpoGo: validaciónseller sinexcepción. Esa confirmación permite commit; no cierra007/006 ni acredita pasos comerciales no probados.
-- Se conserva historial local deHRDCORE (2commits previos pendientes de publicación) y se prepara commit del trabajo acumulado vendedor/productos/pedido simple/Figma/animaciones/hotfix con pruebas y SDD. Excluir.env, secretos, coverage, .expo y temporales.
-- CIúltimoHRDCOREremoto enverde; workflowactual solo pushmain/HRDCORE oPR a esasramas. PushV1.2 por sísolo no dispara eseworkflow. No merge ni publicación de la aplicación; solo ramaGit solicitada.
+- Se integraron selectivamente Seller, activación protegida por sesión, roles explícitos Buyer/Buyer+Seller y operaciones de productos respaldadas por los contratos AWS disponibles.
+- Se integraron categorías paginadas, catálogo/producto AWS, pedido directo y pago en efectivo. Producción no usa carrito ni fallback silencioso a mocks; `EXPO_PUBLIC_CATALOG_SOURCE=mock` solo opera con `__DEV__`.
+- Se conservaron OTP Supabase, login automático posterior a OTP, contraseña únicamente en memoria, JWT únicamente en SecureStore y las guardas actuales de sesión.
+- Se conservaron CI/CD, Security, CodeQL, Gitleaks, Dependabot, EAS, package `mx.edu.utt.uttgo`, Node `22.13.1` y el versionado remoto EAS. No se integraron configuraciones antiguas de V1.2.
+- Se integró SDD 007 y se documentan como pendientes `QR_VISUAL_ONLY`, fotografías/S3, historial/seguimiento AWS, notificaciones remotas, dashboard Seller y listado privado no respaldado.
+- La versión canónica de Expo queda en `1.2.0`; `versionCode` continúa delegado a EAS `autoIncrement` remoto.
+- Estado: `V12_PHYSICAL_TEST_PASSED`. Preview V1.2.0 aprobado en prueba física Android; queda autorizada la preparación del Production AAB. No se ejecuta `eas submit` ni se publica automáticamente en Google Play.
 
-## Hotfix runSeller — TypeError del lector de estado en catch
-- Usuario reporta fallo físico AuthContext176:153. La expresión ubicada allí era session.sellerSubmissionState(), método obligatorio llamado otra vez dentro del catch. Reproducción antes del fix confirmó la promesa rechazada con el mismo TypeError al faltar el método; claseactual/factory sí lo definen. useState retiene instancia anterior entre renders; prueba de retención/remount modela compatibilidad con FastRefresh, sin afirmar inspección del objeto del dispositivo ni el errorbackendoriginal oculto.
-- Context valida métodos y snapshot booleano antes de contactar seller y después de recibir respuesta; incompatible muestra error fijo de recarga completa, sin optional chaining ni éxito/rolinventado. Lectura de metadata del catch aislada para no lanzar otra excepción; preservarHTTPoriginal/401, resultadosinciertos de altas iniciadas y cancelación despuésdelogout. No adoptarUser de respuesta si falla el contrato interno. AuthSession solo explicita tipoSellerSubmissionState, sin cambiar su operaciónAWS.
--15 regresiones añadidas: métodos ausentes, snapshot inválido/getterque lanza, retención/remount/restauración, preservación401/403/503, alta incierta/rolnoelevado, respuesta/rechazo traslogout, promesa inesperada/resultado incompatible, factoryreal+Context+GETBearer con fetch/storagefixture y reintentoUI/Mis productos. Suitefinal640/640/40suites, sin skips; TypeScript0errores, ESLint0errores/27warnings previos, ExpoDoctor20/20 y diffchecklimpio. BundleAndroid200/14,066,037bytes; procesoMetro detenido.
-- SDD005/007/memoria/manual actualizados. Sin cambios de pantallasFigma ni contratos/publicación/catálogo/Supabase/SecureStore, sin cuentas/altasreales ni secretos/logs nuevos. Repetición física requiere reload completo (no solo FastRefresh), pendiente delusuario antes decommit; sinpush.
+## Preparación Production AAB V1.2.0 (2026-11-19)
 
-## Bloques1/2 y recuperación3 acotada — vendedor verificado y Figma actual
-- Implementado GETseller automático al entrar/foco con resultado missing/active/error. Solo404SELLER_PROFILE_NOT_FOUND del GETpropio significa ausencia; whitelist de error y uniontipada hastaContext/UI, sin tratar401/403/otros404/red como formulario. Consultas concurrentes comparten promesa completa e identidad por generación; blur/unmount/logout descartan respuestasanteriores.
-- Altaexistente reutilizada en SellerActivationForm/Entry: businessName/description/pickupPoint, no storeName/phone. POST200documentado/201confirmado requiereDTOActive y GETposterior conmismaidentidadSeller; no aprobaciónadministrativa. Recibido se conserva ante fallo de verificación para no repetirPOST; campos siguen editables tras rechazo definitivo. Misproductos/editores exigen perfilActive y rolactual validado, sin permisoslocalesinventados.
-- ProductResponseampliado a todos los campos/nulabilidad delschema, números o cadenas decimales documentadas con conversiónsegura. ProductPageexclusivototal; retiradoalias totalCount. imageUrlnoexisteenresponseactual: placeholderlocal, Createomiteimagen. isAvailable también bloquea compra. Catálogo se revalida al recuperar foco conservandoquery/input y datos de lamismaselección durante recarga. created_desc bloqueado antesdefetch y control deshabilitado, sin sustituirenum.
-- CheckpointB1antesdeauditoría:622/622tests/40suites, tsc0, lint0errores/30warnings previos, Doctor20/20 y diffchecklimpio. Fallos iniciales por fixture de coordinador desactualizada y aserción de ruta sinquery corregidos en tests, sin fallbackruntime para ocultarlos.
-- Bloque2:22PNGsoriginales comprador/vendedor inspeccionados y comparados con códigoactualAWS. Matriz006existente actualizada, diferenciando capacidades actuales, recuperaciónlocal, endpointsconfirmados y backendpendiente; no renders nuevos deExpoGo ni afirmación de fidelidadpixelperfect.
-- Bloque3limitado: efectivo en Datos/Confirmar (sin nuevo campoPOST/cobro/comisiones), DeliveryQrCardcomo marco visual bloqueado y sin generación de credencial/QRconorderId/JSONficticio, avisosAWS sinmockNotifications encubiertos (maqueta devexplícita conservada). HistoriaGETmine/detail, seguimiento completo y dashboard/tabsSeller siguenpendientes de implementación; no se declaran recuperados.
-- Verificaciónfinal:625/625tests en40suites (+32 sobre593 de partida), TypeScript0errores, ESLint0errores/27warnings remanentes (3advertencias eliminadas al tocarAvisos), ExpoDoctor20/20 y diffchecksin errores. BundleAndroidHTTP200/14,063,236bytes con servicios/movimiento, Metrodetenido. Sin mutacionesAWS, dependenciasnuevas, cambiosSupabase/SecureStore ni publicación. SDD003/005/006/007 y guíaactualizados; commit siguependiente de prueba físicaAGENTS, sinpush.
+- Preview EAS V1.2.0 aprobado: build `4095ca00-b95e-4990-bceb-64ba7561f1a5`, commit `a33041eb166e3a1c47919a77395cc6f3e9e68677`.
+- Evidencia confirmada: `645/645` tests en `46` suites, TypeScript sin errores, lint sin errores, Expo Doctor `20/20`, npm audit sin vulnerabilidades Critical/High, CI/Security/CodeQL/Gitleaks exitosos y prueba física Android aprobada.
+- Estado de release: `V12_PHYSICAL_TEST_PASSED`; se prepara Production AAB `1.2.0` con versionado remoto EAS. QR backend, S3 completo, notificaciones remotas e historial AWS completo permanecen pendientes.
 
-## Etapa006 — tabs y transiciones discretas
-- Conservado navegadorTabs/BottomTabBar público del SDK58, cinco pestañas/eventos/links/historial/guardas. Mismos iconosoutline/paleta/Poppins/indicadorFigma22×2: selección220ms, escala1.08, elevación2.5dp, color nativo y marcador deslizante. Interrupción de cambios rápidos sin colas ni callbacks que alteren rutas al finalizar.
-- ReduceMotion compartido de AccessibilityInfo con preferencia inicialconservadora, listener en vivo y protección de consultaobsoleta. Cancela microanimaciones y ajusta destino; nuevosStacks/tabs none, sin lift/escala. Los gestos nativos en curso siguen bajo autoridad del SO. Labels/hitboxes y selected nativos preservados; altura accesible desde64dp+SafeArea con reserva de líneas porancho/fontScale, sin recortar ni limitar fuente.
-- Stack nativos horizontales para detalle/categoría/checkout/auth/seller/editor; filtros verticales como card. Tabs fade120ms. Botones/tarjetas press0.98 (80/120ms), feedback140ms en región/mensajes/errorformulario; sin animar todas las filas al renderizar, retener datos para fadeout o modificar callbacks de negocio. Fuentes AWS/mocks y preparación real existentes conservadas.
-- Sin paquetes nuevos: Animated de RN con native driver para transform/opacity/color admitido por0.88. Reanimated/worklets/gesture-handler instalados intactos. UI006 inspeccionada y originales conservados; SDD006/memoria/manual `motion-expo-go.md` actualizados.
--593/593pruebas/38suites (562previas+31nuevas), TypeScript0errores, ESLint0errores/30warnings previos, ExpoDoctor20/20 y diffchecklimpio. Tests routerreal comprueban selecciónrápida/labels/back/deeplink/invitado/privados/loginexplícito/cambiosesión/logout, más ReduceMotion/races/cleanup/press/geometría. BundleAndroid200/14,050,485bytes con módulos de movimiento y servicioscomerciales; Metrodetenido.72archivosprotegidos idénticos al checkpointdeestatarea:43509f3a316af4339a08da50d41e4987a3670d00de375b973fc88089f0a2b484.
-- Sin nuevas peticiones/mutacionesAWS ni contratos, cambiosAuthContext/CartContext/SecureStore o dependencias. Objetivo60FPS y comparación320/360/390/430dp/fontScale/gestos requierenExpoGo; no se acreditan conJest. Commit `feat(ui): add smooth tab and screen transitions` solicitado, pendiente de prueba manual exigida porAGENTS; no hash nuevo, push ni publicación.
+## Legal y evidencia Production V1.2.0 (2026-11-19)
 
-## P0 PR backend #24 — disponibilidad, alta sin fotos y notas
-- PR24 fusionado según confirmación del usuario. GETOpenAPIHTTPS desplegado ya publica UpdateProductAvailabilityRequest.status, CreateOrderRequest.notes y CreateProductRequest.imageUrlnullable; Active/Paused y límite250 confirmados por usuario. No se ejecutaron POST/PATCH reales ni prueba física de despliegue.
-- Disponibilidad implementada con bodyexclusivo status, PATCH200validado, vendedor Seller+Active/ownership/lock/generación y controles Pausar/Reactivar en Mis alimentos. Owner de IDs verificados solo en sesión permite reactivar Paused oculto del catálogo público; no sustituye autorizaciónbackend ni inventa endpointprivado. Se limpia con cambio de sesión.
-- Alta omite imageUrl incluso al recibir null; URLs mock/placeholder/file/S3inventadas se rechazan antes defetch. Placeholder local en preview/catálogo/detalle; fotografías reales pendientesFase05. 422IMAGE_NOT_AVAILABLE con mensaje fijo y diagnóstico proyectado (sin body/headers/IDs/notas/token/URL), consola solo desarrollo y últimoevento sanitizado enmemoria.
-- Notas opcionales≤250UTF16 en builder, preparación y Datos→Confirmar→POST. Solo productId/quantity/notes enviados, backend calcula importes. Error conserva preparación/notas; solo201válido limpia preparación. Carrito mock no se vacía ni convierte a multiitem; no órdenes ficticias productivas. Texto422 genérico saneado para múltiples formularios, regresiónregistro conservada.
-- Evidencia pública: healthHealthy,3categorías reales; GETproductosdefault/search/categoryId/maxPrice200vacío,total0. Los4sorts confirmados devuelven400VALIDATION_ERROR. Se omite sortBy al cargar y se ofrece Predeterminado AWS; selección explícita muestra error real, sin enumguess ni retry/fallback. Ordenamiento real sigue bloqueado por despliegue.
-- Adaptadores de lectura para versiones documentadas: productos total/totalCount; OrderResponse desplegado orderId/buyerUserId/total+metadata frente contratoanterior id/buyerId/totalAmount. Validación y normalización al modelo existente, rechaza mezclas/contradicciones. Activación OpenAPI200 vs contrato201 y POSTorders200extra registrados, sin ampliar éxito por suposición. GETmine/detail ya publican schemas pero integración/enums/historial/seguimiento quedan pendientes.
-- Verificación:562/562tests en36suites (+36 respecto526), TypeScript0errores, ESLint0errores/30warnings previos, ExpoDoctor20/20 y gitdiffcheck limpio. BundleAndroidHTTP200/14,026,589bytes con root src/app y serviciosproductos/órdenes presentes; Metro detenido. SDD003/005/007, manual y memoria actualizados. Usuario confirmó «Prueba manual pendiente» al consultar la condición deAGENTS: commit local no creado; trabajo local sinpush.
+- Se agregaron enlaces accesibles desde `Perfil > Privacidad y seguridad` para la política de privacidad y la solicitud de eliminación de cuenta, usando el navegador seguro de Expo.
+- Se verificó el AAB Production EAS `cd4516ec-4d0c-451b-a77b-2b776380bbc1`: `FINISHED`, versión `1.2.0`, versionCode `3`, paquete `mx.edu.utt.uttgo`.
+- La carga a Google Play Closed Testing sigue siendo manual; la URL oficial de Landing continúa pendiente de documentación.
 
-## Etapa007/003 — DTO productos y pedido simple AWS
-- Nuevos contratos del usuario desbloquean producto individual/list/create201/PATCH200: IDs/categoryId/sellerId/nombre/description/ingredientes/precio/stock/imageUrl/status Active|Paused. Productos usan totalCount; categorías mantienen total. Sort exactos price_asc/price_desc/name_asc/created_desc. Create excluye imageUrl; edición inicial solo price/stock, respuestas correlacionadas con ID/campos enviados.
-- AuthSession/Context únicos incorporan capacidades comerciales privadas con mismo JWT, revalidación /me+SellerActive, categorías actuales y ownership sellerId antes de PATCH. Exclusión mutua, protección contra duplicados/POST ambiguo y cancelación por cambio de sesión. IDs reales consultados/creados solo en memoria de sesión, no listado privado supuesto.
-- Seller puede publicar explícitamente, consultar ID propio y editar precio/stock. Catálogo paginado y detalle muestran DTO real sin rellenar rating/tiempo/vendedor ficticios. Fotos solo de URLHTTPS válida o neutro, nunca registro mock por coincidencia deID. Búsqueda/categoría/maxPrice/sort preservados en navegación.
-- Pedido de un producto en rutas existentes: preparación→revisión→confirmación→recibo201. Body exacto productId/quantity, validación identidad/cantidad/total en centavos/estadoPending/fecha. Preparación se conserva ante fallo y limpia tras éxito validado; logout elimina estado y descarta respuesta tardía. Sin conversión multiitem, notas/fee/pago/QR supuestos. Historial/seguimiento/calificación/cancelación no presentan mocks bajo fuenteAWS mientras falten contratos.
-- Verificación:526/526pruebas en35suites (491previas+35nuevas), TypeScript0errores, lint0errores/30warnings previos, Doctor20/20 y diffcheck limpio. `expo start -c` y bundleAndroid con routerRoot=src/app HTTP200/14,015,245bytes, rutas y servicios producto/orden presentes; Metro detenido. Una primera consulta de bundle sin routerRoot no incluía las rutas de src/app; se corrigió el diagnóstico para verificar el bundle completo.
-- Actualizados SDD003/005/007, memoria y manual vigente en backend-handoff007. Sin mutaciones reales automáticas ni evidencia de MongoDB/ExpoGo. Disponibilidad de escritura continúa bloqueada por contradicción status/availability; media/listado privado/ordersmine/detail pendientes. Commit local pendiente de la prueba manual Expo Go exigida por AGENTS; sin push.
+## EAS Production AAB Gate (2026-11-14)
 
-## Etapa007 P0 — SellerActive y categorías AWS, productos bloqueados por DTO
-- Usuario confirma POSTactivación201/GETme SellerActiveDTO y rolesBuyer+Seller, sin aprobación administrativa. Parser runtime y representación Mi negocio reales; misma sesión/JWT revalida authme/usersme antes de adoptar Seller, no se fabrica ni guarda otroJWT. Si quedaBuyer, se permite ir al login para actualizar permisos.
-- OpenAPI público accesible con rutas categorías/productos y pedidos, pero sin responseDTO producto ni enums sortBy. GETcategories/products observados con items[]/total0. Aclaración usuario autoriza completar solo contratosseguros; no publicación con respuestas incompletas.
-- Servicio categoría paginado/idpersistente/sortOrder y consumidores comprador/vendedor conectados sin fallback. ProducciónAWS siempre; maquetas previas solo flagCATSOURCE=mock explícito dev. Mismas rutas y tema; catálogo con estadosAWS, no mocks ante error ni fotos por coincidencia deID.007/006 documentan esa dependencia de datos sin rehacer estilosglobales.
-- ProductService prepara GETlist/detail y requestbuilders name/description/ingredients/categoryId/price/stock, PATCHprice/stock y disponibilidadPaused únicamente. Mutaciones fallan antes dePOST/PATCH por responseDTOpendiente. Página vacía sí se valida; item no vacío/detalle muestran bloqueo, nunca éxitos/listas ficticias. SinDELETE/media/pedidos/sellerId supuesto.
-- Errorenvelope código/status/correlationId/message se clasifica con mensajesfijos sin mostrar cuerpos.491/491pruebas/33suites, tsc0errores, lint0errores/30warnings, Doctor20/20 y diffchecklimpio. Regresiónauth/navegación conservada con mocks explícitos; sin cuentas/negocios/productos reales automáticos ni cambiosOTP/SecureStore.
-- Handoff007 actualizado con DTO/env/whitelistfaltantes y guíaExpoGo; Crear→Consultar→Mostrar comprador sigue bloqueado. Commitlocal solicitado del trabajo seguro, sinpush/merge/buildrelease y sin etapaCOMPLETADA por falta de evidencia física.
+- Se registra `PREVIEW_PHYSICAL_TEST_PASSED` para el build EAS `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, commit validado `6b407e8`.
+- Se prepara la transición `READY_FOR_CLOSED_TEST_BUILD` dentro de la fase vigente `004-ci-cd`.
+- Se agregan `PROD-EAS-001` a `PROD-EAS-008` para variables Production, gate previo, AAB, ausencia de `eas submit` y destino Closed Testing.
+- El perfil EAS `production` declara explícitamente `environment: production` y conserva `autoIncrement`, versionado remoto y `app-bundle`.
+- El workflow Production valida las tres variables públicas por nombre antes de ejecutar EAS, sin imprimir valores ni guardarlos como artifacts.
 
-## Etapa007 — vendedor y preparación de productos (EN PRUEBAS, parcial)
-- No existía etapa vendedor; se crea007 siguiendo la numeración (004 ya es CI/CD) y se reutiliza sellerService005 con las4rutas confirmadas. Reconsulta OpenAPI falló por transporte/ECONNRESET sin desactivarTLS; respuestas seller/roles siguen sin contrato confirmado.
-- Perfil autenticado ofrece Quiero vender. Grupo /seller protegido contiene Mi negocio/solicitud/Mis productos/formulario draft. POST solicitud y GETme se ejecutan mediante AuthSession/AuthContext existente, sin exponer JWT/cuerpos unknown ni cambiar rol. Se muestran status/errores sanitizados; aceptación no equivale aprobación.
-- Validación textoUnicode/límites frontend, precioMXN centavos y metadata de imagen preparada, categoría real requerida. Bloqueos de duplicación y resultado incierto/resp tardías, sin reintentos automáticos ni idempotencia server-side supuesta.
-- Mi negocio tiene consultaHTTP, pero campos/edición se bloquean hasta schema de perfil/estado/ownership. Productos tienen preview efímero no publicado; sin APIs confirmadas no hay CRUD/publicación/upload/categorías ni productos ficticios. Catálogo comprador mock intacto, no Crear→Consultar→Mostrar real.
--449/449pruebas/31suites (405previas+44nuevas), tsc0errores, lint0errores/30warnings previos, Doctor20/20, diffcheck limpio y bundleAndroidHTTP200/2477módulos. Sin operaciones reales automáticas, claves en logs, nuevas dependencias, cambios006 o push/release.
-- SDD007 registra diferencias Figma por contrato, roles ampliados pendientes, handoff backend y recorrido ExpoGo. Usuario autoriza commit local seguro; hash/resultado en entrega/historial. No módulo terminado hasta contratos/prueba física/publicación integral.
+## EAS Preview Environment Gate (2026-11-14)
 
+### Cambios
+
+- Se documentaron `REQ-EAS-ENV-001` a `REQ-EAS-ENV-008` dentro de la fase vigente `004-ci-cd`.
+- El perfil EAS `preview` declara explícitamente el ambiente `preview`.
+- `.env.example` conserva placeholders vacíos y `.env` continúa ignorado/no versionado.
+- El ambiente EAS Preview autorizado contiene las tres variables públicas requeridas; sus valores no se incorporan al repositorio.
+- Se mantiene prohibido incluir `service_role`, claves secretas, JWT signing secrets, SMTP passwords o Gmail passwords en el cliente móvil.
+- El APK Preview `2abb8a71-9b68-46f0-a3ea-f2e98b27f4fe` queda como evidencia técnica no funcional por haber sido generado con el ambiente vacío.
+
+### Evidencia de build
+
+- CI `43638411063` y Security `43638411132` pasaron correctamente.
+- Workflow Preview `43638662372` pasó gates, validó las tres variables por nombre y terminó correctamente.
+- EAS Build `5b4b0280-71e0-44f9-9a84-87b5062dd84a`, perfil `preview`, APK interno, commit `6b407e8`.
+- Estado: `PREVIEW_BUILD_READY_FOR_PHYSICAL_TEST`. Production AAB, `eas submit` y Google Play permanecen bloqueados.
+
+### Seguridad pendiente
+
+La rotación/revocación del Supabase JWT signing secret expuesto corresponde al equipo Backend/Supabase según la estrategia activa de signing keys. No se realiza desde este repositorio móvil.
+
+## OTP Supabase y activación lazy (2026-11-13)
+
+### Cambios
+
+- Registro móvil mediante `POST /api/v1/auth/register` y pantalla OTP con `verifyOtp`/`resend` oficiales de Supabase.
+- OTP válido dispara inmediatamente el login Backend; la contraseña solo vive en memoria y el JWT se guarda únicamente en SecureStore.
+- Decodificación runtime separada para `/api/v1/auth/me` y `/api/v1/users/me`, con roles `Buyer`/`Seller`/`Admin` validados explícitamente.
+- Variables públicas `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; nunca se incluyen secretos SMTP o `service_role`.
+
+### Bloqueos y evidencia
+
+- El código Backend devuelve registro `202`; el OpenAPI desplegado publica `200` de forma inconsistente. El cliente exige `202` y no crea sesión con el acuse.
+- `decodeLogin` valida exclusivamente `accessToken`, `expiresIn`, `tokenType: Bearer` y el objeto `user` confirmado por los DTOs Backend.
+- Validación local: TypeScript 0 errores, lint 0 errores, 205 pruebas, coverage 95.01% statements y export Android exitoso.
+
+## Fase 005 - Demo invitado, onboarding y preparación Play Store
+
+### Estado
+
+**EN DESARROLLO**. Se creó una fase SDD específica antes de implementar.
+
+### Cambios
+
+- Demo invitado 1/2 y 2/2 con datos separados en `src/data/demo`.
+- Welcome conectado al demo y Splash con identidad UTTT-GO.
+- Login y Registro conectados al `ApiClient` autorizado.
+- JWT almacenado con `expo-secure-store`; no se guardan contraseñas locales.
+- Verificación de correo adaptada al enlace real de Supabase, sin token ficticio.
+- Nombre, icono, adaptive icon, splash y workflows Android actualizados.
+- Pruebas específicas del demo y respuesta `202 Accepted` de registro.
+- Pruebas de contrato para Welcome, Demo 1, Demo 2 y ausencia de redirect por sesión.
+- Flujo inicial corregido: Splash navega directamente a Demo 1; Welcome queda fuera del arranque.
+- Expo actualizado a `~58.0.25` para satisfacer la validación de dependencias de Expo Doctor.
+- Backend HTTPS verificado el 2026-11-12: base `https://3.129.142.54.nip.io`, health `200`, OpenAPI accesible y TLS válido.
+- `EXPO_PUBLIC_API_BASE_URL` documenta la base HTTPS sin `/openapi/v1.json`; Backend Smoke usa HTTPS con validación TLS estricta.
+- Deuda documentada: `CartProvider` se conserva por dependencia de pantallas buyer antiguas.
+- Launcher simplificado sin texto para icono normal, adaptive icon y monochrome icon.
+- Validación local repetida en `eas-google-play`: TypeScript limpio, 16 tests, coverage sobre umbrales,
+  Expo Doctor 20/20 y export Android exitoso. Expo Router generó chunks independientes para Welcome,
+  Demo 1, Demo 2, Login y Registro en el export web de verificación.
+- Preview Android finalizado correctamente con EAS usando el commit `54ee2e9`; Build ID
+  `a79cfe03-5d21-4a04-aa5f-e7d192cd9afe`, APK interna y package `mx.edu.utt.uttgo`.
+
+### Bloqueos
+
+`BLOCKED_BY_BACKEND_EMAIL_RESEND`, `BLOCKED_BY_EAS_AUTH`,
+`NON_BLOCKING_EAS_WARNING` y `EXPECTED_SIDELOAD_WARNING` quedan sujetos a validación.
+
+## Fase 004 - Preparación CI/CD, DevSecOps y contrato API
+
+### Estado
+
+**EN DESARROLLO**. Se actualizó la fase vigente sin crear una segunda estructura SDD.
+
+### Cambios
+
+- Node 22.13.1 unificado mediante `.nvmrc`, `engines` y workflows.
+- Scripts reales de tests, coverage e integración.
+- Pruebas deterministas para correo institucional, utilidades y `ApiError`.
+- Configuración API por entorno y cliente centralizado aislado de los mocks.
+- CI con quality, Expo Doctor y trazabilidad SDD.
+- CodeQL, Dependency Review, npm audit, Dependabot y Gitleaks.
+- Workflows manuales para Preview EAS, release AAB y smoke test Backend.
+- Documentación de entornos, branch protection, evidencias y bloqueos externos.
+
+### Bloqueos
+
+`BLOCKED_BY_EXPO_LINK`, `BLOCKED_BY_EXPO_TOKEN`, `BLOCKED_BY_FIRST_EAS_BUILD`, `PENDING_LANDING_URL_DOCUMENTATION` y `MANUAL_GOOGLE_PLAY_UPLOAD`.
 ## Etapa005 — Registro→Login seguro y auditoría de preparación Play
 - Beta true en desarrollo/internal explícita ahora redirige directamente a Login tras200/202 con correo efímero/acuse pendiente y contraseña vacía; false conserva OTP original. No auto-login, bypass de Confirm email/Active ni eliminación de servicios. Cuentas nuevas pendientes siguen rechazadas por AWS: enlace/SSO aprobado es bloqueo contractual, no se inventa endpoint.
 - Validación nombre Unicode2–100/NFC/espacios y controles, email string254/local64/dominio exacto, password sin transformación con recomendación12 (política real pendiente) y techo cliente4096. Servicio valida tipos/listas blancas.429 tiene mensaje genérico, controles de consultas/rate-limit/enumeración son responsabilidad backend no auditada.
@@ -576,3 +630,18 @@ npx expo start --android  # Android directo
 **Fecha**: 2025-11-06
 **Branch**: `HRDCORE` → `origin/HRDCORE` sincronizado
 **Commits**: `a00c8d2` → `cf1b88b` → `f3bbe3e` → `01a77b1` → `ffb0961` → `c8ff59c`
+
+---
+
+## Sincronización `HRDCORE` → `eas-google-play` (2026-11-13)
+
+- Se integraron los cambios funcionales de `HRDCORE` (`91799ca`) mediante merge no fast-forward iniciado sobre la rama de publicación.
+- Se conservaron CI/CD, DevSecOps, acciones fijadas por SHA, Node 22.13.1, Expo SDK 58, EAS, iconos, splash y origen HTTPS de producción.
+- Se incorporaron catálogo responsivo, grupos de navegación, guardas privadas, servicios API tipados, coordinación de sesión con SecureStore y pruebas nuevas.
+- El registro conserva `POST /api/v1/auth/register` con respuesta 202 y el flujo de verificación por enlace; no se incorporó OTP/PIN.
+- El contrato de identidad del backend permanece bloqueado hasta confirmación, por lo que el login real no se declara operativo.
+- Validación de integración: `npm test` 195/195, `npm run test:coverage` 195/195 con 97.57% statements, TypeScript 0 errores, Expo Doctor 20/20 y export Android exitoso.
+- Lint termina con 0 errores y 31 warnings preexistentes en pantallas buyer/UI.
+- El OpenAPI HTTPS respondió 200 y confirma `auth/login`, `auth/me`, `users/me` y `register`, pero publica `register` como 200 y un `servers.url` HTTP; esto queda como `BLOCKED_BY_BACKEND_CONTRACT` frente al contrato esperado 202/HTTPS.
+- El OpenAPI no declara endpoints OTP, Supabase ni resend; `HRDCORE` tampoco contiene SDK/configuración Supabase ni implementación `verifyOtp`. Estado: `BLOCKED_BY_BACKEND_SUPABASE_OTP`.
+- CartContext permanece como deuda histórica no activada por el alcance de compra directa.
