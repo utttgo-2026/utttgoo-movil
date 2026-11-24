@@ -6,6 +6,8 @@ node_modules/
 # Expo
 .expo/
 dist/
+coverage/
+expo-export.log
 web-build/
 expo-env.d.ts
 
@@ -31,8 +33,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*
-!.env.example
+.env
+.env*.local
+.env
 
 # test artifacts
 coverage/
@@ -45,3 +48,8 @@ example
 # generated native folders
 /ios
 /android
+
+# Build artifacts and credentials
+*.apk
+*.aab
+*.keystore

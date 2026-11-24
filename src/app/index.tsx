@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText, BrandLogo, Screen } from '@/components';
+import { ROUTES } from '@/navigation/routes';
 import { colors, radii, spacing } from '@/theme';
 
 export default function SplashScreen() {
@@ -10,7 +11,7 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/welcome');
+      router.replace(ROUTES.demo.first);
     }, 2500);
 
     return () => clearTimeout(timer);
@@ -23,7 +24,9 @@ export default function SplashScreen() {
         <View style={styles.divider} />
       </View>
       <View style={styles.university}>
-        <AppText variant="caption" align="center">Universidad Tecnológica de Tula-Tepeji</AppText>
+        <AppText variant="caption" color={colors.textMuted} align="center">
+          Universidad Tecnológica de Tula-Tepeji
+        </AppText>
       </View>
     </Screen>
   );
@@ -48,16 +51,5 @@ const styles = StyleSheet.create({
     bottom: spacing.xxl,
     width: '100%',
     alignItems: 'center',
-  },
-  universityTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  universityLine: {
-    width: 32,
-    height: 2,
-    backgroundColor: colors.textMuted,
-    borderRadius: radii.pill,
   },
 });

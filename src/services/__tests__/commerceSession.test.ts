@@ -11,10 +11,10 @@ import { productMetadata } from '../__fixtures__/product';
 jest.mock('../sessionStorage', () => ({ sessionStorage: {} }));
 const input = { name: 'Alimento fixture', description: 'Descripción fixture', ingredients: ['Maíz'], categoryId: 'aws-category', price: 30.25, stock: 4 };
 const product: ProductResponse = { ...input, ...productMetadata, id: 'aws-product', sellerId: 'aws-seller', status: 'Active' };
-const seller: SellerActiveResponse = { sellerId: product.sellerId, businessName: 'Cocina fixture', description: 'Comida fixture', pickupPoint: 'Edificio fixture',
+const seller: SellerActiveResponse = { sellerId: product.sellerId, storeName: 'Cocina fixture', description: 'Comida fixture', phone: '5551234567',
   status: 'Active', isActive: true, roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' };
-const order = { id: 'aws-order', buyerId: 'aws-user', sellerId: product.sellerId, productId: product.id, quantity: 2, unitPrice: 30.25, totalAmount: 60.50,
-  status: 'Pending' as const, createdAt: '2026-11-16T12:00:00Z' };
+const order = { orderId: 'aws-order', buyerId: 'aws-user', sellerId: product.sellerId, productId: product.id, productName: product.name, quantity: 2, unitPrice: 30.25, totalAmount: 60.50,
+  status: 'Pending' as const, currency: 'MXN' as const, paymentMethod: 'Cash' as const, pickupPoint: '', deliveredAt: null, completedAt: null, version: 1, updatedAt: '2026-11-16T12:00:00Z', createdAt: '2026-11-16T12:00:00Z' };
 function fixture(isSeller = true) {
   const roles = isSeller ? ['Buyer', 'Seller'] : ['Buyer'];
   const identity = { id: 'aws-user', email: 'fixture@uttt.edu.mx', displayName: 'Fixture', roles, accountStatus: 'Active' };
@@ -37,6 +37,36 @@ describe('Comercio privado: permisos, ownership y resultados tardíos', () => {
     jest.spyOn(orderService, 'create').mockResolvedValue(order);
   });
   afterEach(() => jest.restoreAllMocks());
+  test('lista todas las páginas públicas y filtra por sellerId real, sin mezclar vendedores', async () => {
+    const { session } = fixture(); await session.restore();
+    const list = jest.spyOn(productService, 'getPage')
+      .mockResolvedValueOnce({ items: [{ ...product, id: 'one' }, { ...product, id: 'foreign', sellerId: 'other' }], page: 1, pageSize: 100, totalCount: 3 })
+      .mockResolvedValueOnce({ items: [{ ...product, id: 'two' }], page: 2, pageSize: 100, totalCount: 3 });
+    expect((await session.visibleSellerProducts()).map((item) => item.id)).toEqual(['one', 'two']);
+    expect(sellerService.getMe).toHaveBeenCalledWith('synthetic.aws.jwt');
+    expect(list).toHaveBeenLastCalledWith({ page: 2, pageSize: 100 });
+  });
+  test('catálogo inconsistente no se presenta como listado completo; Buyer no consulta', async () => {
+    const list = jest.spyOn(productService, 'getPage').mockResolvedValueOnce({ items: [product], page: 1, pageSize: 100, totalCount: 2 })
+      .mockResolvedValueOnce({ items: [product], page: 2, pageSize: 100, totalCount: 2 });
+    const sellerSession = fixture().session; await sellerSession.restore();
+    await expect(sellerSession.visibleSellerProducts()).rejects.toMatchObject({ kind: 'invalid_response' });
+    list.mockClear(); const buyer = fixture(false).session; await buyer.restore();
+    await expect(buyer.visibleSellerProducts()).rejects.toMatchObject({ status: 403 });
+    expect(list).not.toHaveBeenCalled();
+  });
+  test('historial y detalle exigen comprador de la sesión y filtran Seller sin mezclar páginas', async () => {
+    const { session } = fixture(false); await session.restore();
+    const summary = { ...order, role: 'buyer' as const };
+    jest.spyOn(orderService, 'mine').mockResolvedValue({ items: [summary, { ...summary, orderId: 'seller-order', role: 'seller' }], page: 2, pageSize: 20, totalCount: 21 });
+    jest.spyOn(orderService, 'detail').mockResolvedValue(order);
+    expect(await session.listBuyerOrders(2)).toMatchObject({ items: [summary], page: 2, totalCount: 21 });
+    expect(await session.buyerOrder(order.orderId)).toEqual(order);
+    jest.mocked(orderService.detail).mockResolvedValue({ ...order, buyerId: 'different-user' });
+    await expect(session.buyerOrder(order.orderId)).rejects.toMatchObject({ kind: 'invalid_response' });
+    jest.mocked(orderService.mine).mockResolvedValue({ items: [{ ...summary, buyerId: 'different-user' }], page: 1, pageSize: 20, totalCount: 1 });
+    await expect(session.listBuyerOrders(1)).rejects.toMatchObject({ kind: 'invalid_response' });
+  });
   test('anónimo y Buyer no publican aunque el DTO del negocio diga Active', async () => {
     const { session } = fixture(false);
     await expect(session.createProduct(input)).rejects.toMatchObject({ kind: 'unauthenticated' });
@@ -92,6 +122,22 @@ describe('Comercio privado: permisos, ownership y resultados tardíos', () => {
     expect(await session.createOrder({ productId: product.id, quantity: 2 }, 'preparation-1')).toEqual(order);
     expect(orderService.create).toHaveBeenCalledWith('synthetic.aws.jwt', { productId: product.id, quantity: 2 });
     await expect(session.createOrder({ productId: product.id, quantity: 2 }, 'preparation-1')).rejects.toMatchObject({ kind: 'validation' });
+    expect(orderService.create).toHaveBeenCalledTimes(1);
+  });
+  test('un pedido confirmado no impide otro intento nuevo', async () => {
+    const { session } = fixture(false); await session.restore();
+    await session.createOrder({ productId: product.id, quantity: 2 }, 'p1');
+    await expect(session.createOrder({ productId: product.id, quantity: 2 }, 'p1')).rejects.toMatchObject({ code: 'ORDER_ALREADY_CONFIRMED' });
+    await session.createOrder({ productId: product.id, quantity: 2 }, 'p2');
+    expect(orderService.create).toHaveBeenCalledTimes(2);
+  });
+  test.each(['timeout', 'network', 'invalid_response'] as const)('resultado %s tras POST permanece incierto incluso tras consultar y restaurar', async (kind) => {
+    jest.mocked(orderService.create).mockRejectedValue(new ApiError(kind, 'fixture'));
+    jest.spyOn(orderService, 'mine').mockResolvedValue({ items: [], page: 1, pageSize: 20, totalCount: 0 });
+    const { session } = fixture(false); await session.restore();
+    await expect(session.createOrder({ productId: product.id, quantity: 2 }, 'p1')).rejects.toMatchObject({ code: 'ORDER_OUTCOME_UNCERTAIN' });
+    await session.listBuyerOrders(1); await session.restore();
+    await expect(session.createOrder({ productId: product.id, quantity: 1 }, 'p2')).rejects.toMatchObject({ code: 'ORDER_OUTCOME_UNCERTAIN' });
     expect(orderService.create).toHaveBeenCalledTimes(1);
   });
   test.each([{ ...product, stock: 1 }, { ...product, status: 'Paused' as const }])('revalida disponibilidad antes de crear pedido', async (value) => {

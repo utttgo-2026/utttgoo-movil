@@ -271,7 +271,7 @@ npm run test:ci
 
 - ❌ No push a GitHub sin autorización explícita
 - ❌ No commit sin `npx tsc --noEmit` = 0 errors
-- ❌ No push sin prueba manual en Expo Go
+- ❌ No push sin prueba manual en Expo Go acreditada o excepción específica documentada por el mantenedor
 - ❌ No modificar `UTTT-Go/` (originales Figma)
 - ❌ No inventar categorías/diseños sin validar Figma
 - ❌ No usar emojis como sustitutos de iconos Figma
@@ -285,12 +285,14 @@ npm run test:ci
 
 ## 12. Reglas CI/CD (Obligatorias)
 
+La fase CI/CD vigente es `specs/004-ci-cd/`. La versión única de Node es 22.13.1. Los builds EAS de preview y production requieren enlace real del proyecto y `EXPO_TOKEN`; no deben simularse con `echo`. Production requiere HTTPS del Backend y genera AAB, no APK.
+
 ### CI (Integración Continua)
 - **Obligatorio antes de merge**: CI debe pasar en GitHub Actions
 - **Jobs obligatorios**: TypeScript, Lint, Expo Doctor
 - **Tests**: Cuando existan, deben pasar en CI
 - **Pipeline**: `.github/workflows/ci.yml` (TypeScript, Lint, Expo Doctor)
-- **Triggers**: PR/push a `main` y `HRDCORE`
+- **Triggers**: PR a `main` y `HRDCORE`; push a `main`, `HRDCORE` y `V1.2`
 
 ### AWS-API-INTEGRATION (Etapa 005)
 - SDD: `specs/005-aws-api-integration/spec.md`, `plans/005-aws-api-integration-plan.md`, `tasks/005-aws-api-integration-tasks.md`.
@@ -315,7 +317,8 @@ npm run test:ci
 
 ### Reglas de Seguridad
 - ❌ NO commit sin `npx tsc --noEmit` = 0 errors + `npm run lint` limpio
-- ❌ NO push sin CI passing en GitHub Actions
+- Antes del push: `npx tsc --noEmit`, `npm run test:ci`, lint sin errores, Expo Doctor y `git diff --check` aprobados; bundle Android verificado, prueba física en Expo Go acreditada o excepción específica documentada por el mantenedor, y revisión de secretos y archivos sensibles.
+- Después del push y antes de merge o release: GitHub Actions debe ejecutar y aprobar el CI del SHA nuevo. Un CI fallido impide merge o publicación. El push inicial permite que Actions reciba y valide ese SHA; un CI verde anterior no lo valida.
 - ❌ NO secrets en código (`EXPO_TOKEN`, credenciales) → usar GitHub Secrets
 - ❌ NO `router.replace` en login/verify-email (usa `push`)
 - ❌ NO builds de producción sin autorización explícita

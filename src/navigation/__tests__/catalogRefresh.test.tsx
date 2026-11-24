@@ -29,7 +29,7 @@ describe('Catálogo real se revalida al volver, sin rehacer el navegador', () =>
       name: 'Maíz fixture', description: 'Descripción fixture', ingredients: [], price: 35, stock: 4, status: 'Active' };
     let published = false;
     const request = jest.spyOn(httpClient, 'request').mockImplementation(async (path) => ({ status: 200, headers: {}, data: {
-      items: path === '/api/v1/products' && published ? [product] : [], page: 1, pageSize: 20, total: path === '/api/v1/products' && published ? 1 : 0,
+      items: path === '/api/v1/products' && published ? [product] : [], page: 1, pageSize: 20, totalCount: path === '/api/v1/products' && published ? 1 : 0,
     } }));
     const view = await renderRouter(routes, { initialUrl: '/buyer/search?query=maiz' });
     await waitFor(() => expect(screen.getByText('AWS no tiene productos públicos con esta selección.')).toBeTruthy());

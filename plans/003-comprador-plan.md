@@ -1,5 +1,8 @@
 # Plan 003 — Flujo del Comprador
 
+## PR27 — integración en pruebas
+Crear pedido único usando decoder completo PR27; conservar preparación si falla. Consultar página y detalle mediante AuthSession con propiedad comprador, sin exponer JWT. Refrescar al foco; pendientes tests UI específicos, Figma físico y comprobación AWS privada.
+
 ## Bloque3 acotado
 Después de checkpointBloque1 y auditoría22PNG006, reutilizar AwsOrderReview/Receipt para tarjetas efectivo y marcoQRsinpayload. Extraer tarjeta QRpresentacional que solo muestra orderId válido de recibo y estado pendiente; no aceptar/generar credencial hasta DTOseguro. Mantenercallbacks/envíos/guards y no tocar APIórdenes. Avisos conservaRequireSession y diseñoMockdev, fuenteAWS devuelve pendiente de contrato sin fixtures. Pruebas nofabricaciónQR/no-notificacionesmock/efectivo, más suitecompleta y cinco checks. HistoriaGETmine/detail y dashSeller permanecen unidades siguientes expresas.
 
@@ -279,3 +282,6 @@ Implementar el flujo principal del comprador con catálogo de productos, categor
 - `ANALISIS_FIGMA.md` (UI-006 a UI-025)
 - `MAPA_NAVEGACION.md` (flujos buyer)
 - `ANALISIS_FIGMA.md` (UI-012 Categoría.png - pendiente verificación)
+# Diagnóstico físico de confirmación — en curso
+
+Separar mensajes confirmados/resultado incierto, exponer razón controlada al contexto, ofrecer acceso a historial y conservar los bloqueos existentes. Pruebas con errores y respuestas simulados; no crear pedidos reales.

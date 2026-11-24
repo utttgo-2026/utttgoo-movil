@@ -55,7 +55,7 @@ export const productService = {
   },
   async create(token: string, input: CreateProductRequest, categoryIds: readonly string[]) {
     const body = createProductBody(input, categoryIds);
-    const response = await httpClient.request('/api/v1/products', { method: 'POST', token, body: { ...body }, expectedStatuses: [201] }).catch((error: unknown) => {
+    const response = await httpClient.request('/api/v1/products', { method: 'POST', token, body: { ...body, imageUrl: null }, expectedStatuses: [201] }).catch((error: unknown) => {
       if (error instanceof ApiError && error.status === 422 && error.code === 'IMAGE_NOT_AVAILABLE') productImageUnavailableDiagnostic();
       throw error;
     });

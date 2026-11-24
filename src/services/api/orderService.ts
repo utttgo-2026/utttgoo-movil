@@ -1,7 +1,8 @@
 import type { CreateOrderRequest } from '@/types/api';
 import { assertAllowedFields } from '@/utils/apiValidation';
 import { sellerText } from '@/utils/sellerValidation';
-import { invalidContract, orderResponse } from './catalogContracts';
+import { invalidContract } from './catalogContracts';
+import { orderPagePr27, orderPr27 } from './orderContractsPr27';
 import { ApiError } from './errors';
 import { httpClient } from './httpClient';
 
@@ -19,8 +20,22 @@ export const orderService = {
   async create(token: string, input: CreateOrderRequest) {
     const body = createOrderBody(input);
     const response = await httpClient.request('/api/v1/orders', { method: 'POST', token, body: { ...body }, expectedStatuses: [201] });
-    const data = orderResponse(response.data);
-    if (data.productId !== body.productId || data.quantity !== body.quantity) return invalidContract();
+    const data = orderPr27(response.data);
+    if (data.productId !== body.productId || data.quantity !== body.quantity || data.status !== 'Pending') return invalidContract();
     return data;
+  },
+  async mine(token: string, page = 1, pageSize = 20) {
+    if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) throw new ApiError('validation', 'Paginación inválida.');
+    const response = await httpClient.request('/api/v1/orders/mine', { token, query: { page, pageSize }, expectedStatuses: [200] });
+    const result = orderPagePr27(response.data);
+    if (result.page !== page || result.pageSize !== pageSize) return invalidContract();
+    return result;
+  },
+  async detail(token: string, orderId: string) {
+    const id = sellerText(orderId, 1, 256);
+    const response = await httpClient.request(`/api/v1/orders/${encodeURIComponent(id)}`, { token, expectedStatuses: [200] });
+    const result = orderPr27(response.data);
+    if (result.orderId !== id) return invalidContract();
+    return result;
   },
 };

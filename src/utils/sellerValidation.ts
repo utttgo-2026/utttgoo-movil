@@ -14,9 +14,9 @@ export function sellerText(value: unknown, min: number, max: number): string {
 }
 
 export function activationBody(value: SellerActivationRequest): SellerActivationRequest {
-  assertAllowedFields(value, ['businessName', 'description', 'pickupPoint']);
-  return { businessName: sellerText(value.businessName, 2, 100), description: sellerText(value.description, 10, 1000),
-    pickupPoint: sellerText(value.pickupPoint, 2, 200) };
+  assertAllowedFields(value, ['storeName', 'description', 'phone']);
+  return { storeName: sellerText(value.storeName, 1, 100), description: sellerText(value.description, 1, 500),
+    phone: sellerText(value.phone, 3, 32) };
 }
 
 export interface DraftImage { uri: string; mimeType: string; bytes: number; width: number; height: number }

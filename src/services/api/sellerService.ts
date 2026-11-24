@@ -10,7 +10,7 @@ export type SellerLookup = { kind: 'missing'; status: 404 } | { kind: 'active'; 
 export const sellerService = {
   async requestActivation(token: string, input: SellerActivationRequest) {
     const response = await httpClient.request('/api/v1/sellers/activation-requests', {
-      method: 'POST', token: bearerToken(token), body: sellerBody(input, true), expectedStatuses: [200, 201],
+      method: 'POST', token: bearerToken(token), body: sellerBody(input, true), expectedStatuses: [201],
     });
     return { ...response, data: sellerActiveResponse(response.data) };
   },

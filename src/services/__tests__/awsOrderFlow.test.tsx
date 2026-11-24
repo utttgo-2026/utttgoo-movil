@@ -9,7 +9,7 @@ const mockUpdateNotes = jest.fn();
 const mockParams = { id: 'aws-order' };
 const mockProduct = { id: 'aws-product', name: 'Producto AWS', price: 35.25, imageUrl: null };
 const mockAuth = { orderPreparation: { product: mockProduct, quantity: 2, notes: '' }, submitOrder: mockSubmit, updateOrderNotes: mockUpdateNotes,
-  lastOrder: { id: 'aws-order', productId: 'aws-product', quantity: 2, unitPrice: 35.25, totalAmount: 70.5, createdAt: '2026-11-16T12:00:00Z' } };
+  lastOrder: { orderId: 'aws-order', productId: 'aws-product', productName: 'Producto AWS', status: 'Pending', quantity: 2, unitPrice: 35.25, totalAmount: 70.5, createdAt: '2026-11-16T12:00:00Z' } };
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
@@ -49,7 +49,7 @@ describe('UI pedido AWS y medios reales', () => {
     expect(mockSubmit).toHaveBeenCalledTimes(1); expect(mockPush).not.toHaveBeenCalled();
     await act(async () => { finish({ success: false, error: 'Resultado incierto fixture' }); });
     expect(view.getByText('Resultado incierto fixture')).toBeTruthy(); expect(mockPush).not.toHaveBeenCalled();
-    mockSubmit.mockResolvedValue({ success: true, data: { id: 'aws-order' } });
+    mockSubmit.mockResolvedValue({ success: true, data: { orderId: 'aws-order' } });
     await fireEvent.press(view.getByRole('button', { name: 'Confirmar pedido' }));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/buyer/order-created', params: { id: 'aws-order' } });
   });
@@ -62,6 +62,16 @@ describe('UI pedido AWS y medios reales', () => {
     expect(view.queryByText('¡Pedido generado!')).toBeNull();
     expect(view.queryByText('Código QR de entrega')).toBeNull();
     expect(view.getByText(/No hay un recibo AWS validado/)).toBeTruthy();
+  });
+  test('resultado incierto ofrece historial y bloquea repetición en pantalla', async () => {
+    mockSubmit.mockResolvedValue({ success: false, reason: 'uncertain', error: 'No se pudo confirmar el pedido.' });
+    const view = await render(<AwsOrderReview confirm />);
+    await fireEvent.press(view.getByRole('button', { name: 'Confirmar pedido' }));
+    expect(view.getByText('No se pudo confirmar el pedido.')).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Confirmar pedido' })).toBeDisabled();
+    await fireEvent.press(view.getByRole('button', { name: 'Revisar mis pedidos' }));
+    expect(mockPush).toHaveBeenCalledWith('/buyer/orders');
+    expect(mockSubmit).toHaveBeenCalledTimes(1);
   });
   test('historial no simula colección vacía ni seguimiento', async () => {
     const view = await render(<AwsOrdersPending />);

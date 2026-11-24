@@ -5,7 +5,7 @@ import { ApiError, backendHttpError } from '../api/errors';
 import type { SellerActiveResponse } from '@/types/api';
 
 jest.mock('../sessionStorage', () => ({ sessionStorage: {} }));
-const input = { businessName: 'Negocio fixture', description: 'Descripción sintética del negocio', pickupPoint: 'Edificio fixture' };
+const input = { storeName: 'Negocio fixture', description: 'Descripción sintética del negocio', phone: '5551234567' };
 const active: SellerActiveResponse = { ...input, sellerId: 'seller-fixture', status: 'Active', isActive: true,
   roles: ['Buyer', 'Seller'], createdAt: '2026-11-16T12:00:00Z', updatedAt: '2026-11-16T12:00:00Z' };
 const identity = { id: 'mongo-fixture', email: 'fixture@uttt.edu.mx', displayName: 'Fixture', roles: ['Buyer'], accountStatus: 'Active' };
@@ -60,13 +60,43 @@ describe('Seller sobre sesión única sin revelar JWT/cuerpo unknown', () => {
     await expect(session.sellerOperation()).rejects.toMatchObject({ kind: 'http', status });
     expect(deps.storage.clear).toHaveBeenCalledTimes(status === 401 ? 1 : 0);
   });
-  test('error temporal de alta no reintenta y prohíbe repetir resultado incierto aun tras consulta', async () => {
+  test('error temporal de alta consulta GET y prohíbe repetir POST tras confirmar negocio', async () => {
     const post = jest.spyOn(sellerService, 'requestActivation').mockRejectedValue(new ApiError('timeout', 'Synthetic timeout'));
     jest.spyOn(sellerService, 'getMe').mockResolvedValue({ status: 200, headers: {}, data: active });
     const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
-    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'timeout' });
+    expect(await session.sellerOperation(input)).toMatchObject({ kind: 'active', status: 200, reconciled: true, roleSynced: false });
     await session.sellerOperation();
     await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'validation' }); expect(post).toHaveBeenCalledTimes(1);
+  });
+  test('POST con interpretación fallida reconcilia GETActive y revalida identidad sin inventar éxito del POST', async () => {
+    const post = jest.spyOn(sellerService, 'requestActivation').mockRejectedValue(new ApiError('invalid_response', 'POST DTO fixture invalid', 201));
+    const { session, deps } = fixture(); await session.login(identity.email, 'synthetic-password');
+    deps.auth.getMe.mockResolvedValue({ status: 200, headers: {}, data: { ...identity, roles: ['Buyer', 'Seller'] } });
+    deps.users.getMe.mockResolvedValue({ status: 200, headers: {}, data: { ...identity, roles: ['Buyer', 'Seller'], phone: null, avatarUrl: null } });
+    expect(await session.sellerOperation(input)).toMatchObject({ kind: 'active', status: 200, reconciled: true, seller: active, roleSynced: true });
+    expect(post).toHaveBeenCalledTimes(1); expect(sellerService.getMe).toHaveBeenCalledTimes(1);
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'validation' });
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+  test.each(['missing', 'network'] as const)('POST incierto y GET%s conserva bloqueo; consulta posterior nunca reenvía alta', async (verification) => {
+    const post = jest.spyOn(sellerService, 'requestActivation').mockRejectedValue(new ApiError('timeout', 'POST timeout fixture'));
+    const lookupError = verification === 'missing' ? backendHttpError(404, { status: 404, code: 'SELLER_PROFILE_NOT_FOUND', correlationId: 'fixture', message: 'Fixture' }) : new ApiError('network', 'GET network fixture');
+    jest.mocked(sellerService.getMe).mockRejectedValue(lookupError);
+    const { session } = fixture(); await session.login(identity.email, 'synthetic-password');
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'timeout' });
+    expect(session.sellerSubmissionState()).toEqual({ received: false, uncertain: true });
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ kind: 'validation' });
+    jest.mocked(sellerService.getMe).mockResolvedValue({ status: 200, headers: {}, data: active });
+    expect(await session.sellerOperation()).toMatchObject({ kind: 'active' });
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+  test('GET401 al verificar POSTincierto conserva invalidación de JWT', async () => {
+    jest.spyOn(sellerService, 'requestActivation').mockRejectedValue(new ApiError('network', 'POST network fixture'));
+    jest.mocked(sellerService.getMe).mockRejectedValue(new ApiError('http', 'GET unauthorized fixture', 401));
+    const { session, deps } = fixture(); await session.login(identity.email, 'synthetic-password');
+    await expect(session.sellerOperation(input)).rejects.toMatchObject({ status: 401 });
+    expect(deps.storage.clear).toHaveBeenCalledTimes(1);
+    await expect(session.sellerOperation()).rejects.toMatchObject({ kind: 'unauthenticated' });
   });
   test('HTTP/config insegura no llega al servicio vendedor', async () => {
     const post = jest.spyOn(sellerService, 'requestActivation');

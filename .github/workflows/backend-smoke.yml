@@ -1,0 +1,25 @@
+name: Backend Smoke Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check backend health
+        env:
+          API_BASE_URL: https://3.129.142.54.nip.io
+        run: |
+          test -n "$API_BASE_URL"
+          curl --fail --silent --show-error --max-time 15 --proto '=https' --tlsv1.2 "$API_BASE_URL/health"

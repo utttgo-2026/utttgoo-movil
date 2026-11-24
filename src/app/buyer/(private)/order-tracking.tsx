@@ -8,9 +8,9 @@ import { colors, fontSize, layout, radii, spacing } from '@/theme';
 import { mockOrders, getOrderStatusLabel, getOrderStatusColor } from '@/data/mock';
 
 import { usesMockCatalog } from '@/config/catalogSource';
-import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
+import { AwsBuyerTracking } from '@/components/catalog/AwsOrderFlow';
 
-export default function OrderTrackingScreen() { return usesMockCatalog() ? <MockOrderTrackingScreen /> : <AwsOrdersPending />; }
+export default function OrderTrackingScreen() { return usesMockCatalog() ? <MockOrderTrackingScreen /> : <AwsBuyerTracking />; }
 function MockOrderTrackingScreen() {
   const router = useRouter();
 

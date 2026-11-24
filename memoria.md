@@ -1,50 +1,37 @@
 # Memoria — UTTT-Go Móvil
 
-## V1.2 — preparación de colaboración desde casa
-- READMEobsoleto sobre login demo/sinbackend reemplazado por estado actual y quickstart para ramaV1.2. Guía docs/COLABORACION.md con Node24/npmci, Windows/macOSLinux, plantilla.env, cuenta institucional propia, LAN/túnel, actualizaciónGit, errores y alcance real. .nvmrc24 añadido como recomendación sin enginesforzados ni cambio de dependencias.
-- .env.example conserva solo orígenes públicos/flags y publishablekey vacía a completar por responsable; se aclara formato público aceptado y flujo beta sin otorgarpermisos. .gitignore protege todaslas variantes.env salvo plantilla. Ninguna lectura/copia del .env privado para preparar el clon ni exposición de credenciales.
-- Validación desde clonación remota limpia b6a8890 en temporal: npmci, tsc0,640/640tests/40suites, Doctor20/20; paquete/lock/configsin cambios. BundleAndroid200/14,057,550bytes con solo URLs/flags de plantilla pública y clave vacía, Metrodetenido. Instalación se hizo con Node25.4/npm11.7local y dio engines; se recomienda24LTS comoCI, no se afirma prueba remotaNode24 ni OTPreal. Runtime y evidenciafísica delhotfix confirmado porusuario permanecen iguales.
-- Assetsruntime estánversionados; PNGsoriginalesFigma externos se solicitan al equipo para diseñar, no son requisito de arranque. EASpreview se documenta como preparaciónadicional: falta projectId y workflowbuildactual solo tieneplaceholder; no se activan builds/tiendas ni se simulaAPK. Repositorio público para clonar, escrituraGitHub requiereautorización propia.
+## Decisión CI/CD vigente
 
-## Publicación en rama V1.2 autorizada
-Usuario solicita subir todos los cambios acumulados a V1.2 y confirma en pregunta explícita que verificó físicamente el hotfixrunSeller enExpoGo tras recargacompleta, sin laexcepción. Se cumple la condición manual para crear el commit de esta entrega; resto del recorrido comercial/Figma permanece ENPRUEBAS y no se amplía esa evidencia a flujos no reportados. Rama creada desdeHRDCORE con sus2commits locales previos y el workingtree acumulado; solo fuente/tests/SDD, sin .env/credenciales/temporales. CIactual filtra push a main/HRDCORE y PR contra esasramas: un push exclusivo aV1.2 no disparaCI automáticamente.
+La fase `004-ci-cd` concentra la preparación de calidad, seguridad y release. Node se fija en 22.13.1. La URL API se obtiene de entorno y usa la base HTTPS verificada `https://3.129.142.54.nip.io`; el cliente rechaza rutas de documentación como `/openapi/v1.json` y no se debilita la seguridad Android para Production. El cliente API interpreta el contrato `ApiError` centralmente, pero las pantallas continúan usando mocks hasta que exista contrato funcional aprobado.
 
-## Hotfix físico reportado runSeller / AuthContext176
-- Expresión identificada en la posición reportada: session.sellerSubmissionState(). Se llamaba también desde catch, de modo que su ausencia en la instancia rechazaba otra vez la promesa y tapaba el errororiginal. El método existe en clase/factory actuales; no es un import ausente demostrado ni un cambio del endpoint. Antes del fix, el test con instancia sin método produjo exactamente TypeError:session.sellerSubmissionState is not a function.
-- useState(createAuthSession) conserva instancia entre renders; prueba reproduce retención de un objeto viejo aunque factory cambie y recuperación al remount. FastRefresh es mecanismo compatible con esa retención; no se afirma haber inspeccionado memoria remota del teléfono ni saber el errorHTTP original que quedó oculto.
-- Corrección acotada: contrato obligatorio runtime en Context y SellerSubmissionState tipado en coordinador; validar antes de operar y antes de adoptarUser. Catchaislado para metadata, HTTPoriginal/401 preservados, cancelación porrevision y resultadoincierto si falló integridad después de intentar alta. Falta de método nunca es éxito ni se oculta con optional chaining. No se cambian prototipos ni se reemplaza coordinador en caliente: reloadcompleto crea instanciaactual y restauraJWT por flujoexistente.
--640/640tests/40suites (+15), tsc0, lint0errores/27warnings, Doctor20/20,diffchecklimpio. Tests de método ausente/getterque lanza/metadata inválida/errororiginal/logout/restauración y factoryreal a través de Context con GETBearer simulado; reintentoUI alcanzaMis productos. BundleAndroid200/14,066,037bytes, Metrodetenido. No cambios de APIproductos/catálogo, pantallasFigma ni solicitudesmutantesAWS. CorrecciónENPRUEBAS hasta nueva confirmación física delusuario; sincommit/push.
+## Integración V1.2 — 2026-11-18
 
-## Recuperación por bloques — vendedor real y matriz actual Figma
-- B1ejecutado sobre módulos existentes: SellerEntry compartido en rutas negocio/activación/editores; GETautomático al foco, solo404SELLER_PROFILE_NOT_FOUND tipado como missing, coalescing de consulta completa/identidad por generación. Otros errores no habilitan alta. Formularioextraído sin cambiar campos businessName/description/pickupPoint; storeName/phone no se envían.
-- POSTseller acepta200 publicado/201 previamente confirmado con parserActive; marca recibido antes deGETperfil y rolesrevalidados con mismoJWT. Si falla verificación, conservaralta recibida y bloquearreenvío. Contextrole y GETActive gobiernan acceso, no roles del negocio como autoridad. Logout/querynuevo descarta resultadosobsoletos. Supabase/SecureStore/contratosauth y animaciones sin cambios de comportamiento.
-- ProductResponseahora completo conmetadata/nulabilidad obligatoria y números/cadenas de formato explícito normalizadas con rangosseguros. ProductPage solo total, sin totalCount; response no incluye imageUrl segúnOpenAPI/GETreal, fotografía se resuelve como placeholderlocal. Compra respeta isAvailable/status/stock. Catálogo al foco conserva selección/input y datos públicos de la misma consulta durante recarga; ruta de otrosfiltros no muestra resultadosanteriores. created_desc rechazado antes deHTTP y opción deshabilitada; incompatibilidad400 registrada.
-- EvidenciaGETpública actual categorías3/productos1/total1; OpenAPIproductoscompleto y camposaltavigentes. Sin POST/PATCH AWS automático ni evidencia de persistencia por esta iteración.
-- Auditoríaestática nueva de22PNGsoriginales frente a fuentesAWS actuales en matriz006 existente (sin duplicarla). Recuperación B3acotada: efectivo visual UI015/016 sin campoauthoritativo nuevo, marcoQR UI017 sin payload/scanner ni generación de QRconID/JSONlocal, avisosAWS ya no muestran fixtures como eventos reales. Alertasmock solo devexplícito.
-- CheckpointB1:622tests/40suites, tsc0, lint0errores/30warnings, Doctor20/20 y diffcheck. FinalB3acotado/hardening:625/625/40suites, tsc0, lint0errores/27warnings, Doctor20/20,diffchecklimpio,bundleAndroid200/14,063,236bytes, Metrodetenido. No pruebaExpoGo ni commit/push; etapasENPRUEBAS. Unidades siguientes:3.1GETmine/detail (schemasdisponibles),3.2dashboard/tabsSeller y autorizacióncola,3.3acciones/QRseguro concontratosfaltantes. No confundir tareas de integración pendientes con bloqueo de todo el backend.
+- `eas-google-play` conserva la infraestructura de release y seguridad; no se copian `eas.json`, workflows, configuración EAS, package ni variables desde V1.2.
+- Seller requiere sesión AWS válida, perfil Active y roles exactos `Buyer` o `Buyer + Seller`; el estado local nunca concede permisos.
+- El catálogo productivo usa AWS por defecto. El mock solo está permitido en desarrollo con `EXPO_PUBLIC_CATALOG_SOURCE=mock`; no existe fallback silencioso.
+- El pedido productivo es directo por producto, cantidad, notas y efectivo. `CartContext` se conserva como deuda histórica y no participa en el flujo AWS.
+- El QR del recibo es `QR_VISUAL_ONLY`; fotografías/S3, historial/seguimiento completo, dashboard Seller, notificaciones remotas y listado privado permanecen bloqueados hasta contratos/backend y evidencia física.
+- `app.json` es la única versión canónica y queda en `1.2.0`; EAS mantiene `appVersionSource: remote` y `autoIncrement: true`.
+- Preview V1.2.0 aprobado en prueba física Android: `V12_PHYSICAL_TEST_PASSED`, build EAS `4095ca00-b95e-4990-bceb-64ba7561f1a5`, commit `a33041eb166e3a1c47919a77395cc6f3e9e68677`.
+- La evidencia de release registra 645/645 tests en 46 suites, CI/Security/CodeQL/Gitleaks exitosos y Expo Doctor 20/20; Production AAB queda como siguiente gate y no se ejecuta `eas submit`.
 
-## Etapa006 — movimiento discreto y accesible
-- Revisados Constitution/AGENTS/memoria/006/layouts y PNG UI006. Se conserva BottomTabBar de Expo Router58 y sus cinco pestañas, mismos glyphsoutline/paleta/Poppins/subrayado22×2 e historial. Wrapper visual con contexto de progreso por tab; no confiar en argumento focused de renderIcon porque el SDK dibuja variantestrue/false. Selección220ms easingcubic, icono1.08/−2.5dp y color interpolado nativo (RN0.88 lo admite); indicador usa ancho real/insets/RTL. Altura mínima64dp+inset, espacio de labels según fuente/ancho sin capfontScale.
-- RNAnimated nativo basta; Reanimated4.7.1/worklets0.13 ya instalados se conservan. Transform/opacity/color sin layoutanimado, loops, callbacks de navegación al terminar ni bloqueo de interacción. Hooks cancelan/retargetean valores al cambiar rápido; no se animan todas las filas ni se cambia key/offset del grid.
-- AccessibilityInfo/useSyncExternalStore comparte una suscripciónReduceMotion, inicialconservadora, consultaobsoleta descartada, cambios en vivo y cleanup. Bajo reducción no lift/escala; cambios instantáneos y nuevosStacks none. Stack nativo horizontal salvo filtrovertical como card, sin mover rutas ni tocarback/guards. Gesto nativo ya en curso corresponde al SO.
-- Botones/tarjetas responden a press solo en contenido, manteniendo hitbox/callback; errores/formularios y estados de catálogo/confirmación con fade140ms a nivel región/mensaje. Texto y datos desaparecen inmediatamente al retirarse, sin snapshots privados para fadeout ni éxito backend fingido.
--593/593tests/38suites (+31), tsc0, ESLint0errores/30warnings previos, Doctor20/20, diffchecklimpio; bundleAndroid200/14,050,485bytes con movimiento y servicios existentes, Metrodetenido.72protegidos idénticos al workingtree inicialSHA25643509f3a316af4339a08da50d41e4987a3670d00de375b973fc88089f0a2b484. GuíaExpoGo006 preparada; no evidencia física/FPS ni nuevo commit por condiciónmanualAGENTS, sinpush.
+## Fase 005: demo y onboarding
 
-## P0 PR #24 — actualización vigente
-- PRbackend24 fusionado según usuario, contratos status Active/Paused, notes≤250 e imageUrlomitido/null resueltos. OpenAPIHTTPS verificado sinmutaciones; Fase05 conserva uploadS3 pendiente. Diagnóstico422IMAGE_NOT_AVAILABLE solo proyecciónconstante sin datos personales ni secretos, desarrollo consola y últimoevento seguro enmemoria.
-- Se mantienen servicios y únicoAuthContext. Disponibilidad usa capabilityprivada con SellerActive/ownership/lock/generación, respuesta200correlacionada. Owner de IDs reales verificados se conserva por sesión para reactivar Paused aunque catálogo público lo oculte; se limpia con login/restore/logout. Backend sigue autoridad. No listado privado ni endpoint inventado.
-- Notes en preparación existente, editable en Datos y readonly en Confirmar; límiteUTF16 compatible.NET sin truncar. Request únicamenteproductId/quantity/notes. No carrito multiitem, importescliente ni limpieza por error.
-- Despliegue observado difiere en páginas(total) y respuestaorden(orderId/buyerUserId/total+metadata). Lectura de ambas versiones documentadas con validación y normalización al modelo interno, sin aliasesguess ni respuesta híbrida. HealthHealthy,categorías3, productosvacíos; búsquedacategoríaprecioGET200,4sortsconfirmadosGET400. Omisión de sort inicial permitecatálogo; no retry ni enum alternativo ocultando400.
-- Prueba física del circuito comercial siguependiente; AGENTScondiciona commitlocal a ExpoGo ademásdechecks aunque usuario solicitócommit. No se afirma persistencia real de productos/pedidos por schema/fixtures.
+El demo invitado vive en `src/data/demo` y no utiliza el cliente API. Login y registro
+usan únicamente los contratos autorizados; el JWT se guarda en `expo-secure-store`.
+La pantalla de confirmación explica el enlace de Supabase y no presenta token, OTP ni
+reenvío simulado. El icono y splash usan assets UTTT-GO rojos. El Backend expone HTTPS
+verificado desde el 2026-11-12; Production permanece manual por los gates de release.
+
+La restauración de sesión no controla la navegación inicial: el splash lleva a Welcome
+para todos los usuarios. `CartProvider` se conserva porque las pantallas buyer antiguas
+dependen de `useCart`; no forma parte del demo invitado y queda como deuda separada.
+
+La revisión del APK se validó contra el grafo de rutas de Expo Router y no solo contra
+texto del bundle Hermes. El export incluyó chunks separados para Welcome, Demo 1, Demo 2,
+Login y Registro; no se encontró un redirect de autenticación que omita el onboarding.
 
 > Registro de decisiones arquitectónicas, de diseño, de navegación, de datos mock y de alcance del proyecto UTTT-Go Móvil.
-
-## Continuación007/003 — productos y pedido AWS
-- DTOproducto confirmado desbloquea creación y edición inicial precio/stock; ProductPage usa totalCount, separado de categorías total. Estados/sort exactos del contrato. Disponibilidad de escritura sigue bloqueada por discrepancia status/availability.
-- No adaptar AWS a FoodItem con rating/tiempo/vendedor ficticios. UI usa ProductResponse, componentes/tema/rutas actuales y fotografíaHTTPS o neutro. Listado paginado de hasta20 por pantalla, sin listas virtualizadas anidadas. IDs propios de productos solo tras respuestaAWS/consulta ownership, sin supuesto listado privado.
-- Capacidades comerciales en sesión/Context existentes; revalidar /me y SellerActive, comprobar ownership y descartar respuestas tardías. Memoria comercial por sesión, sin nuevo almacenamiento ni autoridad de autenticación. Bloqueos POST cliente no sustituyen idempotencia backend.
-- Contratoorders de un solo producto justifica preparación independiente del carrito mock multiitem; no generar varias órdenes ni enviar notas/fee. Éxito solo tras201 validado e identidad/cantidad/total coherentes. Flujo conserva las rutas order-data/confirm-order/order-created; sin contrato de consulta no se presenta historial/seguimiento/QR ficticio.
-- Manual físico y fidelidad visual siguen pendientes; no se ejecutaron mutaciones reales automáticamente. La regla de commit requiere Expo Go antes de crear el commit local.
 
 ---
 
@@ -173,6 +160,8 @@ Usuario solicita subir todos los cambios acumulados a V1.2 y confirma en pregunt
 
 ---
 
+**Última actualización**: 2025-11-05
+**Versión**: 1.0
 ## 10. AWS-API-INTEGRATION — 2026-11-11
 
 ### Decisiones de integración
@@ -277,20 +266,30 @@ Usuario solicita subir todos los cambios acumulados a V1.2 y confirma en pregunt
 - Play es auditoría, no publicación. target36 en RN instalado no sustituye manifest final, producción bloquea3 permisos innecesarios y flagBetafalse; faltan privacidad pública/eliminación app+web/Data safety/firma/EAS y desplazar funciones mock antes de listing honesto. npm audit28/omitdev21, sin altos/críticos pero con remediación compatible pendiente; no fixforce.
 - Checks405pruebas/28suites sin skipped, tsc0, lint0errores/30warnings, Doctor20/20 y diffcheck limpio. Trabajo005 acumulado relacionado se prepara para commit local explícitamente autorizado sin .env ni artefactos; sin push/merge/release. Excepción de commit técnico con prueba física aún pendiente registrada por instrucción actual, nunca cierre de005.
 
-## 21. Etapa007 — vendedor sin contratos de respuesta supuestos
-- Servicios de vendedor005 preexistían, pantallas no. Se abre007, no004 (CI/CD) ni duplicación005/006. Referencias UI027/028/030/035/036 inspeccionadas; UI028 activado no se presenta al aceptar solicitud. Teléfono/imagen negocio sin campo API permanecen no editables.
-- Único coordinador/sessionContext extendido solo para solicitud/consulta: JWT privado, statusHTTP proyectado, cuerpo unknown descartado para UI. No otro SecureStore/clientauth. Locks y aceptación/resultadoincierto por sesión evitan doble envío/retries; logout/generación impide aplicar respuesta vieja.401 limpia con política,403 no cambia rol.
-- HTTP200/201 no demuestra autorización; GETme sin enum/DTO no fabrica pending/approved/rejected/suspended. Buyer sigue único rol confirmado del contrato005; Seller necesita DTO ampliado y permisos server-side. Edición negocio/CRUD productos se bloquean en vez de inventar schemas/endpoints. ConsultaOpenAPI actual ECONNRESET, sin bypass ni nueva evidencia del servidor.
-- Productos preparados solo como UI/preview efímero y validadores locales, no requestDTO AWS: precio2decimales→centavos exactos, imágenes5MB/6000px por metadata (no contenido binario), categorías vacías hastaAPI. No picker/upload/publicación/retirada real ni sustitución del catálogo21mocks; no afirmar publicación conectada.
--449/449tests/31suites,405previos+44nuevos; tsc0errores, lint0errores/30warnings, Doctor20/20, diffcheck limpio y bundleAndroidHTTP200/2477módulos. No prueba física, cuentas/altas reales automáticas, nuevas dependencias ni push/build. Commit local seguro solicitado, autorización no equivale cierre funcional. SDD007 EN PRUEBAS parcial y handoffbackend identifica exactamente lo faltante.
-
-## 22. P0 comercial por contratos completos, sin productos adivinados
-- POSTseller201/GETme ActiveDTO recibidos; roles exactosBuyer oBuyer+Seller. Se deja atrás el supuesto de aprobaciónadministrativa en estecontrato. Revalidación /me usaJWTactual, no tokennuevo desde el DTOnegocio. Rol enContext solo desde identidad/perfil confirmados; siJWTviejo no confirmaSeller, usuario debe ir al login explícito.
-- Categorías reales paginadas con idsserver y vacío honesto; AWS por defecto en comprador y siempre en vendedor. Mocksolo flagdesarrollo, nunca fallbackdeerror ni fuenteproductiva. Categorías Figma no se convierten en idsAWS; styles/rutas anteriores quedan reutilizables en la maqueta explícita.
-- OpenAPI cambió: publica productos/categorías/pedidos, pero responses sin schema y PATCHJsonElement/sortBystring no son contratoscompletos. GETpúblicoscategories/products devolvieron vacío; no extraerDTOdeitems inexistentes. Se preguntó al usuario y autorizó completarvendedor/categorías y prepararcapa producto sin publicar.
-- Producto requestexacto preparado con precioMXN/stock0/ingredientes/categoríaAWS sinimagen; Paused único valor conocido. Create/update/pause bloqueados antesdefetch hasta responsedecoder/whitelist. GETvacío es validable, no vacío o detalle exigenDTO y no se renderizancomomock; placeholderneutro sin fotofood-id. No privatelistsellerId ni endpointsinventados, media/pedidospendientes.
--491/491pruebas/33suites, tsc0errores, lint0errores/30warnings, Doctor20/20,diffcheck limpio. Cambios de expectativa históricos200solicitud/contractPending se ajustaron al201Activeconfirmado, no se quitaron suites. Un fallo inicial de efectoReact/importorder y cast de test se corrigió antesdechecksfinales; ninguna regresiónpendiente. Sin operacionesmutantesautomáticas, secretos/logs,nuevasdependencias ni cambiosOTP/loginUI/storage. Commitlocalseguro solicitado; evidenciafísica Crear→Consultar→Mostrar aún bloqueada porDTOfaltantes.
-
 **Última actualización**: 2026-11-13
 **Versión**: 1.4
 **Autor**: Equipo UTTT-Go Móvil
+
+## Sincronización con rama funcional (2026-11-13)
+
+- Fuente revisada: `HRDCORE` en `91799ca`; destino: `eas-google-play`.
+- Se priorizó la configuración de publicación y seguridad del destino frente a la versión fuente de CI, que intentaba cambiar Node 22.13.1 por Node 24.
+- Se conservaron los contratos HTTPS, SecureStore, onboarding Demo 1/Demo 2 y verificación por enlace Supabase.
+- Se integraron la arquitectura de API tipada, sesión centralizada, rutas privadas y catálogo responsivo.
+- Bloqueo restante: `sessionContract` continúa sin contrato de identidad confirmado por backend; no se habilita una sesión ficticia ni se inventan endpoints.
+- La sincronización terminó en el commit de integración `4d3623d`; el stash `stash@{0}` se conserva como respaldo y la rama `backup/eas-google-play-pre-auth-sync` apunta al HEAD previo.
+- Verificación local: Node `v22.13.1`, tsc limpio, 19 suites/195 tests, coverage 97.57% statements, Doctor 20/20 y export Android exitoso. Lint tiene 0 errores y 31 warnings existentes.
+- El backend HTTPS `/health` respondió 200. OpenAPI respondió 200, pero no documenta OTP/Supabase y expone discrepancias de `register` (200 publicado frente a 202 requerido) y servidor HTTP; no se declara autenticación OTP funcional.
+
+## Decisión OTP Supabase (2026-11-13)
+
+Supabase es responsable únicamente de confirmar el correo con `verifyOtp({ type: 'signup' })`
+y reenviar el código con `resend({ type: 'signup' })`. El Backend no recibe callbacks de OTP:
+el primer `POST /api/v1/auth/login` posterior a un OTP válido realiza la activación lazy de
+`PendingEmailVerification` a `Active`. La contraseña se mantiene en un `useRef` temporal del
+flujo y se elimina al consumir el OTP o cerrar sesión; nunca entra en almacenamiento, URL o logs.
+
+El contrato de identidad de `/api/v1/auth/me` y el perfil de `/api/v1/users/me` está validado
+en runtime y mantiene DTOs separados. El campo JWT de `/api/v1/auth/login` sigue sin evidencia
+en el OpenAPI actual, por lo que el decoder continúa bloqueado hasta recibir una respuesta real
+autorizada del Backend.

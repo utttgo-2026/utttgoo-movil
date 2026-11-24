@@ -19,6 +19,7 @@ jest.mock('../sessionStorage', () => ({ sessionStorage: { save: jest.fn(), clear
 let mockHasAwsSession = false;
 jest.mock('../authSession', () => ({ createAuthSession: () => ({
   restore: async () => mockHasAwsSession ? { id: 'aws-fixture', email: 'aws-existing@uttt.edu.mx', role: 'buyer', fullName: 'AWS fixture' } : null,
+  cancelPendingOperations: () => undefined,
 }) }));
 
 function Probe() {

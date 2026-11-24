@@ -2,105 +2,89 @@ name: CI
 
 on:
   pull_request:
-    branches: [main, HRDCORE]
+    branches: [main, HRDCORE, eas-google-play]
   push:
-    branches: [main, HRDCORE]
+    branches: [main, HRDCORE, eas-google-play]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: '22.13.1'
 
 jobs:
-  typecheck:
-    name: TypeScript Check
+  quality:
+    name: Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
+          cache: npm
       - name: Install dependencies
         run: npm ci
-
-      - name: Run TypeScript type check
-        run: npx tsc --noEmit
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
         run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Tests and coverage
+        run: npm run test:coverage
+      - name: Expo Android export
+        run: npx expo export --platform android --clear
+      - name: Upload coverage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
 
   expo-doctor:
     name: Expo Doctor
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
+          cache: npm
       - name: Install dependencies
         run: npm ci
-
-      - name: Run Expo Doctor
+      - name: Expo Doctor
         run: npx expo-doctor
 
-  tests:
-    name: Tests
+  sdd:
+    name: SDD Traceability Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests
-        run: npm run test:ci
-
-  summary:
-    name: CI Summary
-    needs: [typecheck, lint, expo-doctor, tests]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: CI Summary
+          persist-credentials: false
+      - name: Verify active SDD documents
         run: |
-          echo "=== CI Summary ==="
-          echo "TypeScript: ${{ needs.typecheck.result }}"
-          echo "Lint: ${{ needs.lint.result }}"
-          echo "Expo Doctor: ${{ needs.expo-doctor.result }}"
-          echo "Tests: ${{ needs.tests.result }}"
-          if [[ "${{ needs.typecheck.result }}" != "success" ]] || [[ "${{ needs.lint.result }}" != "success" ]] || [[ "${{ needs.expo-doctor.result }}" != "success" ]] || [[ "${{ needs.tests.result }}" != "success" ]]; then
-            echo "::error::CI failed"
-            exit 1
-          fi
-          echo "All checks passed!"
+          test -s specs/004-ci-cd/spec.md
+          test -s specs/004-ci-cd/plan.md
+          test -s specs/004-ci-cd/tasks.md
+          test "$(basename "$(dirname specs/004-ci-cd/spec.md)")" = "004-ci-cd"
+          grep -Eq '^# Specification 004([[:space:]-]|$)' specs/004-ci-cd/spec.md
+          grep -Eq '^# Plan 004([[:space:]-]|$)' specs/004-ci-cd/plan.md
+          grep -Eq '^# Tasks 004([[:space:]-]|$)' specs/004-ci-cd/tasks.md
