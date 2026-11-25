@@ -1,5 +1,53 @@
 # Specification007 — Vendedor y productos
 
+### Salidas de operaciones finalizadas
+En Delivered acreditado por respuesta y GET, el detalle retira el escáner y ofrece Ver pedidos recibidos e Ir a Mi negocio. Volver a abrir el pedido recupera el estado real. Desde la publicación confirmada, Ver mis alimentos retira el formulario de la pila. Ver SDD006.
+
+## Acceso y actualización de pedidos reales
+
+En la prueba física el vendedor no encontró «Pedidos recibidos». Agregar acceso Seller desde Perfil, manteniendo la verificación de negocio activo y propiedad. Bandeja con Todos y filtros por estado desde el servidor, sin perder pedidos avanzados; filtro/página independientes. PATCH con versión del detalle validado, conflicto recuperado por GET sin repetir la escritura. Aplicar al detalle el resultado ya confirmado por GET y volver a consultar la bandeja. Diagnóstico de botón, envío, respuesta y verificación sin IDs privados ni credenciales.
+
+## Pedidos recibidos y entrega — continuación autorizada
+
+Conectar GET /sellers/me/orders y detalle participante mediante sesión Seller existente, sin enviar sellerId. Transiciones oficiales con versión y releer resultado; no fijar Delivered por PATCH. Escaneo QR seleccionado por pedido propio, formato base64url43 y POST delivery-confirmations {token}, sin persistir/loguear credencial. GET posterior confirma Delivered; errores/resultado incierto conservan recuperación sin repetir scan automáticamente. Reutilizar SellerEntry y tema/originales UI038/039, sin pedidos ficticios, realtime supuesto ni reconstrucción de navegación. Ver spec003 para contrato completo.
+
+## Limpieza visual de fotografías — en pruebas
+
+El usuario confirma que la integración real funciona y solicita únicamente UX/UI. Referencias inspeccionadas: UI-035/036/037, UI-006 y UI-013 originales. Conservar tema Poppins/rojo, bloque de fotografía neutro y redondeado, tarjetas compactas con miniatura/precio, formularios y navegación existentes. Sin pantallas nuevas.
+
+- No mostrar estados wire, IDs internos, endpoints, infraestructura, flags ni diagnóstico de activación. La edición se abre desde cada alimento, sin campo público de ID. Mantener advertencia comprensible del alcance parcial del listado.
+- Selección con vista previa/cambiar/quitar, actividad discreta, «Revisando fotografía…», «Fotografía lista» únicamente con asset aprobado válido, rechazo claro y consulta/reintento de revisión cuando corresponde. Estado simulado identificado como demostración, sin vocabulario de infraestructura.
+- Publicación muestra «Publicando alimento…» y solo tras éxito «¡Alimento publicado!», Crear otro y Ver mis alimentos. Error incierto conserva datos y bloqueo, con revisión de alimentos/soporte; no convertir errores en éxito.
+- Traducir errores en la capa de presentación, conservando errores/diagnósticos sanitizados internos existentes. No modificar contratos, transporte, gates, Seller, expiración/renovación acotada, validación MIME/firma/4,000,000 bytes ni exclusión de duplicados.
+- Verificar recorridos UI y ausencia de textos técnicos, recuperación, publicación sin foto, reinicio, imágenes reales y renovación; checks completos y bundle Android. El pulido visual físico en Expo Go permanece pendiente de observación.
+
+## Catalog corregido por backend: reintento condicionado
+
+Backend reporta corregido en producción el bug de promoción que provocaba503 antes de guardar; confirma reutilización de mediaAssetId Approved. Esa confirmación no acredita ausencia del registro concreto: no liberar el bloqueo ni repetir POST hasta verificación autorizada de DB/ID. GET público actual default/20/50=200 y100=400; la corrección local50 se conserva. Agregar versión/pantalla y URL de query segura al diagnóstico, mensajes/detalles estructurados sanitizados, sin textos personales ni firmas. No reconstruir IDs desde imageUrl ni reupload automático.
+
+Diagnóstico implementado `catalog-v2`: source estable de pantalla/operación, URL completa únicamente cuando es segura, marca urlRedacted explícita y clasificación de validación local/HTTP400, servicio5xx, transporte y contrato. Preservar message solo de allowlist estática y details con campos/límites permitidos; no registrar respuestas originales. La prueba física ya acredita Approved, no publicación/GET de imagen del intento fallido. Promoción a approved/ reportada corregida no acredita retención definitiva ni migración de objetos anteriores.
+
+
+## Catalog: GET400 demostrado y POST503 incierto — en curso
+
+GET públicos: sin parámetros y pageSize20 responden200; pageSize100 responde400 y50 responde200. Mis alimentos enviaba100; máximo del código backend50. sortBy price_asc responde400 y priceAsc/createdAtDesc responden200; conservar nombres UI y serializar contrato camelCase. POST503 no prueba DTO inválido ni ausencia de producto: CreateProductService puede persistir antes de fallar en proyección/firma/media. No repetir; formulario/asset Approved se conservan mientras siga viva la instancia. Sin listado privado completo ni correlationId del intento original no se acredita existencia/ausencia.
+
+
+## Activación Media y mensaje físico — corrección en pruebas
+
+El mensaje anterior de ProductPhotoPanel:15 dependía de !demo && !PRODUCT_MEDIA_REAL_ENABLED, una constante evaluada al importar productMedia.ts:2; no de Approved ni mediaAssetId. La configuración local cargada por Expo es controlled/demo vacío, pero no se ha inspeccionado el bundle del teléfono. Sustituir snapshots por isRealProductMediaEnabled() en panel/formularios/hook/cliente; explicar solo clasificaciones públicas de bloqueo en desarrollo con marcador media-gate-v2. El nuevo bundle sigue siendo necesario para cambios .env: el getter no lee un .env remoto en ejecución. No habilitar producción ni ignorar Seller/Approved; publicar con foto solo con asset válido aprobado y acción explícita.
+
+
+## Seguimiento vigente: SHA y retención de imágenes (confirmación backend)
+
+Esta actualización prevalece sobre las referencias históricas de despliegue y retención que siguen abajo.
+- El último SHA de CD-Deploy documentado que backend compartió es `c809f60ffd422acb759d31fe54b4916b7fbc4da0`, anterior a los cambios finales de PR #45. El SHA realmente desplegado de la versión más reciente sigue pendiente de verificar. No presentar referencias anteriores, incluido `cd98e56`, como acreditación de esa versión.
+- El lifecycle actual de S3 elimina a los 30 días todos los objetos bajo `staging/`, incluso fotografías `Approved` asociadas a productos publicados. La persistencia de fotografías a largo plazo **no está estabilizada**.
+- La caducidad de `uploadUrl` e `imageUrl` a los cinco minutos solo afecta la autorización temporal. Renovar `imageUrl` mediante GET del producto no restaura un objeto eliminado; si no puede recuperarse, conservar placeholder y manejo de errores sin bucles.
+- Backend planea almacenamiento definitivo bajo `approved/{owner}/{assetId}`. Es una solución propuesta pendiente de implementación/despliegue/evidencia; no es una ruta de API ni una clave que el frontend deba construir o utilizar.
+- Conservar los contratos y la integración real controlada existentes, sin copias locales de respaldo, persistencia de URLs firmadas ni resubidas automáticas. La prueba manual con cuenta Seller autorizada sigue disponible y no acredita retención a largo plazo.
+
+
 ## Reapertura urgente runSeller188 — no resuelto físicamente
 Usuario retira la aceptación previa: TypeError persiste en consulta y alta, trace188:59. En HEADc606435 el188 es un if/return sin llamadas; mapaAndroid delMetro8081 coincide porhash conGit, una sola fuenteAuthContext y proyecto correcto/SDK58. Hay0targets de inspector en la consulta inicial: no se acredita québundleejecuta el teléfono ni quéfunción eraundefined desde ese trace. No repetir conclusión176sin evidencia. Diagnóstico temporal __DEV__ solo operación/etapa/typeof/status, sin sesión/IDs/credenciales; retirar antes delcierre. Corregir estructura si se reproduce incompatibilidad real y conservar GETprevio a reintento de POSTincierto. Sincommit/push ni declaración de solución hasta nueva pruebafísica.
 - Evidencia local nueva: manifiesto ExpoGo solicita enginehermes/reactCompilertrue/hermes-stable; smoke previo omitía estos parámetros. Fuente única del servidor no acredita versión delcliente. Se ejecutaron módulos reales emitidos porMetro con ese perfil en VMNode, con puente/fetch/storage sintéticos: missing404→POST201→GETActive→roles y consultaActive funcionan. No equivale a ejecutarHermes del dispositivo ni reproduce el TypeError físico.
@@ -76,3 +124,23 @@ Con Seller Active y sellerId verificados, consultar todas las páginas públicas
 # Vista previa local de imagen — seguimiento
 
 La vista previa del alimento debe mostrar la fotografía seleccionada con etiqueta explícita de local, sin asociarla al producto. La publicación con foto permanece bloqueada hasta verificar SHA desplegado y asociación Media autorizada.
+# Confirmación backend: Media bloqueado
+
+El equipo backend confirma que la verificación de objetos y persistencia MediaAssets están incompletas, Catalog rechaza imageUrl no vacía, ProductResponse no la incluye y PATCH no admite fotografías. SHA EC2 y permisos S3 requieren confirmación. Mantener selección/vista previa local y adaptadores aislados; publicar sin imagen y no conectar S3 hasta contrato, despliegue y E2E confirmados.
+
+La edición de precio y stock conserva los datos introducidos si falla PATCH; las tarjetas distinguen explícitamente disponibilidad del estado de publicación sin presentar stock o estado inventados.
+# PR33 Media + Catalog — implementación simulada en curso
+
+Fuente backend commit 6218aad: POST /media/upload-url usa fileName/mimeType/size y devuelve mediaAssetId/uploadUrl/expiresAt/headers; PUT binario; POST /media/confirm usa mediaAssetId y devuelve estado; GET /media/{mediaAssetId} consulta moderación. Solo Approved permite asociación; creación y PATCH usan mediaAssetId y ProductResponse incorpora imageUrl/imageUrlExpiresAt. PR abierto, IAM/Azure y despliegue pendientes: nunca activar tráfico real por el mero OpenAPI.
+# Límite Media actualizado — 4 MB decimales
+
+Confirmación de backend para la primera versión: máximo exacto 4,000,000 bytes, inclusivo; sustituye 5 MiB del documento histórico 6218aad. Archivo vacío, inaccesible, de tamaño no verificable o firma/MIME inválidos no producen intención de subida. No compresión automática. Selector y adaptación de subida comparten constante; se vuelve a leer el archivo antes de pedir URL. DTO/commit actualizado pendiente de publicación; producción continúa bloqueada.
+# Conexión PR33 — modo demostración explícito
+
+Activar demostración únicamente con __DEV__ y EXPO_PUBLIC_MEDIA_DEMO=pr33; catálogo, IDs y mutaciones de esa demostración permanecen aislados en memoria. No combinar un asset simulado con productos AWS. La asociación real sigue deshabilitada en código hasta despliegue y autorización; los consumidores pueden mostrar pares imageUrl/imageUrlExpiresAt validados sin cambiar el DTO comercial restante. Renovación GET acotada sin crear productos.
+# Recorrido real controlado en Expo Go — en curso
+
+GET del despliegue confirma upload-url/confirm/complete/estado y ProductResponse con pares de imagen; máximo 4,000,000 bytes. Catálogo real incluye host exacto utttgo-images-2427dbc8.s3.us-east-2.amazonaws.com. Código público cd98e56 usa Rekognition, propiedad y Approved para asociar, y PATCH mediaAssetId nullable; no hay SHA público que acredite la revisión EC2 exacta. Permitir solo opt-in explícito en desarrollo contra API verificada, sin habilitar release ni ejecutar mutaciones automáticamente. Confirmar únicamente tras PUT200, mismos bytes que size, diagnóstico sin URLs/secretos.
+# Primera prueba física real — pendiente
+
+Backend autoriza cuenta Seller de prueba y reporta upload/confirm/Approved/POST/GET probados manualmente en producción; PATCH tiene código/E2E, pero no prueba manual de producción confirmada. Retención reportada de fotografías: 30 días; no confundirla con expiración de URLs PUT/GET a 5 minutos ni implementar borrado local de assets. Prueba manual acotada a una foto y, con autorización, un producto. Renovación explícita de Mis alimentos reinicia el intento GET acotado sin crear productos.

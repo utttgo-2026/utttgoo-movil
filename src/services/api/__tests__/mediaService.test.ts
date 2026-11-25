@@ -3,6 +3,8 @@ import { ApiError } from '../errors';
 import { MediaUploadAttempt, putMediaUpload, requestMediaUpload } from '../mediaService';
 
 const mockPut = jest.fn();
+// Exercise only the historical adapter's mechanics; live use is closed in production.
+jest.mock('../mediaPr33Client', () => ({ requireLegacyMediaUnavailable: () => undefined }));
 const bytes = new Uint8Array([255, 216, 255, 1]);
 jest.mock('expo/fetch', () => ({ fetch: (...args: unknown[]) => mockPut(...args) }));
 jest.mock('expo-file-system', () => ({ File: class { exists = true; size = 4; async bytes() { return new Uint8Array([255, 216, 255, 1]); } } }));

@@ -1,5 +1,24 @@
 # Specification 003 — Flujo del Comprador
 
+### Historial al cerrar la compra
+Tras POST confirmado, Mis pedidos queda debajo del comprobante y se retiran los pasos de compra. Ver mi pedido sustituye el comprobante por seguimiento. QR solo en seguimiento con estado fresco; el comprobante conserva el acceso y la explicación. Resultado incierto no activa navegación de éxito. Ver SDD006 y MAPA_NAVEGACION.md.
+
+El comprador sigue consultando el detalle autorizado para habilitar el QR únicamente en Ready; no hay emisión automática. La corrección del recorrido vendedor está en SDD007: el GET de verificación de entrega se aplica al detalle sin repetir el POST; el comprador vuelve a consultar y retira el QR al confirmar Delivered. La credencial no entra en las trazas.
+
+## Incidencia de inicio ExpoCrypto — recuperación física reportada
+
+SDK real58 (expo58.0.26), crypto58.0.8, core58.1.0, router58.0.32 y RN0.88.1 alineados, sin duplicados ni incompatibilidad diagnosticada. El import estático de Crypto en AuthSession exige registro nativo al evaluar AuthContext/layout. Usuario reporta Go58.0.6+ y confirma desaparición de ambos errores tras forzar detención y abrir solo el proyecto mediante expo start --go -c. No atribuir automáticamente a #54020 (Go58.0.5) ni a #51198 (release/prebuild antiguo), ni afirmar identificado el desencadenante interno del runtime anterior. Conservar Crypto.randomUUID/SHA256, import estático, autenticación y bloqueos. Sin modificaciones funcionales de sesión/dependencias para ocultarlo. Regresión de bootstrap y guía docs/EXPO_CRYPTO_ANDROID.md; ejecución física de UUID/SHA/login/listados/QR requiere confirmación específica.
+
+## Pedidos y entrega real — implementación vigente en pruebas
+
+OpenAPI HTTPS consultado y fuente backend de referencia 8d48ae9816e95533ca24a93e5b3d9730af7dcb67 (no atesta SHA EC2). Publica POST orders201/200, GET mine/detalle, POST cancel200, PATCH status200, POST delivery-token201/confirmations200 y GET sellers/me/orders200. Schemas PR27 vigentes, totalCount y pageSize1..50; fuente ordena createdAt descendente, sin sort query. Solo Cash/MXN y compra de un producto con quantity1..50, notes≤250. El carrito mock no participa.
+
+Estados oficiales Pending/Accepted/InPreparation/Ready/Delivered/Rejected/CancelledByBuyer. Comprador cancela solo Pending. Vendedor Pending→Accepted|Rejected, Accepted→InPreparation, InPreparation→Ready, PATCH con versión leída; Delivered exclusivamente por confirmación de QR. Releer tras mutaciones y ante incertidumbre, sin repetir automáticamente.
+
+QR backend {orderId,token,expiresAt}, token opaco base64url43, emisión solo comprador propio/Ready; nueva emisión invalida anterior. Mostrar únicamente ese token, nunca orderId ni JSON local; memoria efímera, limpiar al salir/background/cambio de estado, expiración y lecturas acotadas. Vendedor selecciona pedido propio, escanea solo QR y envía {token}; éxito de entrega requiere confirmación validada y GET Delivered. Sin logs/persistencia de credencial ni reuso automático.
+
+Mis pedidos consulta al foco, reinicia página tras compra/foco/refresh, permite paginación y pull-to-refresh, no filtra silenciosamente por rol, valida ownership y deduplica IDs. Reportar de forma sanitizada discrepancia entre creación confirmada y página reciente, sin afirmar ausencia global por una página. Recibo recuperable por GET y seguimiento con timeline oficial, estados en español y referencia derivada amigable (no número oficial inventado). Originales UI015/016/017/019/020/022 y UI038/039 inspeccionados; no hay pantalla de escáner identificada en inventario, reutilizar contenedor/tema del flujo con cámara integrada. No mocks productivos ni pagos electrónicos.
+
 ## Bloque3 acotado tras auditoría actual006
 Se inspeccionaron originales UI015/016/017/019/020/021/022/024 contra `AwsOrderFlow` y pantallas actuales. Recuperar panel exclusivamenteEfectivo en Datos/Confirmación sin añadir campo request ni afirmar pago confirmado; conservar precios estimados antes dePOST y totalbackend después. Recibo con IDpersistente puede mostrar marco de CódigoQRdeentrega, pero solo placeholder/credencialpendiente: ningún QR real se genera con orderId, JSONlocal o secreto inventado. No scanner/validación/entrega hasta contrato. AvisosAWS no deben presentar mockNotifications como si fueran eventosdelservidor; maqueta solo fuenteMockdev explícita y mensaje honesto sin API. GETmine/detail schemas publicados quedan siguiente unidad3.1, no bloqueados por faltaendpoint; no se declara restaurado historial/seguimiento en este bloque.
 

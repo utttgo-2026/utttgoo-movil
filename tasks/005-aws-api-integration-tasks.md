@@ -280,3 +280,16 @@ Bundle Android dev finalHTTP200/2470módulos, handoff y configuración comprobad
 Se agregan únicamente requestSellerActivation/consultSeller al Context existente con ejecución dentro del coordinador: Bearer no sale a UI, guardas de sesión y generaciones se conservan,401 invalida estado conforme a política y403 no crea permisos. Login/OTP/SecureStore/contratos /me no se alteran. Regresión449/449/31suites aprobada; estado de vendedor unknown/publicación bloqueada hasta contratos. Detalle en specs007/backend-handoff.md, no cierre de auth005.
 
 Continuación contractual007P0: SellerActiveDTO confirmado y roles [Buyer,Seller] ahora soportados en login/identidad/perfil, además deBuyer. Tras activar/consultar, mismoJWT consulta /me y Context solo adopta el rol revalidado; no rotación automática ni cambio deOTP/loginUI.491pruebas/33suites y todosloschecks aprobados. DTOproductos sigue incompleto y mutaciones bloqueadas; no auth ni publicación completas por mocks.
+### Retoma OTP real — en pruebas
+- [x] Figma y contrato AWS/Supabase revisados.
+- [x] Pulido OTP, recuperación desde Login y exclusión de registros en curso/inciertos. Guía `docs/OTP_EXPO_GO.md`; la prueba debe desactivar Beta local.
+- [x] TypeScript sin errores, Jest 891/891 en 65 suites, lint 0 errores/21 avisos existentes y Expo Doctor 20/20. Bundle Android HTTP 200 con Hermes/React Compiler, 13,311,249 bytes, con Beta desactivada mediante override de proceso.
+- [ ] Recepción inicial y reenvío reales, verificación y perfil Active con cuenta autorizada en Expo Go.
+### OTP definitivo — en pruebas
+- [x] Contrato de seis dígitos, Figma y activación en LoginService revisados.
+- [x] Casillas, cierre a Login y regresiones. TypeScript sin errores, Jest 894/894 en 65 suites, lint 0 errores/21 avisos existentes, Doctor 20/20 y bundle Android HTTP 200 con Hermes/React Compiler.
+- [ ] Confirmación de Dashboard y recorrido físico autorizado.
+### Paso obligatorio a OTP
+- [x] Localizado el desvío exclusivo de Beta; configuración local revisada sin exponer credenciales.
+- [x] Verificada navegación estándar y Beta en Router real en memoria, fallos e incertidumbre con mocks. Jest 894/894 en 65 suites, TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20, diff check limpio y bundle Android HTTP 200 (13,309,326 bytes, Hermes/React Compiler).
+- [ ] Prueba física de OTP, Atrás y login con registro autorizado.

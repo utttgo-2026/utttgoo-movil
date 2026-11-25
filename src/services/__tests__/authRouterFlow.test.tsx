@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stack } from 'expo-router';
-import { renderRouter } from 'expo-router/testing-library';
+import { renderRouter, testRouter } from 'expo-router/testing-library';
 import { cleanup, fireEvent, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
@@ -18,8 +18,8 @@ const mockRegister = jest.fn();
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ login: mockLogin, register: mockRegister, status: 'anonymous' }) }));
 jest.mock('../supabase/verificationClient', () => ({ verificationClient: { verify: async () => {}, resend: jest.fn() } }));
 
-describe('Router real en memoria: handoff OTP a un nuevo login', () => {
-  test.each([false, true])('registro→login Beta=%s mantiene contraseña vacía y nunca autentica por navegación', async (beta) => {
+describe('Router real en memoria: handoff OTP sin pantallas completadas detrás', () => {
+  test.each([false, true])('registro→OTP→login Beta=%s mantiene contraseña vacía y elimina pantallas completadas', async (beta) => {
     mockRegister.mockClear(); mockLogin.mockClear();
     const previousUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
     const previousKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -39,7 +39,9 @@ describe('Router real en memoria: handoff OTP a un nuevo login', () => {
         _layout: () => <Stack screenOptions={{ headerShown: false }} />,
         login: Login, register: Register, 'verify-email': VerifyEmail,
         buyer: () => <Text>Buyer route fixture</Text>,
-      }, { initialUrl: '/login' });
+        welcome: () => <Text>Bienvenida fixture</Text>,
+      }, { initialUrl: '/welcome' });
+      await testRouter.push('/login');
       await fireEvent.changeText(view.getByPlaceholderText('matricula@uttt.edu.mx'), 'old-fixture@uttt.edu.mx');
       await fireEvent.changeText(view.getByPlaceholderText('········'), 'synthetic-old-password');
       await fireEvent.press(view.getByRole('button', { name: 'Crear cuenta' }));
@@ -49,13 +51,15 @@ describe('Router real en memoria: handoff OTP a un nuevo login', () => {
       await fireEvent.changeText(view.getByPlaceholderText('········'), 'synthetic-new-password');
       await fireEvent.changeText(view.getByPlaceholderText('Repite tu contraseña'), 'synthetic-new-password');
       await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
-      if (!beta) {
-        await waitFor(() => expect(view.getPathname()).toBe('/verify-email'));
-        await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '012345');
-        await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
-        await waitFor(() => expect(view.getByRole('button', { name: 'Continuar al login' })).toBeTruthy());
-        await fireEvent.press(view.getByRole('button', { name: 'Continuar al login' }));
-      }
+      await waitFor(() => expect(view.getPathname()).toBe('/verify-email'));
+      expect(view.getByText('Verifica tu correo')).toBeTruthy();
+      await testRouter.back('/login');
+      await fireEvent.changeText(view.getByPlaceholderText('matricula@uttt.edu.mx'), 'verified-fixture@uttt.edu.mx');
+      await fireEvent.press(view.getByRole('button', { name: 'Volver a verificar correo' }));
+      await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '012-345');
+      await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
+      expect(await view.findByText('¡Correo verificado!')).toBeTruthy();
+      await fireEvent.press(view.getByRole('button', { name: 'Iniciar sesión' }));
       await waitFor(() => expect(view.getPathname()).toBe('/login'));
       expect(view.getByPlaceholderText('matricula@uttt.edu.mx').props.value).toBe('verified-fixture@uttt.edu.mx');
       expect(view.getByPlaceholderText('········').props.value).toBe('');
@@ -63,11 +67,9 @@ describe('Router real en memoria: handoff OTP a un nuevo login', () => {
       expect(mockRegister).toHaveBeenCalledTimes(1);
       expect(mockLogin).not.toHaveBeenCalled();
       expect(transport).not.toHaveBeenCalled();
-      if (beta) {
-        expect(view.getByText(/Registro recibido por AWS/)).toBeTruthy();
-        await fireEvent.press(view.getByRole('button', { name: 'Verificar correo (opcional)' }));
-        expect(view.getPathname()).toBe('/verify-email');
-      }
+      expect(view.queryByRole('button', { name: 'Volver a verificar correo' })).toBeNull();
+      await testRouter.back('/welcome');
+      expect(view.getByText('Bienvenida fixture')).toBeTruthy();
     } finally {
       await cleanup(); pendingRegistration.reset(); transport.mockRestore(); diagnostic.mockRestore();
       if (previousUrl === undefined) delete process.env.EXPO_PUBLIC_SUPABASE_URL; else process.env.EXPO_PUBLIC_SUPABASE_URL = previousUrl;

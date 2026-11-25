@@ -81,19 +81,19 @@ describe(`Inicialización sin red (${localConfiguration ? 'entorno Expo local' :
     // Test memory only: no registration, account, email or auth session is created.
     pendingRegistration.begin('initialization-fixture@uttt.edu.mx');
     const view = await render(<VerifyEmail />);
-    expect(view.queryByText(/Falta configurar la URL HTTPS/) === null).toBe(true);
+    expect(view.queryByText(/La verificación no está disponible/) === null).toBe(true);
     expect(view.getByLabelText('Código OTP de seis dígitos').props.editable === true).toBe(true);
-    expect(view.getByRole('button', { name: 'Verificar código' }).props.accessibilityState.disabled === false).toBe(true);
+    expect(view.getByRole('button', { name: 'Verificar correo' }).props.accessibilityState.disabled === false).toBe(true);
     // Initial resend wait is a normal guard, not an incomplete configuration.
-    expect(view.getByRole('button', { name: 'Reenviar token (60 s)' }).props.accessibilityState.disabled === true).toBe(true);
+    expect(view.getByRole('button', { name: 'Reenviar código (60 s)' }).props.accessibilityState.disabled === true).toBe(true);
     await act(async () => { jest.advanceTimersByTime(60000); });
-    expect(view.getByRole('button', { name: 'Reenviar token' }).props.accessibilityState.disabled === false).toBe(true);
+    expect(view.getByRole('button', { name: 'Reenviar código' }).props.accessibilityState.disabled === false).toBe(true);
   });
 
   test('entrada directa conserva bloqueo por falta de registro, no por configuración', async () => {
     const view = await render(<VerifyEmail />);
-    expect(view.queryByText(/Falta configurar la URL HTTPS/) === null).toBe(true);
+    expect(view.queryByText(/La verificación no está disponible/) === null).toBe(true);
     expect(view.queryByText(/No hay un registro reciente disponible/) !== null).toBe(true);
-    expect(view.getByRole('button', { name: 'Verificar código' }).props.accessibilityState.disabled === true).toBe(true);
+    expect(view.getByRole('button', { name: 'Verificar correo' }).props.accessibilityState.disabled === true).toBe(true);
   });
 });

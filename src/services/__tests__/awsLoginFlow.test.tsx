@@ -14,9 +14,10 @@ import { productMetadata } from '../__fixtures__/product';
 
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('expo-crypto', () => ({ randomUUID: () => '12345678-1234-4123-8123-123456789012' }));
 const mockNavigate = jest.fn();
-const mockReplace = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), navigate: mockNavigate, replace: mockReplace }) }));
+const mockDismissTo = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), navigate: mockNavigate, dismissTo: mockDismissTo }) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 
 jest.mock('expo-secure-store', () => ({
@@ -139,9 +140,11 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     await act(async () => { expect((await result.current.submitOrder()).success).toBe(false); });
     expect(result.current.orderPreparation?.quantity).toBe(2); expect(result.current.lastOrder).toBeNull();
     expect(result.current.orderPreparation?.notes).toBe('Sin cebolla');
+    expect(result.current.orderRevision).toBe(0);
     await act(async () => { expect((await result.current.submitOrder()).success).toBe(true); });
     expect(result.current.orderPreparation).toBeNull(); expect(result.current.lastOrder).toEqual(order);
-    expect(post).toHaveBeenLastCalledWith(valid.accessToken, { productId: product.id, quantity: 2, notes: 'Sin cebolla' });
+    expect(post).toHaveBeenLastCalledWith(valid.accessToken, { productId: product.id, quantity: 2, notes: 'Sin cebolla' }, '12345678-1234-4123-8123-123456789012');
+    expect(result.current.orderRevision).toBe(1);
     await act(async () => { expect((await result.current.submitOrder()).success).toBe(false); });
     expect(post).toHaveBeenCalledTimes(2);
     await act(async () => { await result.current.logout(); });
@@ -255,7 +258,7 @@ describe('Login real del cliente/contrato/contexto con fetch y SecureStore simul
     expect(view.queryByText('Mariana López Cruz')).toBeNull();
     expect(transport).toHaveBeenCalledTimes(2);
     await fireEvent.press(view.getByRole('button', { name: 'Cerrar sesión' }));
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/welcome'));
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledWith('/welcome'));
     expect(storedToken).toBeNull(); expect(view.queryByText(profile.email)).toBeNull();
   });
 

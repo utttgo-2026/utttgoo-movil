@@ -1,6 +1,7 @@
 import { ApiError } from '@/services/api/errors';
 import type { SellerActivationRequest } from '@/types/api';
 import { assertAllowedFields } from './apiValidation';
+import { MAX_PRODUCT_IMAGE_BYTES } from './productImage';
 
 export function sellerText(value: unknown, min: number, max: number): string {
   if (typeof value !== 'string' || value.length > max * 2 || /[\p{Cc}\p{Cf}]/u.test(value)) {
@@ -24,9 +25,9 @@ export function validateDraftImage(image: DraftImage): DraftImage {
   assertAllowedFields(image, ['uri', 'mimeType', 'bytes', 'width', 'height']);
   if (typeof image.uri !== 'string' || !/^(file|content):\/\//.test(image.uri) || image.uri.length > 2048 ||
       !['image/jpeg', 'image/png', 'image/webp'].includes(image.mimeType) ||
-      !Number.isSafeInteger(image.bytes) || image.bytes <= 0 || image.bytes > 5 * 1024 * 1024 ||
+      !Number.isSafeInteger(image.bytes) || image.bytes <= 0 || image.bytes > MAX_PRODUCT_IMAGE_BYTES ||
       !Number.isSafeInteger(image.width) || !Number.isSafeInteger(image.height) || image.width < 1 || image.height < 1 ||
-      image.width > 6000 || image.height > 6000) throw new ApiError('validation', 'Imagen inválida: JPEG/PNG/WebP, hasta 5 MB y 6000 px por lado.');
+      image.width > 6000 || image.height > 6000) throw new ApiError('validation', 'Imagen inválida: JPEG/PNG/WebP, hasta 4 MB y 6000 px por lado.');
   return { ...image };
 }
 

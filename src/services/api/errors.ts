@@ -12,6 +12,9 @@ export type ApiErrorKind =
   | 'cancelled';
 
 export class ApiError extends Error {
+  public responseCorrelationId?: string;
+  public diagnosticRequest?: import('./requestDiagnostics').SafeCatalogRequest;
+  public outcomeUncertain?: boolean;
   constructor(
     public readonly kind: ApiErrorKind,
     message: string,
@@ -27,11 +30,20 @@ export class ApiError extends Error {
 
 export function backendHttpError(status: number, data: unknown): ApiError {
   const messages: Record<string, string> = {
+    ORDER_NOT_FOUND: 'No se encontró un pedido disponible para tu cuenta.', ORDER_FORBIDDEN: 'No tienes permiso para realizar esta acción en el pedido.',
+    ORDER_STATE_CONFLICT: 'El estado del pedido cambió. Actualízalo antes de continuar.', ORDER_VERSION_CONFLICT: 'El pedido se actualizó desde otro dispositivo. Consulta su estado de nuevo.',
+    ORDER_UNAVAILABLE: 'No pudimos completar la operación del pedido. Intenta más tarde.',
+    DELIVERY_TOKEN_INVALID: 'El código QR no corresponde a este pedido. Comprueba el pedido y solicita el código vigente.',
+    DELIVERY_TOKEN_EXPIRED: 'El código QR venció. Pide al comprador que genere uno nuevo.', DELIVERY_TOKEN_ALREADY_USED: 'Este código QR ya se utilizó. Actualiza el pedido para comprobar la entrega.',
+    INSUFFICIENT_STOCK: 'No hay suficientes unidades disponibles. Revisa la cantidad.', PRODUCT_NOT_AVAILABLE: 'Este alimento ya no está disponible para pedir.',
     UNAUTHORIZED: httpErrorMessage(401), SELLER_ROLE_REQUIRED: 'AWS requiere permiso Seller para esta operación.',
     SELLER_PROFILE_NOT_FOUND: 'Todavía no tienes un negocio registrado.',
     CATEGORY_NOT_FOUND: 'AWS no encontró la categoría seleccionada.', PRODUCT_NOT_FOUND: 'AWS no encontró el producto.',
     PRODUCT_CONFLICT: 'El producto cambió o está en conflicto. Consulta su estado antes de repetir.',
     IMAGE_NOT_AVAILABLE: 'Las fotografías aún no están disponibles. Publica el alimento sin imagen; la subida se habilitará en la Fase 05.',
+    IMAGE_NOT_APPROVED: 'La fotografía no está aprobada o no pertenece a tu cuenta. Revisa su estado antes de asociarla.',
+    INVALID_OBJECT: 'El archivo subido no coincide con el tipo o tamaño autorizado. Selecciona otra fotografía.',
+    ASSET_NOT_FOUND: 'No se encontró una fotografía accesible para esta cuenta.',
     VALIDATION_ERROR: httpErrorMessage(400), RATE_LIMITED: httpErrorMessage(429),
     CATALOG_UNAVAILABLE: 'El catálogo AWS no está disponible temporalmente.', SELLER_UNAVAILABLE: 'El servicio de vendedores no está disponible temporalmente.',
   };

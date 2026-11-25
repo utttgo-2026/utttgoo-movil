@@ -17,7 +17,7 @@ export interface PendingRegistration {
 export class PendingRegistrationStore {
   private current: PendingRegistration | null = null;
   private revision = 0;
-  private loginHint: { email: string; expiresAt: number; registrationReceived: boolean } | null = null;
+  private loginHint: { email: string; expiresAt: number } | null = null;
   private listeners = new Set<() => void>();
   constructor(private readonly now = () => Date.now()) {}
   getSnapshot = () => this.current;
@@ -37,17 +37,10 @@ export class PendingRegistrationStore {
   prepareLogin(id: number) {
     const pending = this.read();
     if (pending?.id !== id || !pending.verified || pending.busy) return false;
-    this.loginHint = { email: pending.email, expiresAt: this.now() + LOGIN_HINT_MS, registrationReceived: false };
+    this.loginHint = { email: pending.email, expiresAt: this.now() + LOGIN_HINT_MS };
     this.clear(id);
     return true;
   }
-  preparePendingLogin() {
-    const pending = this.read();
-    if (!pending || pending.busy) return false;
-    this.loginHint = { email: pending.email, expiresAt: this.now() + LOGIN_HINT_MS, registrationReceived: true };
-    return true;
-  }
-  hasRegistrationReceipt() { this.getLoginEmailHint(); return this.loginHint?.registrationReceived === true; }
   getLoginEmailHint() {
     if (this.loginHint && this.loginHint.expiresAt <= this.now()) this.loginHint = null;
     return this.loginHint?.email;

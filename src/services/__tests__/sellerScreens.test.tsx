@@ -19,7 +19,7 @@ let mockAuthenticated = true;
 let mockRole: 'buyer' | 'seller' = 'seller';
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush }), Stack: () => null,
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush, dismissTo: mockPush }), Stack: () => null,
   useFocusEffect: (callback: () => void | (() => void)) => jest.requireActual<typeof import('react')>('react').useEffect(callback, [callback]) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('@/services/api/categoryService', () => ({ categoryService: { getAll: async () => [{ id: 'category-fixture', name: 'Categoría fixture', sortOrder: 1 }] } }));
@@ -41,7 +41,7 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.changeText(view.getByLabelText('Descripción del negocio'), 'Comida del campus fixture');
     await fireEvent.changeText(view.getByLabelText('Teléfono de contacto'), '5551234567');
     await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
-    expect(view.getByText(/Negocio Active confirmado por GET AWS/)).toBeTruthy();
+    expect(view.getByText('Tu negocio está registrado. Vuelve a iniciar sesión para actualizar tus permisos.')).toBeTruthy();
     expect(view.queryByRole('button', { name: 'Registrar negocio' })).toBeNull();
     expect(view.getByRole('button', { name: 'Mis productos' })).toBeDisabled();
     expect(mockRequest).toHaveBeenCalledTimes(1);
@@ -56,9 +56,9 @@ describe('Vendedor UI sin operaciones reales', () => {
   test('consulta HTTP real informada sin fabricar estado de autorización ni perfil', async () => {
     mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
     const view = await render(<Business />);
-    await waitFor(() => expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Tu negocio está activo.')).toBeTruthy());
     expect(mockConsult).toHaveBeenCalledTimes(1);
-    expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy();
+    expect(view.getByText('Tu negocio está activo.')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
   });
   test('403 no se convierte en rechazo administrativo', async () => {
@@ -75,7 +75,7 @@ describe('Vendedor UI sin operaciones reales', () => {
   test('preview local no publica, envío explícito usa DTO y bloquea repetición tras201', async () => {
     mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
     const list = await render(<Products />);
-    await waitFor(() => expect(list.getByText(/El listado privado completo aún no tiene contrato/)).toBeTruthy());
+    await waitFor(() => expect(list.getByText('Algunas publicaciones pausadas pueden no aparecer en esta lista.')).toBeTruthy());
     await list.unmount();
     const view = await render(<Draft />);
     await waitFor(() => expect(view.getByLabelText('Nombre del alimento')).toBeTruthy());
@@ -84,17 +84,18 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '35.25');
     await waitFor(() => expect(view.getByText('Categoría fixture')).toBeTruthy());
     await fireEvent.press(view.getByText('Categoría fixture'));
-    await fireEvent.press(view.getByRole('button', { name: 'Vista previa local' }));
-    expect(view.getByText('Vista previa — no publicado')).toBeTruthy();
+    await fireEvent.press(view.getByRole('button', { name: 'Vista previa' }));
+    expect(view.getByText('Así se verá tu alimento')).toBeTruthy();
     expect(mockCreateProduct).not.toHaveBeenCalled();
-    expect(view.getByText(/Media pendiente/)).toBeTruthy();
+    expect(view.queryByText(/AWS|media-gate|Approved|EXPO_PUBLIC/)).toBeNull();
     expect(mockRequest).not.toHaveBeenCalled(); expect(mockConsult).toHaveBeenCalledTimes(2);
     mockCreateProduct.mockResolvedValue({ success: true, data: { id: 'aws-product-fixture', status: 'Active' } });
     await fireEvent.press(view.getByRole('button', { name: 'Publicar alimento' }));
     expect(mockCreateProduct).toHaveBeenCalledWith({ name: 'Alimento fixture', description: 'Descripción de alimento fixture', price: 35.25,
       stock: 0, ingredients: [], categoryId: 'category-fixture' });
     expect(view.queryByRole('button', { name: 'Publicar alimento' })).toBeNull();
-    expect(view.getByText(/Producto recibido por AWS: aws-product-fixture/)).toBeTruthy();
+    expect(view.getByText('¡Alimento publicado!')).toBeTruthy();
+    expect(view.queryByText(/aws-product-fixture|Active/)).toBeNull();
     await fireEvent.press(view.getByRole('button', { name: 'Crear otro alimento' }));
     expect(view.getByLabelText('Nombre del alimento').props.value).toBe('');
     expect(view.getByLabelText('Precio MXN').props.value).toBe('');
@@ -106,7 +107,7 @@ describe('Vendedor UI sin operaciones reales', () => {
     mockCreateProduct.mockResolvedValueOnce({ success: true, data: { id: 'aws-product-second', status: 'Active' } });
     await fireEvent.press(view.getByRole('button', { name: 'Publicar alimento' }));
     expect(mockCreateProduct).toHaveBeenCalledTimes(2);
-    expect(view.getByText(/Producto recibido por AWS: aws-product-second/)).toBeTruthy();
+    expect(view.getByText('¡Alimento publicado!')).toBeTruthy();
     await fireEvent.press(view.getByRole('button', { name: 'Ver mis alimentos' }));
     expect(mockPush).toHaveBeenCalledWith('/seller/products');
   });
@@ -132,17 +133,17 @@ describe('Vendedor UI sin operaciones reales', () => {
     await waitFor(() => expect(view.getByRole('button', { name: 'Elegir de galería' })).toBeTruthy());
     await fireEvent.press(view.getByRole('button', { name: 'Elegir de galería' }));
     expect(mockChoosePhoto).toHaveBeenCalledWith('gallery');
-    expect(view.getByLabelText('Vista previa de fotografía local')).toBeTruthy();
+    expect(view.getByLabelText('Vista previa de fotografía')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Publicar alimento' })).toBeDisabled();
     await fireEvent.changeText(view.getByLabelText('Nombre del alimento'), 'Tacos fixture');
     await fireEvent.changeText(view.getByLabelText('Descripción del alimento'), 'Preparados al momento');
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '25');
     await fireEvent.press(view.getByText('Categoría fixture'));
-    await fireEvent.press(view.getByRole('button', { name: 'Vista previa local' }));
-    expect(view.getByLabelText('Fotografía local en vista previa')).toBeTruthy();
-    expect(view.getByText(/todavía no se ha subido a AWS/)).toBeTruthy();
+    await fireEvent.press(view.getByRole('button', { name: 'Vista previa' }));
+    expect(view.getByLabelText('Fotografía del alimento en vista previa')).toBeTruthy();
+    expect(view.getByText('Vista previa · Todavía no publicado')).toBeTruthy();
     await fireEvent.press(view.getByRole('button', { name: 'Quitar fotografía' }));
-    expect(view.queryByLabelText('Vista previa de fotografía local')).toBeNull();
+    expect(view.queryByLabelText('Vista previa de fotografía')).toBeNull();
     expect(mockCreateProduct).not.toHaveBeenCalled();
   });
   test('cámara informa permiso denegado y cancelación conserva foto previa', async () => {
@@ -156,7 +157,23 @@ describe('Vendedor UI sin operaciones reales', () => {
     expect(view.getByText('Permite el acceso a la cámara.')).toBeTruthy();
     await fireEvent.press(view.getByRole('button', { name: 'Elegir de galería' }));
     await fireEvent.press(view.getByRole('button', { name: 'Cambiar desde galería' }));
-    expect(view.getByLabelText('Vista previa de fotografía local')).toBeTruthy();
+    expect(view.getByLabelText('Vista previa de fotografía')).toBeTruthy();
+  });
+  test('foto nueva demasiado grande conserva selección anterior y datos comerciales', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
+    mockChoosePhoto.mockResolvedValueOnce({ uri: 'file:///anterior.jpg', mimeType: 'image/jpeg', size: 42, width: 100, height: 100 })
+      .mockRejectedValueOnce(new Error('La fotografía supera el límite de 4 MB. Selecciona una imagen más pequeña.'));
+    const view = await render(<Draft />);
+    await waitFor(() => expect(view.getByLabelText('Nombre del alimento')).toBeTruthy());
+    await fireEvent.changeText(view.getByLabelText('Nombre del alimento'), 'Piña con chile');
+    await fireEvent.press(view.getByRole('button', { name: 'Elegir de galería' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Cambiar desde galería' }));
+    expect(view.getByLabelText('Vista previa de fotografía').props.source.uri).toBe('file:///anterior.jpg');
+    expect(view.getByLabelText('Nombre del alimento').props.value).toBe('Piña con chile');
+    expect(view.getByText('La fotografía supera el límite de 4 MB. Selecciona una imagen más pequeña.')).toBeTruthy();
+    await fireEvent.press(view.getByRole('button', { name: 'Quitar fotografía' }));
+    expect(view.queryByLabelText('Vista previa de fotografía')).toBeNull();
+    expect(mockCreateProduct).not.toHaveBeenCalled();
   });
   test('publicación en curso excluye pulsaciones rápidas', async () => {
     mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
@@ -169,10 +186,12 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '25');
     await fireEvent.press(view.getByText('Categoría fixture'));
     await fireEvent.press(view.getByRole('button', { name: 'Publicar alimento' }));
+    expect(view.getByText('Publicando alimento…')).toBeTruthy();
+    expect(view.queryByText('¡Alimento publicado!')).toBeNull();
     await fireEvent.press(view.getByRole('button', { name: 'Publicar alimento' }));
     expect(mockCreateProduct).toHaveBeenCalledTimes(1);
     await act(async () => { finish({ success: true, data: { id: 'aws-1', status: 'Active' } }); });
-    expect(view.getByText(/Producto recibido por AWS: aws-1/)).toBeTruthy();
+    expect(view.getByText('¡Alimento publicado!')).toBeTruthy();
   });
   test('pulsaciones simultáneas en alta quedan excluidas', async () => {
     let finish!: (response: object) => void;
@@ -186,23 +205,55 @@ describe('Vendedor UI sin operaciones reales', () => {
     await fireEvent.press(view.getByRole('button', { name: 'Registrar negocio' }));
     expect(mockRequest).toHaveBeenCalledTimes(1);
     await act(async () => { finish({ success: true, kind: 'active', status: 201, seller, roleSynced: false }); });
-    await waitFor(() => expect(view.getByText(/Negocio Active confirmado/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText('Tu negocio está registrado. Vuelve a iniciar sesión para actualizar tus permisos.')).toBeTruthy());
   });
-  test('consulta producto propio antes de editar solo precio y stock; cambiar ID invalida editor', async () => {
+  test('selecciona alimento propio sin exponer ID antes de editar solo precio y stock', async () => {
     mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
     mockConsultProduct.mockResolvedValue({ success: true, data: { id: 'aws-product', name: 'Producto fixture', price: 30, stock: 4 } });
     const view = await render(<Products />);
-    await waitFor(() => expect(view.getByLabelText('ID de producto AWS')).toBeTruthy());
-    await fireEvent.changeText(view.getByLabelText('ID de producto AWS'), 'aws-product');
-    await fireEvent.press(view.getByRole('button', { name: 'Consultar producto propio' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Editar Producto fixture' })).toBeTruthy());
+    expect(view.queryByLabelText('ID de producto AWS')).toBeNull();
+    expect(view.queryByText(/aws-product|AWS|contrato/)).toBeNull();
+    await fireEvent.press(view.getByRole('button', { name: 'Editar Producto fixture' }));
     expect(mockConsultProduct).toHaveBeenCalledWith('aws-product', undefined);
     await fireEvent.changeText(view.getByLabelText('Precio MXN'), '32.50');
     await fireEvent.changeText(view.getByLabelText('Stock'), '0');
     await fireEvent.press(view.getByRole('button', { name: 'Guardar precio y stock' }));
     expect(mockConsultProduct).toHaveBeenLastCalledWith('aws-product', { price: 32.5, stock: 0 });
-    expect(view.getByText('Precio y stock confirmados por AWS.')).toBeTruthy();
-    await fireEvent.changeText(view.getByLabelText('ID de producto AWS'), 'another-id');
+    expect(view.getByText('Precio y stock actualizados.')).toBeTruthy();
+    mockConsultProduct.mockResolvedValueOnce({ success: false, error: 'No se pudo consultar el alimento.' });
+    await fireEvent.press(view.getByRole('button', { name: 'Editar Producto fixture' }));
     expect(view.queryByRole('button', { name: 'Guardar precio y stock' })).toBeNull();
+  });
+  test('PATCH fallido conserva precio y stock para corregir o reintentar', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
+    mockConsultProduct.mockResolvedValueOnce({ success: true, data: { id: 'aws-product', name: 'Producto fixture', price: 30, stock: 4 } })
+      .mockResolvedValueOnce({ success: false, error: 'AWS no disponible' });
+    const view = await render(<Products />);
+    await waitFor(() => expect(view.getByRole('button', { name: 'Editar Producto fixture' })).toBeTruthy());
+    await fireEvent.press(view.getByRole('button', { name: 'Editar Producto fixture' }));
+    await fireEvent.changeText(view.getByLabelText('Precio MXN'), '32.50');
+    await fireEvent.changeText(view.getByLabelText('Stock'), '2');
+    await fireEvent.press(view.getByRole('button', { name: 'Guardar precio y stock' }));
+    expect(view.getByText('No pudimos cargar tus alimentos. Intenta más tarde.')).toBeTruthy();
+    expect(view.getByLabelText('Precio MXN').props.value).toBe('32.50');
+    expect(view.getByLabelText('Stock').props.value).toBe('2');
+    expect(view.getByRole('button', { name: 'Guardar precio y stock' })).toBeTruthy();
+  });
+  test('Mis alimentos muestra la imagen real y abre el editor sin mostrar IDs ni infraestructura', async () => {
+    mockConsult.mockResolvedValue({ success: true, kind: 'active', status: 200, seller, roleSynced: true });
+    const product = { id: '507f1f77bcf86cd799439099', name: 'Tacos de piña', price: 25, stock: 2, status: 'Active',
+      imageUrl: 'https://utttgo.s3.amazonaws.com/fixture?signature=private', imageUrlExpiresAt: '2099-01-01T00:00:00Z' };
+    mockVisibleProducts.mockResolvedValue({ success: true, data: [product] });
+    mockConsultProduct.mockResolvedValue({ success: true, data: product });
+    const view = await render(<Products />);
+    await waitFor(() => expect(view.getByLabelText('Fotografía de Tacos de piña')).toBeTruthy());
+    expect(view.getByLabelText('Fotografía de Tacos de piña').props.source.uri).toBe(product.imageUrl);
+    await fireEvent.press(view.getByRole('button', { name: 'Editar Tacos de piña' }));
+    expect(mockConsultProduct).toHaveBeenCalledWith(product.id, undefined);
+    expect(view.getByText('Editar alimento')).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Guardar precio y stock' })).toBeTruthy();
+    expect(view.queryByText(/507f1f77|AWS|PR33|HTTP|contrato|media-gate|signature/)).toBeNull();
   });
   test('acciones explícitas pausan y reactivan usando solo status sin cambiar antes de respuesta', async () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => { buttons?.find((item) => item.text === 'Pausar')?.onPress?.(); });
@@ -212,13 +263,13 @@ describe('Vendedor UI sin operaciones reales', () => {
     await waitFor(() => expect(view.getByRole('button', { name: 'Pausar Producto fixture' })).toBeTruthy());
     await fireEvent.press(view.getByRole('button', { name: 'Pausar Producto fixture' }));
     expect(mockUpdateStatus).toHaveBeenCalledWith('aws-product', { status: 'Paused' });
-    expect(view.getByText('Publicación pausada por AWS.')).toBeTruthy();
+    expect(view.getByText('Publicación pausada.')).toBeTruthy();
     mockProducts[0].status = 'Paused'; await view.rerender(<Products />);
     mockUpdateStatus.mockResolvedValue({ success: true, data: { ...mockProducts[0], status: 'Active' } });
     await fireEvent.press(view.getByRole('button', { name: 'Reactivar Producto fixture' }));
     expect(mockUpdateStatus).toHaveBeenLastCalledWith('aws-product', { status: 'Active' });
     alert.mockRestore();
-    expect(view.getByText('Publicación reactivada por AWS.')).toBeTruthy();
+    expect(view.getByText('Publicación reactivada.')).toBeTruthy();
   });
   test('entrada al módulo muestra alta directamente solo tras missing confirmado', async () => {
     const view = await render(<Business />);
@@ -236,7 +287,7 @@ describe('Vendedor UI sin operaciones reales', () => {
   test('editores directos no se montan con negocio activo pero JWT Buyer', async () => {
     mockConsult.mockResolvedValue({ success: true, kind: 'active', seller, status: 200, roleSynced: false });
     const view = await render(<Draft />);
-    await waitFor(() => expect(view.getByRole('button', { name: 'Actualizar permisos en login' })).toBeTruthy());
+    await waitFor(() => expect(view.getByRole('button', { name: 'Volver a iniciar sesión' })).toBeTruthy());
     expect(view.queryByLabelText('Nombre del alimento')).toBeNull();
     expect(mockCreateProduct).not.toHaveBeenCalled();
   });

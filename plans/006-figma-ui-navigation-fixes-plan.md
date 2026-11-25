@@ -52,3 +52,5 @@ Git tiene cambios previos005 sin commit. Huella de28 archivos protegidos (servic
 
 ## Prueba física
 Expo Go: invitado, cinco tabs, privacidad, categoría una vez, detalle/regreso conservando estado, filtros, último producto, flecha/Android/gesto, deep links válidos/inválidos. Logs [navigation] separan salida normal/ruta desconocida/excepción. Sesión real bloqueada por005.
+### Cierre comercial
+Usar `dismissTo` hacia las tabs antes de abrir el recibo; reutilizar detalle por ID y volver a la bandeja sin insertar otro stack. Medir llamadas en pruebas de foco/intervalo; mantener permisos y vigencia de QR. Validar Back con el router real, después Expo Go.

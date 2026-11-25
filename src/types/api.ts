@@ -67,17 +67,19 @@ export interface ApiPage<T> { items: T[]; page: number; pageSize: number; totalC
 export interface CreateProductRequest {
   name: string; description: string; ingredients: string[]; categoryId: string; price: number; stock: number;
   imageUrl?: null;
+  mediaAssetId?: string | null;
 }
 export type ProductSort = 'price_asc' | 'price_desc' | 'name_asc' | 'created_desc';
 export type ProductStatus = 'Active' | 'Paused';
 export interface ProductAvailabilityRequest { status: ProductStatus }
-export interface ProductResponse extends Omit<CreateProductRequest, 'imageUrl'> {
+export interface ProductResponse extends Omit<CreateProductRequest, 'imageUrl' | 'mediaAssetId'> {
   id: string; sellerId: string; sellerDisplayName: string | null; categoryName: string | null;
   status: ProductStatus; isAvailable: boolean; ratingAverage: number | null; ratingCount: number | null;
   createdAt: string; updatedAt: string;
+  imageUrl?: string | null; imageUrlExpiresAt?: string | null;
 }
 export interface ProductPage { items: ProductResponse[]; page: number; pageSize: number; totalCount: number }
-export interface ProductPatch { price?: number; stock?: number }
+export interface ProductPatch { price?: number; stock?: number; mediaAssetId?: string | null }
 export interface CreateOrderRequest { productId: string; quantity: number; notes?: string }
 export interface OrderResponse extends CreateOrderRequest {
   id: string; buyerId: string; sellerId: string; unitPrice: number; totalAmount: number;

@@ -1,23 +1,25 @@
 import React from 'react';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { AwsOrderReceipt, AwsOrderReview, AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
 import { AwsProductImage } from '@/components/catalog/AwsProductImage';
 
 const mockPush = jest.fn();
 const mockSubmit = jest.fn();
 const mockUpdateNotes = jest.fn();
+const mockDetail = jest.fn();
 const mockParams = { id: 'aws-order' };
 const mockProduct = { id: 'aws-product', name: 'Producto AWS', price: 35.25, imageUrl: null };
-const mockAuth = { orderPreparation: { product: mockProduct, quantity: 2, notes: '' }, submitOrder: mockSubmit, updateOrderNotes: mockUpdateNotes,
+const mockAuth = { orderPreparation: { product: mockProduct, quantity: 2, notes: '' }, submitOrder: mockSubmit, updateOrderNotes: mockUpdateNotes, buyerOrder: mockDetail,
   lastOrder: { orderId: 'aws-order', productId: 'aws-product', productName: 'Producto AWS', status: 'Pending', quantity: 2, unitPrice: 35.25, totalAmount: 70.5, createdAt: '2026-11-16T12:00:00Z' } };
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => mockParams }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockPush, dismissTo: mockPush }), useLocalSearchParams: () => mockParams,
+  useFocusEffect: (fn: () => void) => jest.requireActual<typeof import('react')>('react').useEffect(fn, [fn]) }));
 
 describe('UI pedido AWS y medios reales', () => {
-  beforeEach(() => { jest.clearAllMocks(); mockParams.id = 'aws-order'; mockAuth.orderPreparation.notes = ''; mockUpdateNotes.mockReturnValue({ success: true }); });
+  beforeEach(() => { jest.clearAllMocks(); mockParams.id = 'aws-order'; mockAuth.orderPreparation.notes = ''; mockUpdateNotes.mockReturnValue({ success: true }); mockDetail.mockResolvedValue({ success: false, error: 'No se encontró el pedido.' }); });
   test('revisión muestra un producto y estimado sin fee, notas opcionales, no ejecutaPOST', async () => {
     const view = await render(<AwsOrderReview />);
     expect(view.getByText('Producto AWS')).toBeTruthy(); expect(view.queryByText('Costo de servicio')).toBeNull();
@@ -55,13 +57,14 @@ describe('UI pedido AWS y medios reales', () => {
   });
   test('recibo exige ID validado, jamás toma primer pedido mock', async () => {
     const view = await render(<AwsOrderReceipt />);
-    expect(view.getByText('Número de pedido: aws-order')).toBeTruthy();
-    expect(view.getByText('Código QR de entrega')).toBeTruthy();
-    expect(view.getByLabelText('Credencial QR pendiente del backend')).toBeTruthy();
+    expect(view.getByText('Pedido #UG-AWSORDER')).toBeTruthy();
+    expect(view.getByText('Consulta el código de entrega en el seguimiento cuando el pedido esté listo.')).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Mostrar código de entrega' })).toBeNull();
     mockParams.id = 'forged-order'; await view.rerender(<AwsOrderReceipt />);
     expect(view.queryByText('¡Pedido generado!')).toBeNull();
-    expect(view.queryByText('Código QR de entrega')).toBeNull();
-    expect(view.getByText(/No hay un recibo AWS validado/)).toBeTruthy();
+    expect(view.queryByText('Consulta el código de entrega en el seguimiento cuando el pedido esté listo.')).toBeNull();
+    await waitFor(() => expect(view.getByText('No se encontró el pedido.')).toBeTruthy());
+    expect(mockDetail).toHaveBeenLastCalledWith('forged-order');
   });
   test('resultado incierto ofrece historial y bloquea repetición en pantalla', async () => {
     mockSubmit.mockResolvedValue({ success: false, reason: 'uncertain', error: 'No se pudo confirmar el pedido.' });
@@ -75,7 +78,7 @@ describe('UI pedido AWS y medios reales', () => {
   });
   test('historial no simula colección vacía ni seguimiento', async () => {
     const view = await render(<AwsOrdersPending />);
-    expect(view.getByText(/pendientes de integración y verificación/)).toBeTruthy(); expect(mockSubmit).not.toHaveBeenCalled();
+    expect(view.getByText(/Esta opción todavía no está disponible/)).toBeTruthy(); expect(mockSubmit).not.toHaveBeenCalled();
   });
   test('HTTP/credenciales/media ausente no cargan imagen; HTTPS fallida vuelve a neutro', async () => {
     const view = await render(<AwsProductImage uri="http://images.example.test/photo.jpg" name="Producto" />);

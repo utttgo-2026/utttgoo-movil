@@ -1,5 +1,94 @@
 # Tasks007 — Vendedor/productos
 
+## Pedidos: acceso reportado y recuperación de conflictos
+- [x] OpenAPI comprobado; GET de bandeja con/sin Pending responde 401 sin sesión. El usuario no encuentra la bandeja; no hay evidencia de un PATCH físico.
+- [x] Acceso Seller directo, filtros paginados, recuperación GET de 409 y trazas seguras. Aplicación de detalle verificado por GET y descarte de lecturas de versión menor.
+- [x] TypeScript limpio, Jest 882/882 en 64 suites, lint 0 errores/21 avisos previos, Expo Doctor 20/20, diff check limpio y bundle Android HTTP 200 (13,305,304 bytes, Hermes/React Compiler).
+- [ ] Prueba física con dos cuentas autorizadas y pedido existente. No se realizaron mutaciones ni lecturas privadas automatizadas en AWS.
+
+## Pedidos recibidos y QR real — EN PRUEBAS
+- [x] Contratos del OpenAPI vivo y fuente8d48ae9 verificados, originales UI038/039 inspeccionados; no se encontró original independiente del escáner en el inventario consultado.
+- [x] Bandeja/detalle Seller conectados al coordinador existente, propiedad por sellerId, paginación/refresco, estado con versión y GET posterior. Enlace desde Mi negocio y rutas reales declaradas por archivos, sin duplicación de stacks.
+- [x] Cámara Expo Go con permiso explícito, lectura token43 validado y confirmación oficial; Delivered solo con respuesta válida y lectura posterior. Caducidad/foreground/estado y hashes efímeros contra reuso, sin credenciales en logs ni pagos simulados.
+- [x] TypeScript limpio, Jest868/868 en63suites, lint0errores/21avisos restantes, Doctor20/20, diff check limpio y bundleAndroid200/13,296,432bytes Hermes/ReactCompiler; Metro propio detenido. Ver tasks003 y docs/PEDIDOS_REALES_EXPO_GO.md.
+- [ ] Prueba física con dos cuentas/dispositivos: bandejas, cámara, caducidad, entrega y comparación visual. No pedidos reales automáticos ni commit/push.
+
+## UX pública de fotografías — EN PRUEBAS
+- [x] Usuario confirma integración real funcionando. Auditadas UI de creación/vista previa/listado/editor/catálogo/detalle y guardas; inspeccionados originales Figma UI-035/036/037, UI-006 y UI-013.
+- [x] Retirados marcadores/gates visibles, infraestructura, estados wire, recibos con ID/status y búsqueda manual por ID. Edición desde tarjeta; alcance parcial del listado informado sin lenguaje técnico.
+- [x] Estados breves con indicador, Fotografía lista solo con Approved/ID válido, revisión pendiente y errores comprensibles con cambiar/quitar/consultar/reintentar. Publicando alimento y éxito confirmado, Crear otro/Ver mis alimentos conservados.
+- [x] Errores traducidos en presentación; diagnósticos sanitizados internos conservados. Transportes/contratos/gates/4,000,000 bytes/MIME/firma/Seller/duplicados/expiración y renovación sin cambios funcionales.
+- [x] TypeScript limpio, Jest792/792 en60suites, lint0errores/27avisos existentes y diff check sin errores. Bundle AndroidHTTP200/13,182,408bytes con Hermes/ReactCompiler, Metro propio detenido. Pruebas de textos públicos, no exposición técnica, recuperación, imágenes reales, renovación, publicación sin foto y reinicio aprobadas.
+- [ ] Expo Doctor ejecutado: primer resultado19/20 por servicio React Native Directory; repetición18/20 por Directory y timeout exp.host al validar esquema. Repetir cuando respondan esos servicios externos; no se modificaron dependencias ni se deshabilitaron checks para ocultarlo.
+- [ ] Inspección visual física del pulido en Expo Go, incluyendo ancho pequeño y fuente grande. No marcar aceptación visual completa solo por Jest/bundle. Sin commit/push.
+
+## Diagnóstico catalog-v2 y corrección backend reportada — EN PRUEBAS
+- [x] Confirmación backend registrada: bug de promoción corregido en producción, POST/GET comprobados por su equipo y asset Approved reutilizable condicionado a verificar el intento original. No implica ausencia de ese producto ni prueba del SHA EC2.
+- [x] Diagnóstico común con source/pantalla, versión catalog-v2, URL/query segura y marca de redacción. Message estático y details estructurados permitidos; clasificación de validación local/HTTP400, servicio5xx, transporte y contrato. Pruebas de URL, correlación y exclusión de datos privados.
+- [x] TypeScript limpio, Jest781/781 en59suites, lint0errores/27avisos existentes y Expo Doctor20/20.
+- [x] Bundle Android HTTP200/13,177,135bytes con perfil del manifiesto Hermes/ReactCompiler; Metro propio detenido. git diff --check sin errores (avisos de normalización LF/CRLF).
+- [ ] Backend debe verificar el primer POST por sellerId autenticado, mediaAssetId y hora/correlación; entregar productId o ausencia verificada antes de autorizar otro POST. Bloqueo y Approved conservados en memoria; sin bypass, resubidas ni mutaciones reales automáticas.
+- [ ] Publicación/lectura de imagen en Expo Go pendientes. El usuario sí alcanzó Approved físicamente; las entradas anteriores de primera prueba pendiente son históricas.
+
+## Catalog tras foto Approved — EN CURSO
+- [x] GET sin params y size20=200; size100=400 y50=200. Mis alimentos enviaba100; corregido50 y límite cliente. Orden snake price_asc=400; wirecamel priceAsc/priceDesc/nameAsc/createdAtDesc=200, serialización corregida y filtros UI conservados.
+- [x] CorrelationId .NET omitido por regex anterior; captura segura de cuerpo/headers, hora UTC, query/DTO sanitizado y nombres de campos rechazados si aparecen.
+- [x] POST503 se conserva HTTP503 y marca resultado incierto; formulario y Approved no se limpian, botón bloqueado y consulta disponible sin otro POST. No se afirma persistencia ni ausencia del producto original.
+- [x] Checks finales: TypeScript limpio, Jest778/778 en58suites, ESLint0errores/27avisos existentes, Expo Doctor20/20 y diff check limpio. Bundle AndroidHTTP200/13,172,165bytes con Hermes/ReactCompiler; Metro propio detenido. Regresiones de wirequery,503preservado,correlación yformulario incierto aprobadas.
+- [ ] Backend debe verificar el primer POST en DB/logs antes de otra creación. Source público e5dab7e tiene pasos antes/después de persistencia y promoción S3, no prueba la excepción ni SHA EC2 del caso físico. No se ejecutaron POST/PUT/PATCH reales ni se limpiaron incertidumbres.
+
+## Mensaje de publicación bloqueada — EN PRUEBAS
+- [x] Localizado ProductPhotoPanel:15; condición !demo && !PRODUCT_MEDIA_REAL_ENABLED. Booleano capturado en productMedia.ts:2. Expo local carga controlled y demo vacío; no atribuir valores al bundle del teléfono sin evidencia.
+- [x] Retirado snapshot; getter común en UI/hook/cliente y mensajes por estado. Diagnóstico media-gate-v2 solo con clasificaciones públicas, sin entorno ni valores desconocidos.
+- [x] TypeScript limpio, Jest770/770 en57suites, lint0errores/27avisos existentes, Expo Doctor20/20 y diff check limpio. Bundle AndroidHTTP200/13,166,058bytes Hermes/ReactCompiler, Metro propio detenido. Pruebas UI usan el getter/configuración real con servicios simulados (sin mockear el gate).
+- [ ] Repetir físicamente con recarga completa y observar media-gate-v2. No se elimina el bloqueo de producción ni la validación Seller/Approved, ni se declara identificado el bundle previo del teléfono.
+
+## Seguimiento vigente: retención S3 y SHA definitivo — pendiente de backend
+- [x] Registrar confirmación backend: último CD-Deploy documentado compartido `c809f60ffd422acb759d31fe54b4916b7fbc4da0`, anterior al cierre de PR #45; no acredita la revisión EC2 más reciente.
+- [x] Documentar lifecycle: todos los objetos de `staging/` se eliminan a 30 días, incluidos Approved asociados. No confundirlo con TTL5min de URLs; renovación GET y placeholders conservados, sin cambios runtime.
+- [ ] Backend debe verificar SHA más reciente y confirmar solución de almacenamiento `approved/{owner}/{assetId}`, política de retención y tratamiento de objetos ya existentes. No declarar durabilidad estable antes de esa evidencia.
+- [ ] Mantener prueba manual controlada y registrar su resultado real; no realizar respaldos locales o resubidas automáticas. Sin commit/push por esta actualización.
+
+## Primera E2E móvil — preparación final
+- [x] OpenAPI vivo vuelve a confirmar upload-url/confirm/GET media, máximo4,000,000 y PATCH nullable mediaAssetId. Cliente usa solo confirm; PUT conserva URL/headers y Uint8Array medido, sin JWT ni transformaciones.
+- [x] Renovación explícita de Mis alimentos reinicia GET acotado incluso con producto en caché. Pruebas reforzadas de identidad del buffer y HTTP422 con error/correlación sanitizados.
+- [x] Checks finales: TypeScript limpio, Jest765/765 en56suites, lint0errores/27avisos existentes, Doctor20/20, diff check limpio. Bundle AndroidHTTP200/13,163,458bytes con Hermes/ReactCompiler después de cambios runtime; Metro propio detenido.
+- [ ] Prueba física por el usuario. Backend reporta POST/GET/imágenes probados en producción; PATCH manual producción y E2E móvil pendientes. Retención reportada30días, URLs5minutos. Sin mutaciones reales automáticas ni commit/push.
+
+## Media real controlado — EN CURSO
+- [x] Verificados OpenAPI EC2, GET lista y detalle con imagen y TTL300s, máximo4,000,000 y rutas oficiales. Deployment GitHub production cd98e56 success; no SHA en health/cabeceras EC2.
+- [x] Opt-in __DEV__ + MEDIA_REAL=controlled, demo excluyente y release cerrado; host observado agregado exacto. PUT Uint8Array medido, Content-Type firmado y HTTP200 obligatorio; confirm/status vía AuthSession, polling acotado y diagnósticos sanitizados.
+- [x] Deployment GitHub production cd98e563796cb522276046991426aa4b5fe87c49 con success, URL de ejecución45014052703; no atestación SHA en EC2. Fuente actual usa Rekognition fail-closed y propiedad/Approved para POST/PATCH mediaAssetId nullable. GET detalle real trae imagen y TTL300s.
+- [x] Verificación final: TypeScript limpio, Jest763/763 en56suites, lint0errores/27avisos, Expo Doctor20/20 y diff check limpio. Bundle Android HTTP200/13,163,308bytes Hermes/ReactCompiler, Metro propio detenido.
+- [ ] Prueba manual de una foto/producto propio en Expo Go con MEDIA_REAL=controlled; release sigue cerrado. No se han realizado mutaciones reales automáticamente ni commit/push.
+
+## Conexión de pantallas PR33 — EN PRUEBAS
+- [x] Demostración EXPO_PUBLIC_MEDIA_DEMO=pr33 y __DEV__: creación/listado/edición de foto, estados de moderación, dos creaciones, reemplazo/quitar y catálogo/detalle conectados a los simuladores existentes mediante transporte de memoria sin red.
+- [x] Servicio tipado PR33 y AuthSession.productPhotoOperation preparados con sesión/Active/propiedad, confirmación del mismo asset y asociación solo Approved. Gate real cerrado en código antes del transporte; adaptador histórico también cerrado. No se habilita con un botón ni variable pública.
+- [x] DTO comercial conserva campos obligatorios y admite pares imageUrl/imageUrlExpiresAt válidos o ausencia legacy. Consumidores reales de vendedor/comprador/resumen pueden renovar por GET una vez por montaje; sin POST ni bucles. Demo representa las fotos locales explícitamente y nunca descarga hosts fixture.
+- [x] Checks finales: TypeScript limpio, Jest 748/748 en 54 suites, ESLint 0 errores/27 advertencias existentes, Expo Doctor20/20 y diff check limpio. Bundle Android HTTP200/13,155,222bytes con Hermes/ReactCompiler, proceso Metro propio detenido.
+- [ ] Validación física del árbol actual. Despliegue/IAM/S3/Azure/E2E siguen pendientes; no acreditar persistencia real por pruebas simuladas.
+- [ ] Guía física: docs/MEDIA_PR33_EXPO_GO.md. No commit/push en esta iteración.
+
+## Límite de fotografía actualizado — EN PRUEBAS
+- [x] MAX_PRODUCT_IMAGE_BYTES = 4_000_000 centralizado; selector, adaptador anterior, simulación PR33 y validador de borrador usan el mismo límite inclusivo decimal.
+- [x] Lectura de archivo real y validación de firma/MIME antes de solicitar URL; metadatos del selector sin tamaño se resuelven con File, tamaño real no verificable se rechaza sin red. Sin compresión.
+- [x] Mensaje exacto para exceso; selección inválida conserva foto anterior y campos. Pruebas 3,999,999 / 4,000,000 / 4,000,001 bytes, vacío, desconocido, MIME/firma y rechazo previo a upload-url.
+- [x] TypeScript limpio, Jest 726/726 (49 suites), lint 0 errores/27 advertencias, Expo Doctor20/20, diff check limpio; bundle Android HTTP200 Hermes/ReactCompiler después de cambios runtime, Metro propio detenido.
+- [ ] Prueba física en Expo Go. PR33 sigue simulado y desconectado de pantallas/sesión; asociación/reemplazo/eliminación/renovación no están habilitados en AWS. Nuevo commit/OpenAPI de backend para este límite pendiente de publicación; 6218aad queda como referencia histórica anterior.
+
+## PR33 Media — EN CURSO
+- [x] Documentos del commit 6218aad obtenidos: upload-url, confirm y GET mediaAssetId; confirmación no implica Approved; PATCH admite null para quitar; ProductResponse no expone mediaAssetId.
+- [x] Simulación aislada de upload/confirm/estado y catálogo PR33 con transporte inyectado, hosts fixture y guardia __DEV__; asociación solo Approved, PATCH null, renovación GET acotada y exclusión de POST incierto, pruebas sintéticas sin red.
+- [x] TypeScript limpio; suite completa 714/714 antes de añadir una prueba adicional de POST incierto, que pasa con las suites PR33 focalizadas (12/12). Lint 0 errores/27 advertencias, Doctor20/20, diff check limpio, bundle Android HTTP200 antes del último cambio aislado de simulación.
+- [ ] Integrar estados/moderación y edición/renovación en pantallas reales y sesión; simulación no está conectada a UI ni a servicios AWS. Sin tráfico real hasta aprobar/desplegar PR33 y verificar Azure/IAM/S3/E2E.
+
+## Confirmación backend Media — EN CURSO
+- [x] Equipo backend confirma persistencia/verificación Media incompletas, Catalog rechaza imageUrl, ProductResponse y PATCH no soportan foto; SHA EC2 y permisos S3 pendientes. Sin auditoría ni mutaciones nuevas.
+- [x] Mantener selección local y mejorar recuperación tras PATCH fallido y presentación de disponibilidad real; prueba sintética de conservación de campos.
+- [x] TypeScript limpio, Jest 703/703 (47 suites), lint 0 errores/27 avisos, Expo Doctor 20/20 y diff --check limpio.
+- [ ] Verificar edición y disponibilidad en Expo Go; esperar SHA, DTO y evidencia E2E del backend antes de conectar Media.
+
 ## Media revisión despliegue — EN CURSO
 - [x] GET OpenAPI y catálogo (seis productos): ProductResponse sin imageUrl y ninguno de los seis la contiene. HEAD público 0e95070: POST rechaza URL y PATCH no admite media; confirm no comprueba propiedad/archivo. No se conoce el SHA EC2.
 - [x] Foto seleccionada visible también en vista previa local con etiqueta de no subida; pruebas sintéticas, sin mutaciones AWS.

@@ -10,7 +10,7 @@ import { RequireSession } from '@/components/navigation/RequireSession';
 
 function ProfileContent() {
   const router = useRouter();
-  const { user, logout, sessionError } = useAuth();
+  const { user, logout, sessionError, role } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string>();
 
@@ -23,7 +23,7 @@ function ProfileContent() {
     setLogoutError(undefined);
     const result = await logout();
     setLoggingOut(false);
-    if (result.success) router.replace('/welcome');
+    if (result.success) router.dismissTo('/welcome');
     else setLogoutError(result.error);
   };
 
@@ -53,7 +53,8 @@ function ProfileContent() {
           onPress={handleEditProfile}
           style={styles.editButton}
         />
-        <AppButton label="Quiero vender" variant="outline" onPress={() => router.push('/seller')} />
+        <AppButton label={role === 'seller' ? 'Mi negocio' : 'Quiero vender'} variant="outline" onPress={() => router.navigate('/seller')} />
+        {role === 'seller' ? <AppButton label="Pedidos recibidos" icon="receipt-outline" variant="outline" onPress={() => router.navigate('/seller/orders')} /> : null}
 
         <Surface style={styles.settingsCard} bordered>
           <View style={styles.settingsRow}>

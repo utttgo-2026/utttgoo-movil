@@ -6,6 +6,7 @@ import { useAuth, type SellerOperationResult } from '@/context/AuthContext';
 import { activationBody } from '@/utils/sellerValidation';
 import { errorMessage } from '@/services/api/errors';
 import { colors, radii, spacing } from '@/theme';
+import { productUserMessage } from '@/utils/productPresentation';
 
 /** Existing activation form shared by both seller entry routes; never creates a local permission. */
 export function SellerActivationForm({ onActivated, onRefresh }: { onActivated: (result: SellerOperationResult) => void; onRefresh: () => void }) {
@@ -41,7 +42,7 @@ export function SellerActivationForm({ onActivated, onRefresh }: { onActivated: 
       <Ionicons name="storefront-outline" size={56} color={colors.primary} accessible={false} />
     </View>
     <AppText variant="title" align="center">Vende dentro de la comunidad UTTT</AppText>
-    <AppText>Todavía no tienes negocio. El alta es inmediata; después verificamos el perfil y los permisos con AWS.</AppText>
+    <AppText>Registra tu negocio para comenzar a publicar alimentos.</AppText>
     <Surface bordered style={{ gap: spacing.md }}>
       <AppInput label="Nombre del emprendimiento" accessibilityLabel="Nombre del negocio" value={form.storeName} editable={!busy && !blocked}
         onChangeText={(storeName) => setForm((value) => ({ ...value, storeName }))} placeholder="Nombre del negocio" />
@@ -51,7 +52,7 @@ export function SellerActivationForm({ onActivated, onRefresh }: { onActivated: 
         onChangeText={(phone) => setForm((value) => ({ ...value, phone }))} placeholder="Teléfono de contacto" />
       <AppButton label="Registrar negocio" loading={busy} disabled={blocked} onPress={() => void submit()} />
     </Surface>
-    {message ? <AppText accessibilityRole="alert">{message}</AppText> : null}
+    {message ? <AppText accessibilityRole="alert">{productUserMessage(message)}</AppText> : null}
     <AppButton label="Reconsultar mi negocio" variant="outline" disabled={busy} onPress={onRefresh} />
   </View>;
 }

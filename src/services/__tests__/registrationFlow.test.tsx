@@ -13,7 +13,7 @@ import { RequireSession } from '@/components/navigation/RequireSession';
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush, replace: mockPush }) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('../supabase/verificationClient', () => ({ verificationClient: { verify: jest.fn(), resend: jest.fn() } }));
 jest.mock('../sessionStorage', () => ({ sessionStorage: {
@@ -132,7 +132,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
   test('fallo de red no inventa un HTTP ni filtra el error original', async () => {
     transport.mockRejectedValue(new Error('private-error fixture-private synthetic-private-password'));
     const view = await submit();
-    await waitFor(() => expect(view.getByText(/No fue posible conectar con la API/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText(/No pudimos confirmar el registro/)).toBeTruthy());
     expect(log).toHaveBeenCalledWith('[aws-register]', expect.objectContaining({ event: 'failure', kind: 'network' }));
     expect(log.mock.calls.some(([, fields]) => fields.event === 'response')).toBe(false);
     expect(mockPush).not.toHaveBeenCalled();
@@ -155,29 +155,28 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     expect(view.getByTestId('session-fixture').props.children).toBe('{"user":null,"isAuthenticated":false}');
   });
 
-  test.each([200, 202])('Beta HTTP%s prepara login pendiente sin obligar a OTP ni crear sesión', async (status) => {
+  test.each([200, 202])('Beta HTTP%s abre OTP directamente sin crear sesión', async (status) => {
     process.env.EXPO_PUBLIC_BETA_REGISTRATION_ONLY = 'true';
     transport.mockResolvedValue(new Response('{}', { status }));
     const view = await submit();
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
-    expect(pendingRegistration.hasRegistrationReceipt()).toBe(true);
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/verify-email'));
+    expect(mockPush).not.toHaveBeenCalledWith('/login');
+    expect(pendingRegistration.getLoginEmailHint()).toBeUndefined();
     expect(transport).toHaveBeenCalledTimes(1);
     expect(JSON.parse(transport.mock.calls[0][1]!.body as string)).toEqual({ email: 'fixture-private@uttt.edu.mx', password: secret, displayName: 'Synthetic Private Name' });
     expect(view.getByTestId('session-fixture').props.children).toBe('{"user":null,"isAuthenticated":false}');
     expect(view.queryByTestId('private-fixture')).toBeNull();
     expect(sessionStorage.save).not.toHaveBeenCalled();
     expect(verificationClient.verify).not.toHaveBeenCalled(); expect(verificationClient.resend).not.toHaveBeenCalled();
-    await fireEvent.press(view.getByRole('button', { name: 'Seguir explorando' }));
-    expect(view.queryByTestId('private-fixture')).toBeNull();
     expect(transport).toHaveBeenCalledTimes(1);
   });
 
-  test('Beta conserva contexto OTP y hint de login sin reenviar ni volver a registrar', async () => {
+  test('Beta conserva contexto pendiente sin preparar Login ni reenviar', async () => {
     process.env.EXPO_PUBLIC_BETA_REGISTRATION_ONLY = 'true';
     transport.mockResolvedValue(new Response('{}', { status: 202 }));
     await submit();
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
-    expect(pendingRegistration.getLoginEmailHint()).toBe('fixture-private@uttt.edu.mx');
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/verify-email'));
+    expect(pendingRegistration.getLoginEmailHint()).toBeUndefined();
     expect(pendingRegistration.read()?.email).toBe('fixture-private@uttt.edu.mx');
     expect(transport).toHaveBeenCalledTimes(1);
     expect(verificationClient.resend).not.toHaveBeenCalled();
@@ -200,7 +199,11 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     }));
     const view = await submit(undefined, undefined, true);
     await act(async () => { await jest.advanceTimersByTimeAsync(10001); });
-    expect(view.getByText('El servidor tardó demasiado en responder.')).toBeTruthy();
+    expect(view.getByText(/No pudimos confirmar el registro/)).toBeTruthy();
+    await fireEvent.changeText(view.getByPlaceholderText('········'), secret);
+    await fireEvent.changeText(view.getByPlaceholderText('Repite tu contraseña'), secret);
+    await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
+    expect(pendingRegistration.read()).toBeNull();
     await act(async () => { await jest.advanceTimersByTimeAsync(60000); });
     expect(transport).toHaveBeenCalledTimes(1);
     expect(view.queryByText('Registro recibido')).toBeNull(); expect(mockPush).not.toHaveBeenCalled();
@@ -215,7 +218,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
     expect(transport).toHaveBeenCalledTimes(1);
     await act(async () => { finish(new Response('{}', { status: 200 })); });
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/verify-email'));
     await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
     expect(transport).toHaveBeenCalledTimes(1);
   });
@@ -229,7 +232,7 @@ describe('Registro HTTPS desde formulario, sin AWS real', () => {
     await fireEvent.changeText(view.getByPlaceholderText('········'), secret);
     await fireEvent.changeText(view.getByPlaceholderText('Repite tu contraseña'), secret);
     await fireEvent.press(view.getByRole('button', { name: 'Crear mi cuenta' }));
-    await waitFor(() => expect(view.getByText(/No fue posible conectar con la API/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText(/No pudimos confirmar el registro/)).toBeTruthy());
     expect(view.queryByText('Registro recibido')).toBeNull(); expect(mockPush).not.toHaveBeenCalled();
   });
 });

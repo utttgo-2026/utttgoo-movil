@@ -1,21 +1,39 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { Alert, RefreshControl, View } from 'react-native';
+import React, { useCallback, useRef, useState, useSyncExternalStore } from 'react';
+import { Alert, Image, RefreshControl, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
 import { useAuth } from '@/context/AuthContext';
-import type { ProductResponse, ProductStatus } from '@/types/api';
+import type { ProductResponse, ProductStatus, ProductPatch } from '@/types/api';
 import { priceInCents } from '@/utils/sellerValidation';
 import { ApiError, errorMessage } from '@/services/api/errors';
-import { spacing } from '@/theme';
+import { colors, radii, spacing } from '@/theme';
 import { MotionFeedback } from '@/components/ui/MotionFeedback';
 import { SellerEntry } from '@/components/seller/SellerEntry';
 import { AwsProductImage } from '@/components/catalog/AwsProductImage';
 import { formatCurrency } from '@/utils/format';
+import { isRealProductMediaEnabled, usesProductMediaDemo } from '@/config/productMedia';
+import { pr33Demo } from '@/services/pr33Demo';
+import { useProductPhotoFlow } from '@/hooks/useProductPhotoFlow';
+import { ProductPhotoPanel } from '@/components/seller/ProductPhotoPanel';
+import { RefreshingProductImage } from '@/components/catalog/RefreshingProductImage';
+import { productUserMessage } from '@/utils/productPresentation';
 
-export default function SellerProductsScreen() { return <SellerEntry authorizedChildren={<SellerProductsContent />} />; }
+const demoVisible = async () => ({ success: true as const, data: pr33Demo.list() });
+const demoConsult = async (id: string, patch?: ProductPatch) => ({ success: true as const, data: await pr33Demo.consult(id, patch) });
+const demoStatus = async (id: string, input: { status: ProductStatus }) => ({ success: true as const, data: await pr33Demo.availability(id, input.status) });
+
+export default function SellerProductsScreen() { return usesProductMediaDemo() ? <SellerProductsContent /> : <SellerEntry authorizedChildren={<SellerProductsContent />} />; }
 function SellerProductsContent() {
   const router = useRouter();
-  const { sessionProducts, consultProduct, updateProductStatus, visibleSellerProducts } = useAuth();
+  const auth = useAuth();
+  const demo = usesProductMediaDemo();
+  const realEnabled = isRealProductMediaEnabled();
+  useSyncExternalStore(pr33Demo.subscribe, pr33Demo.snapshot, pr33Demo.snapshot);
+  const sessionProducts = demo ? pr33Demo.list() : auth.sessionProducts;
+  const consultProduct = demo ? demoConsult : auth.consultProduct;
+  const updateProductStatus = demo ? demoStatus : auth.updateProductStatus;
+  const visibleSellerProducts = demo ? demoVisible : auth.visibleSellerProducts;
+  const photoFlow = useProductPhotoFlow();
   const [visible, setVisible] = useState<ProductResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState<string>();
@@ -50,10 +68,25 @@ function SellerProductsContent() {
       if (save && patch && !Object.keys(patch).length) throw new ApiError('validation', 'No hay cambios para guardar.');
       const result = await consultProduct(selectedId, patch);
       if (result.success) {
+        if (!save) photoFlow.reset();
         setId(result.data.id); setProduct(result.data); setPrice(String(result.data.price)); setStock(String(result.data.stock));
         setVisible((items) => items.map((item) => item.id === result.data.id ? result.data : item));
-        setMessage(save ? 'Precio y stock confirmados por AWS.' : 'Producto propio verificado con AWS.');
-      } else { setProduct(undefined); setMessage(result.error); }
+        setMessage(save ? 'Precio y stock actualizados.' : '');
+      } else { if (!save) setProduct(undefined); setMessage(result.error); }
+    } catch (cause) { setMessage(errorMessage(cause)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  const saveImage = async (remove: boolean) => {
+    if ((!demo && !realEnabled) || !product || lock.current || photoFlow.busy) return;
+    lock.current = true; setBusy(true); setMessage('');
+    try {
+      const flow = photoFlow.flow;
+       if (!remove && !photoFlow.approvedMediaAssetId) throw new ApiError('validation', 'La fotografía aún no está lista para usarse.');
+      const result = demo ? { success: true as const, data: await pr33Demo.catalog().patchImage(product.id, remove ? null : flow ?? null) } : await consultProduct(product.id, { mediaAssetId: remove ? null : photoFlow.approvedMediaAssetId });
+      if (!result.success) throw new ApiError('http', result.error);
+      const updated = result.data;
+      setProduct(updated); setVisible((items) => items.map((item) => item.id === updated.id ? updated : item));
+      photoFlow.reset(); setMessage(demo ? 'Fotografía actualizada solo en demostración.' : remove ? 'Fotografía quitada.' : 'Fotografía actualizada.');
     } catch (cause) { setMessage(errorMessage(cause)); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -65,7 +98,7 @@ function SellerProductsContent() {
       if (result.success) {
         setId(result.data.id); setProduct(result.data); setPrice(String(result.data.price)); setStock(String(result.data.stock));
         setVisible((items) => items.map((item) => item.id === result.data.id ? result.data : item));
-        setMessage(result.data.status === 'Paused' ? 'Publicación pausada por AWS.' : 'Publicación reactivada por AWS.');
+        setMessage(result.data.status === 'Paused' ? 'Publicación pausada.' : 'Publicación reactivada.');
       } else { setProduct(undefined); setMessage(result.error); }
     } catch (cause) { setMessage(errorMessage(cause)); }
     finally { lock.current = false; setBusy(false); }
@@ -74,35 +107,46 @@ function SellerProductsContent() {
     .filter((item) => item.name.toLocaleLowerCase('es-MX').includes(search.trim().toLocaleLowerCase('es-MX')));
   return <Screen scroll constrained refreshControl={<RefreshControl refreshing={loading} onRefresh={() => setRevision((value) => value + 1)} />} header={<AppHeader title="Mis alimentos" backFallback="/seller" />}>
     <View style={{ gap: spacing.lg, paddingVertical: spacing.lg }}>
-      <AppText>Productos consultados o creados en esta sesión. El listado privado completo aún no tiene contrato.</AppText>
-      <AppText>También se muestran tus productos visibles del catálogo público; los pausados o no visibles pueden faltar.</AppText>
+      {demo ? <AppText variant="caption">Demostración · Estos alimentos no están publicados.</AppText> : null}
+      {demo ? <AppButton label="Ver catálogo de demostración" variant="outline" onPress={() => router.push('/buyer')} /> : null}
+      <AppText variant="caption">Algunas publicaciones pausadas pueden no aparecer en esta lista.</AppText>
       <AppButton label="Agregar alimento" onPress={() => router.push('/seller/product-draft')} />
-      <AppInput label="Buscar en productos recuperados" accessibilityLabel="Buscar alimentos" value={search} onChangeText={setSearch} />
-      {loading ? <AppText>Cargando catálogo público…</AppText> : null}
-      {listError ? <AppText accessibilityRole="alert">{listError}</AppText> : null}
+      <AppInput label="Buscar alimentos" accessibilityLabel="Buscar alimentos" value={search} onChangeText={setSearch} />
+      {loading ? <AppText>Cargando alimentos…</AppText> : null}
+      {listError ? <AppText accessibilityRole="alert">{productUserMessage(listError)}</AppText> : null}
       <AppButton label="Actualizar alimentos" variant="outline" disabled={loading} onPress={() => setRevision((value) => value + 1)} />
-      {!loading && !listError && !items.length ? <AppText>No hay alimentos en los resultados recuperados.</AppText> : null}
+      {!loading && !listError && !items.length ? <AppText>No hay alimentos para mostrar.</AppText> : null}
       {items.map((item) => <Surface bordered key={item.id} style={{ gap: spacing.sm }}>
-        <AwsProductImage uri={null} name={item.name} />
-        <AppText variant="subtitle">{item.name}</AppText><AppText>{item.description}</AppText>
-        <AppText>{item.categoryName || 'Categoría sin nombre'} · {formatCurrency(item.price)}</AppText>
-        <AppText>{item.id} · {item.status} · Stock {item.stock}</AppText>
-        <AppButton label={`Consultar ${item.name}`} variant="outline" disabled={busy} onPress={() => void consult(false, item.id)} />
-        <AppButton label={`${item.status === 'Active' ? 'Pausar' : 'Reactivar'} ${item.name}`} variant="outline" disabled={busy}
+        <View style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}>
+          <View style={{ width: 76 }}>{demo ? pr33Demo.uri(item.id) ? <Image source={{ uri: pr33Demo.uri(item.id) }} accessibilityLabel="Fotografía de demostración" style={{ width: '100%', aspectRatio: 1, borderRadius: radii.md }} /> : <AwsProductImage uri={null} name={item.name} style={{ aspectRatio: 1, borderRadius: radii.md }} /> : <RefreshingProductImage key={`${item.id}:${revision}:${item.imageUrlExpiresAt ?? ''}`} product={item} style={{ aspectRatio: 1, borderRadius: radii.md }} />}</View>
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <AppText variant="label">{item.name}</AppText>
+            <AppText variant="caption" color={colors.textMuted}>{item.categoryName || 'Alimento'} · {item.status === 'Active' ? 'Activo' : 'Pausado'}</AppText>
+            <AppText variant="bodyStrong" color={colors.primary}>{formatCurrency(item.price)}</AppText>
+            <AppText variant="caption">Stock {item.stock}</AppText>
+          </View>
+        </View>
+        <AppButton label={`Editar ${item.name}`} size="md" variant="outline" disabled={busy} onPress={() => void consult(false, item.id)} />
+        <AppButton label={`${item.status === 'Active' ? 'Pausar' : 'Reactivar'} ${item.name}`} size="sm" variant="ghost" disabled={busy}
           onPress={() => item.status === 'Active' ? Alert.alert('Retirar del catálogo', 'El alimento permanecerá registrado y podrás intentar reactivarlo.', [
             { text: 'Cancelar', style: 'cancel' }, { text: 'Pausar', onPress: () => void changeStatus(item.id, 'Paused') },
           ]) : void changeStatus(item.id, 'Active')} />
       </Surface>)}
-      <AppInput label="ID de producto AWS" accessibilityLabel="ID de producto AWS" value={id} editable={!busy} onChangeText={(value) => { setId(value); setProduct(undefined); }} />
-      <AppButton label="Consultar producto propio" loading={busy} disabled={!id.trim()} onPress={() => void consult()} />
       {product ? <Surface bordered style={{ gap: spacing.md }}>
+        <AppText variant="subtitle">Editar alimento</AppText>
         <AppText variant="subtitle">{product.name}</AppText>
-        <AppInput label="Precio MXN" accessibilityLabel="Precio MXN" value={price} keyboardType="decimal-pad" onChangeText={setPrice} />
-        <AppInput label="Stock" accessibilityLabel="Stock" value={stock} keyboardType="number-pad" onChangeText={setStock} />
+        {!demo ? <RefreshingProductImage key={`${product.id}:${revision}:${product.imageUrlExpiresAt ?? ''}`} product={product} /> : null}
+        {demo || realEnabled ? <><AppText variant="label">Fotografía</AppText>
+          {demo && pr33Demo.uri(product.id) ? <Image source={{ uri: pr33Demo.uri(product.id) }} accessibilityLabel="Imagen actual de demostración" style={{ width: '100%', aspectRatio: 1.6 }} /> : null}
+          <ProductPhotoPanel photo={photoFlow} disabled={busy} />
+          <AppButton label={demo ? 'Guardar fotografía simulada' : 'Guardar fotografía'} disabled={busy || photoFlow.busy || !photoFlow.approvedMediaAssetId} onPress={() => void saveImage(false)} />
+          <AppButton label={demo ? 'Quitar imagen actual (demostración)' : 'Quitar imagen actual'} variant="outline" disabled={busy || photoFlow.busy} onPress={() => void saveImage(true)} />
+        </> : null}
+        <AppInput label="Precio MXN" accessibilityLabel="Precio MXN" value={price} editable={!busy} keyboardType="decimal-pad" onChangeText={setPrice} />
+        <AppInput label="Stock" accessibilityLabel="Stock" value={stock} editable={!busy} keyboardType="number-pad" onChangeText={setStock} />
         <AppButton label="Guardar precio y stock" disabled={busy} onPress={() => void consult(true)} />
       </Surface> : null}
-      {message ? <MotionFeedback trigger={message}><AppText accessibilityLiveRegion="polite">{message}</AppText></MotionFeedback> : null}
-      <AppText>Puedes pausar y reactivar tus publicaciones. Fotografías pendientes de la Fase 05; listado privado completo pendiente.</AppText>
+      {message ? <MotionFeedback trigger={message}><AppText accessibilityLiveRegion="polite">{productUserMessage(message)}</AppText></MotionFeedback> : null}
     </View>
   </Screen>;
 }
