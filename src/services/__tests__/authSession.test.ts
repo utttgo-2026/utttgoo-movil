@@ -2,8 +2,10 @@ import type { ApiResponse } from '@/types/api';
 import type { User } from '@/types/models';
 
 import { ApiError } from '../api/errors';
-import type { SessionContract } from '../api/sessionContract';
+import { sessionContract, type SessionContract } from '../api/sessionContract';
 import { AuthSession } from '../authSession';
+import { PendingRegistrationStore, pendingRegistration } from '../pendingRegistration';
+import { createEmailConfirmation } from '../emailConfirmation';
 
 jest.mock('../sessionStorage', () => ({ sessionStorage: {} }));
 
@@ -41,6 +43,7 @@ function fixture() {
 }
 
 describe('Coordinador de sesión única', () => {
+  afterEach(() => pendingRegistration.reset());
   test('sin token no hay usuario ni petición autenticada', async () => {
     const { deps, session } = fixture();
     expect(await session.restore()).toBeNull();
@@ -122,6 +125,37 @@ describe('Coordinador de sesión única', () => {
     expect(deps.auth.register).toHaveBeenCalledTimes(1);
     expect(deps.storage.save).not.toHaveBeenCalled();
     await expect(session.refreshProfile()).rejects.toMatchObject({ kind: 'unauthenticated' });
+  });
+
+  test('login rechazado mientras el correo está pendiente no escribe sesión ni consulta un perfil privado', async () => {
+    const { deps, session } = fixture();
+    pendingRegistration.begin(user.email);
+    deps.auth.login.mockRejectedValue(new ApiError('http', 'Credenciales no válidas.', 401));
+    await expect(session.login(user.email, 'synthetic-password')).rejects.toMatchObject({ status: 401 });
+    expect(deps.storage.save).not.toHaveBeenCalled();
+    expect(deps.auth.getMe).not.toHaveBeenCalled();
+    expect(pendingRegistration.read()?.verified).toBe(false);
+  });
+
+  test('OTP exitoso no activa sesión; solo Login y el perfil Active de AWS autorizan acceso', async () => {
+    const { deps } = fixture();
+    const session = new AuthSession({ ...deps, contract: sessionContract });
+    const store = new PendingRegistrationStore(); store.begin(user.email);
+    const verify = jest.fn().mockResolvedValue(undefined);
+    await createEmailConfirmation({ verify, resend: jest.fn() }, store).verify(store.read()!.id, '012345');
+    expect(store.read()?.verified).toBe(true);
+    expect(deps.auth.login).not.toHaveBeenCalled();
+    expect(deps.storage.save).not.toHaveBeenCalled();
+    await expect(session.refreshProfile()).rejects.toMatchObject({ kind: 'unauthenticated' });
+
+    const identity = { id: user.id, email: user.email, displayName: user.fullName, roles: ['Buyer'], accountStatus: 'Active' };
+    deps.auth.login.mockResolvedValueOnce(response({ accessToken: 'synthetic.jwt', tokenType: 'Bearer', expiresIn: 3600,
+      user: { id: user.id, roles: ['Buyer'], accountStatus: 'Active' } }));
+    deps.auth.getMe.mockResolvedValueOnce(response(identity));
+    deps.users.getMe.mockResolvedValueOnce(response({ ...identity, phone: null, avatarUrl: null }));
+    await expect(session.login(user.email, 'synthetic-password')).resolves.toMatchObject({ id: user.id, accountStatus: 'Active' });
+    expect(deps.storage.save).toHaveBeenCalledWith('synthetic.jwt');
+    expect(deps.auth.register).not.toHaveBeenCalled();
   });
 
   test('logout local elimina token sin llamar endpoint remoto', async () => {

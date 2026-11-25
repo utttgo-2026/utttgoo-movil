@@ -12,9 +12,14 @@ import { sessionStorage, type SessionStorage } from './sessionStorage';
 import { pendingRegistration } from './pendingRegistration';
 import { sellerService } from './api/sellerService';
 import { activationBody } from '@/utils/sellerValidation';
-import { createProductBody, productPatchBody, productAvailabilityBody, productService } from './api/productService';
+import { createProductBody, productPatchBody, productAvailabilityBody, productService, MAX_PRODUCT_PAGE_SIZE } from './api/productService';
 import { categoryService } from './api/categoryService';
 import { createOrderBody, orderService } from './api/orderService';
+import { mediaPr33Client, requireRealProductMedia } from './api/mediaPr33Client';
+import type { LocalProductPhoto } from './productPhoto';
+import * as Crypto from 'expo-crypto';
+import { sellerOrderTransitions, validDeliveryToken, type OrderPr27, type OrderStatus, type SellerOrderTarget } from './api/orderContractsPr27';
+import { orderDiagnostic } from './api/orderDiagnostics';
 
 interface AuthSessionDependencies {
   storage: SessionStorage;
@@ -30,6 +35,8 @@ export interface SellerSubmissionState { received: boolean; uncertain: boolean }
 /** Coordinador del único AuthContext. No mantiene una segunda copia de User ni sesión demo. */
 export class AuthSession {
   private generation = 0;
+  private registrationInFlight = false;
+  private readonly unresolvedRegistrationEmails = new Set<string>();
   private token: string | null = null;
   private profileRevision = 0;
   private sellerBusy = false;
@@ -40,6 +47,12 @@ export class AuthSession {
   private readonly submitted = new Set<string>();
   private readonly uncertain = new Set<string>();
   private readonly productOwners = new Map<string, string>();
+  private mediaAttempt?: { generation: number; mediaAssetId?: string };
+  private readonly orderKeys = new Map<string, string>();
+  private readonly confirmedOrders = new Set<string>();
+  private readonly orderWritesUnknown = new Set<string>();
+  private readonly scannedCredentials = new Set<string>(); // Digests only, never raw QR tokens.
+  private readonly qrIssues = new Map<string, { started: number; count: number; last: number }>();
 
   constructor(private readonly deps: AuthSessionDependencies) {}
 
@@ -97,6 +110,7 @@ export class AuthSession {
     this.sellerSubmitted = false; this.sellerOutcomeUnknown = false;
     this.submitted.clear(); this.uncertain.clear();
     this.productOwners.clear();
+    this.resetOrderSession();
     this.token = null;
     const normalized = institutionalEmail(email);
     const validatedPassword = requirePassword(password);
@@ -112,20 +126,44 @@ export class AuthSession {
     await this.deps.storage.save(token);
     this.checkCurrent(generation);
     this.token = token;
+    const pending = pendingRegistration.read();
+    if (pending?.email === normalized) pendingRegistration.clear(pending.id);
+    this.unresolvedRegistrationEmails.delete(normalized);
     return user;
   }
 
   async register(displayName: string, email: string, password: string): Promise<void> {
+    const normalized = institutionalEmail(email);
+    const validatedPassword = requirePassword(password);
+    if (this.unresolvedRegistrationEmails.has(normalized)) throw this.registrationUncertain();
+    if (this.registrationInFlight || pendingRegistration.read()?.email === normalized) {
+      throw new ApiError('validation', 'Ya solicitaste este registro. Revisa tu correo antes de volver a intentarlo.');
+    }
+    const generation = this.generation;
+    let dispatched = false;
+    this.registrationInFlight = true;
     try {
       this.deps.assertSecureTransport();
-      await this.deps.auth.register({ displayName, email: institutionalEmail(email), password: requirePassword(password) });
-      pendingRegistration.begin(email);
+      dispatched = true;
+      await this.deps.auth.register({ displayName, email: normalized, password: validatedPassword });
+      this.checkCurrent(generation);
+      pendingRegistration.begin(normalized);
       // Neither200 nor202 proves MongoDB persistence, email verification or a session.
       // No token, setUser, local OTP or assumed Supabase flow.
     } catch (error) {
       registrationDiagnostic({ event: 'failure', kind: error instanceof ApiError ? error.kind : 'unexpected' });
+      if (dispatched && (!(error instanceof ApiError) || ['timeout', 'network', 'invalid_response', 'cancelled'].includes(error.kind) || (error.status ?? 0) >= 500)) {
+        this.unresolvedRegistrationEmails.add(normalized);
+        throw this.registrationUncertain();
+      }
       throw error;
-    }
+    } finally { this.registrationInFlight = false; }
+  }
+
+  private registrationUncertain() {
+    const error = new ApiError('validation', 'No pudimos confirmar el registro. Revisa tu correo y consulta a soporte antes de volver a registrarte.');
+    error.outcomeUncertain = true;
+    return error;
   }
 
   async refreshProfile(patch?: UserPatch): Promise<User> {
@@ -160,15 +198,16 @@ export class AuthSession {
     this.submitted.clear();
     this.uncertain.clear();
     this.productOwners.clear();
+    this.resetOrderSession();
     pendingRegistration.reset();
     await this.deps.storage.clear();
   }
 
   /** Private commerce shares the AWS session; no JWT is returned to React. */
-  private async commerce<T>(scope: 'product' | 'order', operation: (token: string, user: User, check: () => void, dispatch: () => void) => Promise<T>, postKey?: string): Promise<T> {
+  private async commerce<T>(scope: 'product' | 'order', operation: (token: string, user: User, check: () => void, dispatch: () => void) => Promise<T>, postKey?: string, readOnly = false): Promise<T> {
     this.deps.assertSecureTransport();
     if (!this.token) throw new ApiError('unauthenticated', 'Inicia sesión para continuar.');
-    if (this.commerceBusy) throw new ApiError('validation', 'Ya hay una operación comercial en curso.');
+    if (this.commerceBusy && !readOnly) throw new ApiError('validation', 'Ya hay una operación comercial en curso.');
     if (postKey && this.uncertain.has(scope)) {
       const error = new ApiError('validation', 'El resultado de un envío anterior no se pudo confirmar. Consulta tus pedidos o verifica con backend antes de repetir.');
       error.code = scope === 'order' ? 'ORDER_OUTCOME_UNCERTAIN' : 'PRODUCT_OUTCOME_UNCERTAIN';
@@ -183,7 +222,7 @@ export class AuthSession {
     const token = this.token;
     const check = () => this.checkCurrent(generation);
     let dispatched = false;
-    this.commerceBusy = true;
+    if (!readOnly) this.commerceBusy = true;
     try {
       const user = await this.validatedUser(token, requireSessionContract(this.deps.contract), generation);
       check();
@@ -195,15 +234,16 @@ export class AuthSession {
       check();
       if (postKey && dispatched && (!(error instanceof ApiError) || ['network', 'timeout', 'invalid_response'].includes(error.kind) || (error.status ?? 0) >= 500)) {
         this.uncertain.add(scope);
+        if (scope === 'product' && error instanceof ApiError) error.outcomeUncertain = true;
         if (scope === 'order') {
           const uncertainError = new ApiError('invalid_response', 'No se pudo confirmar si AWS creó el pedido. Consulta Mis pedidos y verifica antes de intentar nuevamente.');
           uncertainError.code = 'ORDER_OUTCOME_UNCERTAIN';
           throw uncertainError;
         }
       }
-      if (error instanceof ApiError && error.status === 401) { this.token = null; await this.deps.storage.clear(); }
+      if (error instanceof ApiError && error.status === 401 && error.code !== 'S3_UPLOAD_FAILED') { this.token = null; await this.deps.storage.clear(); }
       throw error;
-    } finally { this.commerceBusy = false; }
+    } finally { if (!readOnly) this.commerceBusy = false; }
   }
 
   private async activeSeller(token: string, user: User, check: () => void): Promise<SellerActiveResponse> {
@@ -220,10 +260,15 @@ export class AuthSession {
       const seller = await this.activeSeller(token, user, check);
       const categories = await categoryService.getAll(); check();
       createProductBody(body, categories.map((item) => item.id));
+      if (body.mediaAssetId) {
+        const asset = await mediaPr33Client.status(token, body.mediaAssetId); check();
+        if (asset.status !== 'Approved') throw new ApiError('validation', 'La fotografía no está aprobada.');
+      }
       dispatch();
       const product = await productService.create(token, body, categories.map((item) => item.id)); check();
       if (product.sellerId !== seller.sellerId) throw new ApiError('invalid_response', 'El producto devuelto no pertenece al negocio autenticado.');
       this.productOwners.set(product.id, product.sellerId);
+      if (body.mediaAssetId) this.mediaAttempt = undefined;
       return product;
     }, `product:${JSON.stringify(body)}`);
   }
@@ -232,13 +277,18 @@ export class AuthSession {
     const body = patch ? productPatchBody(patch) : undefined;
     return this.commerce('product', async (token, user, check, dispatch) => {
       const seller = await this.activeSeller(token, user, check);
-      const product = await productService.getById(id); check();
+      const product = await productService.getById(id, 'seller-editor'); check();
       if (product.sellerId !== seller.sellerId) throw new ApiError('http', 'Este producto no pertenece a tu negocio.', 403);
       this.productOwners.set(product.id, product.sellerId);
       if (!body) return product;
+      if (body.mediaAssetId) {
+        const asset = await mediaPr33Client.status(token, body.mediaAssetId); check();
+        if (asset.status !== 'Approved') throw new ApiError('validation', 'La fotografía no está aprobada.');
+      }
       dispatch();
       const updated = await productService.update(token, id, body); check();
       if (updated.sellerId !== seller.sellerId) throw new ApiError('invalid_response', 'El producto devuelto no pertenece al negocio autenticado.');
+      if ('mediaAssetId' in body) this.mediaAttempt = undefined;
       return updated;
     });
   }
@@ -251,7 +301,7 @@ export class AuthSession {
       const ids = new Set<string>();
       let total: number | undefined;
       for (let page = 1; page <= 100; page++) {
-        const result = await productService.getPage({ page, pageSize: 100 }); check();
+        const result = await productService.getPage({ page, pageSize: MAX_PRODUCT_PAGE_SIZE }, 'seller-products'); check();
         if (total !== undefined && total !== result.totalCount) throw new ApiError('invalid_response', 'El catálogo cambió durante la consulta. Actualiza e intenta de nuevo.');
         total = result.totalCount;
         for (const item of result.items) {
@@ -263,6 +313,26 @@ export class AuthSession {
         if (ids.size > total || !result.items.length) break;
       }
       throw new ApiError('invalid_response', 'No se pudo consultar todo el catálogo público. Intenta de nuevo.');
+    });
+  }
+
+  async productPhotoOperation(operation: 'upload' | 'confirm' | 'status', photo?: LocalProductPhoto) {
+    requireRealProductMedia(); // Closed before ANY session/API request until deployment is authorized.
+    return this.commerce('product', async (token, user, check) => {
+      await this.activeSeller(token, user, check);
+      if (operation === 'upload') {
+        // UI upload is explicit; a completed PUT may be replaced by a newly selected photo.
+        // An unknown PUT result is never cleared just to resend it.
+        if (!photo || (this.mediaAttempt?.generation === this.generation && !this.mediaAttempt.mediaAssetId)) throw new ApiError('validation', 'Selecciona una fotografía nueva o verifica el intento anterior.');
+        const attempt = { generation: this.generation, mediaAssetId: undefined as string | undefined };
+        this.mediaAttempt = attempt;
+        attempt.mediaAssetId = await mediaPr33Client.upload(token, photo, check); check();
+        return { mediaAssetId: attempt.mediaAssetId, status: 'PendingUpload' as const };
+      }
+      const attempt = this.mediaAttempt;
+      if (attempt?.generation !== this.generation || !attempt.mediaAssetId) throw new ApiError('validation', 'No hay una subida confirmable en esta sesión.');
+      const result = operation === 'confirm' ? await mediaPr33Client.confirm(token, attempt.mediaAssetId) : await mediaPr33Client.status(token, attempt.mediaAssetId);
+      check(); return result;
     });
   }
 
@@ -287,9 +357,17 @@ export class AuthSession {
     return this.commerce('order', async (token, user, check, dispatch) => {
       const product = await productService.getById(body.productId); check();
       if (!product.isAvailable || product.status !== 'Active' || body.quantity > product.stock) throw new ApiError('validation', 'El producto no está disponible en la cantidad solicitada.');
+      let key = this.orderKeys.get(preparationId);
+      if (!key) {
+        key = Crypto.randomUUID();
+        if (typeof key !== 'string' || !/^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(key)) throw new ApiError('configuration', 'No se pudo preparar la compra. Vuelve a seleccionar el alimento.');
+        this.orderKeys.set(preparationId, key);
+      }
       dispatch();
-      const order = await orderService.create(token, body); check();
+      const order = await orderService.create(token, body, key); check();
       if (order.buyerId !== user.id || order.sellerId !== product.sellerId) throw new ApiError('invalid_response', 'El pedido no corresponde a la identidad o al producto seleccionado.');
+      this.confirmedOrders.clear(); // Only the most recent purchase is expected on the newest page.
+      this.confirmedOrders.add(order.orderId);
       return order;
     }, `order:${preparationId}`);
   }
@@ -297,16 +375,118 @@ export class AuthSession {
   async listBuyerOrders(page: number) {
     return this.commerce('order', async (token, user, check) => {
       const result = await orderService.mine(token, page); check();
-      if (result.items.some((item) => item.role === 'buyer' && item.buyerId !== user.id)) throw new ApiError('invalid_response', 'El historial no corresponde a la sesión.');
-      return { ...result, items: result.items.filter((item) => item.role === 'buyer') };
-    });
+      if (result.items.some((item) => item.role !== 'buyer' || item.buyerId !== user.id)) throw new ApiError('invalid_response', 'El historial no corresponde a la sesión.');
+      const items = result.items.filter((item, index, all) => all.findIndex((other) => other.orderId === item.orderId) === index);
+      if (page === 1 && this.confirmedOrders.size) {
+        const ids = new Set(items.map((item) => item.orderId));
+        const missingConfirmed = [...this.confirmedOrders].filter((id) => !ids.has(id)).length;
+        if (missingConfirmed) orderDiagnostic('buyer-list', undefined, { page, pageSize: result.pageSize, received: items.length, totalCount: result.totalCount, missingConfirmed });
+      }
+      return { ...result, items };
+    }, undefined, true);
   }
 
   async buyerOrder(orderId: string) {
     return this.commerce('order', async (token, user, check) => {
       const result = await orderService.detail(token, orderId); check();
       if (result.buyerId !== user.id) throw new ApiError('invalid_response', 'El pedido no corresponde a la sesión.');
+      this.orderWritesUnknown.delete(orderId);
       return result;
+    }, undefined, true);
+  }
+
+  async listSellerOrders(page: number, status?: OrderStatus) {
+    return this.commerce('order', async (token, user, check) => {
+      const seller = await this.activeSeller(token, user, check);
+      const result = await (status === undefined ? orderService.sellerMine(token, page) : orderService.sellerMine(token, page, 20, status)); check();
+      if (result.items.some((item) => item.role !== 'seller' || item.sellerId !== seller.sellerId)) throw new ApiError('invalid_response', 'Los pedidos no corresponden a tu negocio.');
+      return { ...result, items: result.items.filter((item, index, all) => all.findIndex((other) => other.orderId === item.orderId) === index) };
+    }, undefined, true);
+  }
+
+  private resetOrderSession() {
+    this.orderKeys.clear(); this.confirmedOrders.clear(); this.orderWritesUnknown.clear(); this.scannedCredentials.clear(); this.qrIssues.clear();
+  }
+
+  private async participantOrder(token: string, user: User, check: () => void, id: string, seller: boolean) {
+    const owner = seller ? (await this.activeSeller(token, user, check)).sellerId : user.id;
+    check();
+    const order = await orderService.detail(token, id, seller ? 'seller-order-detail' : 'buyer-order-detail'); check();
+    if ((seller ? order.sellerId : order.buyerId) !== owner) throw new ApiError('http', 'No tienes acceso a este pedido.', 403);
+    return order;
+  }
+  async sellerOrder(id: string) {
+    return this.commerce('order', async (token, user, check) => {
+      const order = await this.participantOrder(token, user, check, id, true);
+      this.orderWritesUnknown.delete(id); return order;
+    }, undefined, true);
+  }
+  async issueDeliveryToken(id: string) {
+    return this.commerce('order', async (token, user, check) => {
+      const order = await this.participantOrder(token, user, check, id, false);
+      if (order.status !== 'Ready') throw new ApiError('validation', 'El código de entrega estará disponible cuando el pedido esté listo.');
+      const now = Date.now(), previous = this.qrIssues.get(id);
+      const window = previous && now - previous.started < 300000 ? previous : { started: now, count: 0, last: -Infinity };
+      if (window.count >= 3 || now - window.last < 30000) throw new ApiError('validation', 'Espera un momento antes de solicitar otro código de entrega.');
+      window.count++; window.last = now; this.qrIssues.set(id, window);
+      const credential = await orderService.deliveryToken(token, id); check();
+      return credential;
+    });
+  }
+
+  private async mutateOrder(id: string, seller: boolean, target: OrderPr27['status'], run: (token: string, order: OrderPr27) => Promise<{ version: number }>) {
+    return this.commerce('order', async (token, user, check) => {
+      if (this.orderWritesUnknown.has(id)) {
+        const failure = new ApiError('validation', 'Actualiza el pedido para comprobar el resultado anterior antes de continuar.'); failure.outcomeUncertain = true; throw failure;
+      }
+      const before = await this.participantOrder(token, user, check, id, seller);
+      if (target === 'CancelledByBuyer' ? before.status !== 'Pending' : target === 'Delivered' ? before.status !== 'Ready' : !sellerOrderTransitions[before.status]?.includes(target as SellerOrderTarget)) {
+        const failure = new ApiError('validation', 'Esta acción ya no está disponible. El estado del pedido cambió.');
+        failure.code = 'ORDER_STATE_CONFLICT'; throw failure;
+      }
+      let writeAccepted = false;
+      try {
+        const written = await run(token, before); check(); writeAccepted = true;
+        const after = await this.participantOrder(token, user, check, id, seller);
+        if (written.version <= before.version || after.version < written.version || after.version <= before.version || after.status !== target) {
+          const failure = new ApiError('invalid_response', 'No pudimos verificar el cambio. Actualiza el pedido.');
+          orderDiagnostic(target === 'Delivered' ? 'delivery-confirmation' : seller ? 'status' : 'cancel', failure, undefined, { phase: 'readback-mismatch', transition: target, orderVersion: before.version });
+          throw failure;
+        }
+        return after;
+      } catch (cause) {
+        check();
+        if (!(cause instanceof ApiError) || (writeAccepted && cause.status !== 401) || ['network', 'timeout', 'invalid_response'].includes(cause.kind) || (cause.status ?? 0) >= 500) {
+          this.orderWritesUnknown.add(id);
+          const failure = new ApiError('invalid_response', 'No pudimos confirmar el resultado. Actualiza el pedido antes de continuar.'); failure.outcomeUncertain = true; throw failure;
+        }
+        throw cause;
+      }
+    });
+  }
+  cancelBuyerOrder(id: string) { return this.mutateOrder(id, false, 'CancelledByBuyer', (token) => orderService.cancel(token, id)); }
+  async changeSellerOrder(id: string, target: SellerOrderTarget) {
+    let attempted = false;
+    try {
+      return await this.mutateOrder(id, true, target, (token, order) => {
+        attempted = true;
+        return orderService.updateStatus(token, id, target, order.version);
+      });
+    } catch (cause) {
+      if (!attempted) orderDiagnostic('status', cause, undefined, { phase: 'blocked', transition: target });
+      throw cause;
+    }
+  }
+  async confirmOrderDelivery(id: string, credential: string) {
+    if (!validDeliveryToken(credential)) throw new ApiError('validation', 'Este código QR no es válido.');
+    const generation = this.generation;
+    const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, credential);
+    this.checkCurrent(generation);
+    const key = `${id}:${hash}`;
+    if (this.scannedCredentials.has(key)) throw new ApiError('validation', 'Este código ya se intentó. Actualiza el pedido y solicita un código nuevo si aún no fue entregado.');
+    return this.mutateOrder(id, true, 'Delivered', (token) => {
+      this.scannedCredentials.add(key);
+      return orderService.confirmDelivery(token, id, credential);
     });
   }
 

@@ -28,9 +28,9 @@ describe('DTO producto completo del OpenAPI desplegado', () => {
     for (const extra of [{ total: 1 }, { totalCount: '9007199254740993' }, { totalCount: -1 }])
       expect(() => productPageResponse({ items: [product], page: 1, pageSize: 20, ...extra })).toThrow();
   });
-  test('created_desc se bloquea sin petición; no inventa un sort sustituto', async () => {
-    const request = jest.spyOn(httpClient, 'request');
-    await expect(productService.getPage({ sortBy: 'created_desc' })).rejects.toMatchObject({ kind: 'contract_unavailable' });
-    expect(request).not.toHaveBeenCalled();
+  test('created_desc de UI utiliza createdAtDesc confirmado por el despliegue', async () => {
+    const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, totalCount: 0 } });
+    await productService.getPage({ sortBy: 'created_desc' });
+    expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: { page: 1, pageSize: 20, sortBy: 'createdAtDesc' } }));
   });
 });

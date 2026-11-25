@@ -12,7 +12,7 @@ import { VerificationError } from '../supabase/verificationErrors';
 jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => ({ email: 'untrusted@uttt.edu.mx' }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ dismissTo: mockPush }), useLocalSearchParams: () => ({ email: 'untrusted@uttt.edu.mx' }) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('../supabase/verificationClient', () => ({ verificationClient: { verify: jest.fn(), resend: jest.fn() } }));
 jest.mock('../sessionStorage', () => ({ sessionStorage: { save: jest.fn(), clear: jest.fn(), read: jest.fn() } }));
@@ -53,34 +53,34 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
     const view = await render(<Harness />);
     const original = view.getByTestId('aws-session-fixture').props.children;
     expect(view.getByLabelText('Correo del registro reciente').props.value).toBe('registered-fixture@uttt.edu.mx');
-    await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '012345');
-    await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
-    await waitFor(() => expect(view.getByText(/Correo confirmado en Supabase/)).toBeTruthy());
+    await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '012 345');
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
+    await waitFor(() => expect(view.getByText(/¡Correo verificado!/)).toBeTruthy());
     expect(verificationClient.verify).toHaveBeenCalledWith('registered-fixture@uttt.edu.mx', '012345');
     expect(view.getByTestId('aws-session-fixture').props.children).toBe(original);
     expect(sessionStorage.save).not.toHaveBeenCalled(); expect(sessionStorage.clear).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
-    expect(view.getByLabelText('Código OTP de seis dígitos').props.value).toBe('');
-    await fireEvent.press(view.getByRole('button', { name: 'Continuar al login' }));
+    expect(view.queryByLabelText('Código OTP de seis dígitos')).toBeNull();
+    await fireEvent.press(view.getByRole('button', { name: 'Iniciar sesión' }));
     expect(mockPush).toHaveBeenCalledWith('/login');
     expect(pendingRegistration.read()).toBeNull();
   });
 
-  test('formato de código inválido no llama a Supabase', async () => {
+  test.each(['12a456', '01234567', '12345'])('formato %s no llama a Supabase', async (value) => {
     const view = await render(<Harness />);
-    await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '12a456');
-    await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
+    await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), value);
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
     expect(view.getByRole('alert').props.children).toMatch(/El código no es correcto/);
     expect(verificationClient.verify).not.toHaveBeenCalled();
   });
 
   test.each([
-    ['invalid_code', /El código no es correcto/], ['expired_code', /El código expiró o ya no es válido/], ['network', /No fue posible conectar/],
+    ['invalid_code', /El código no es correcto/], ['expired_code', /El código expiró o ya no es válido/], ['network', /No pudimos confirmar el resultado/],
   ] as const)('muestra %s sin confirmar, navegar ni almacenar token', async (kind, message) => {
     jest.mocked(verificationClient.verify).mockRejectedValueOnce(new VerificationError(kind));
     const view = await render(<Harness />);
     await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '123456');
-    await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
     await waitFor(() => expect(view.getByRole('alert').props.children).toMatch(message));
     expect(pendingRegistration.read()?.verified).toBe(false);
     expect(mockPush).not.toHaveBeenCalled(); expect(sessionStorage.save).not.toHaveBeenCalled();
@@ -88,14 +88,14 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
 
   test('reenvío respeta cooldown al remontar pantalla; no afirma entrega SMTP', async () => {
     const first = await render(<Harness />);
-    expect(first.getByRole('button', { name: 'Reenviar token (60 s)' })).toBeDisabled();
+    expect(first.getByRole('button', { name: 'Reenviar código (60 s)' })).toBeDisabled();
     await act(async () => { jest.advanceTimersByTime(60000); });
-    await fireEvent.press(first.getByRole('button', { name: 'Reenviar token' }));
-    await waitFor(() => expect(first.getByText(/Solicitud de reenvío aceptada/)).toBeTruthy());
+    await fireEvent.press(first.getByRole('button', { name: 'Reenviar código' }));
+    await waitFor(() => expect(first.getByText(/Si tu correo está pendiente de verificación, recibirás un nuevo código/)).toBeTruthy());
     expect(verificationClient.resend).toHaveBeenCalledTimes(1);
     await first.unmount();
     const second = await render(<Harness />);
-    expect(second.getByRole('button', { name: 'Reenviar token (60 s)' })).toBeDisabled();
+    expect(second.getByRole('button', { name: 'Reenviar código (60 s)' })).toBeDisabled();
     expect(verificationClient.resend).toHaveBeenCalledTimes(1);
   });
 
@@ -103,9 +103,9 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
     const view = await render(<Harness />);
     await act(async () => { jest.advanceTimersByTime(60000); });
     jest.mocked(verificationClient.resend).mockRejectedValueOnce(new VerificationError('rate_limit', 180000));
-    await fireEvent.press(view.getByRole('button', { name: 'Reenviar token' }));
-    await waitFor(() => expect(view.getByRole('button', { name: 'Reenviar token (180 s)' })).toBeDisabled());
-    expect(view.getByRole('button', { name: 'Verificar código' })).toBeDisabled();
+    await fireEvent.press(view.getByRole('button', { name: 'Reenviar código' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Reenviar código (180 s)' })).toBeDisabled());
+    expect(view.getByRole('button', { name: 'Verificar correo' })).toBeDisabled();
   });
 
   test('doble envío muestra busy y ejecuta una sola operación', async () => {
@@ -113,9 +113,9 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
     jest.mocked(verificationClient.verify).mockImplementationOnce(() => new Promise<void>((resolve) => { finish = resolve; }));
     const view = await render(<Harness />);
     await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '123456');
-    await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
-    await fireEvent(view.getByLabelText('Código OTP de seis dígitos'), 'submitEditing');
-    expect(view.getByRole('button', { name: 'Verificar código' }).props.accessibilityState.busy).toBe(true);
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
+    expect(view.getByRole('button', { name: 'Verificar correo' }).props.accessibilityState.busy).toBe(true);
     expect(verificationClient.verify).toHaveBeenCalledTimes(1);
     await act(async () => { finish(); });
   });
@@ -123,8 +123,8 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
   test('sin configuración pública acciones bloqueadas con explicación accesible', async () => {
     delete process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     const view = await render(<Harness />);
-    expect(view.getByRole('alert').props.children).toMatch(/Falta configurar la URL HTTPS/);
-    expect(view.getByRole('button', { name: 'Verificar código' })).toBeDisabled();
+    expect(view.getByRole('alert').props.children).toMatch(/La verificación no está disponible/);
+    expect(view.getByRole('button', { name: 'Verificar correo' })).toBeDisabled();
     expect(verificationClient.verify).not.toHaveBeenCalled();
   });
 
@@ -133,7 +133,7 @@ describe('Pantalla OTP; proveedor simulado, AuthContext real sin modificar', () 
     const view = await render(<Harness />);
     expect(view.getByRole('alert').props.children).toMatch(/No hay un registro reciente/);
     expect(view.getByLabelText('Correo del registro reciente').props.value).toBe('');
-    expect(view.getByRole('button', { name: 'Verificar código' })).toBeDisabled();
+    expect(view.getByRole('button', { name: 'Verificar correo' })).toBeDisabled();
     expect(verificationClient.verify).not.toHaveBeenCalled(); expect(verificationClient.resend).not.toHaveBeenCalled();
   });
 });

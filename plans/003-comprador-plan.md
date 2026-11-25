@@ -1,5 +1,15 @@
 # Plan 003 — Flujo del Comprador
 
+## Recuperación de bootstrap ExpoCrypto
+Contrastar árbol npm/lock/matriz SDK y reportes upstream por plataforma/tipo de build. No actualizar paquetes alineados ni aplicar downgrade de bare/release a Go. Distinguir ausencia del proveedor nativo de una dependencia JS ausente; preservar fallo visible y UUID nativo. Reinicio completo sin borrar datos y apertura explícita Go recuperó ambos errores según usuario. Probar grafo layout/provider y API JS oficial contra límite nativo simulado; documentar sonda física sin POST ni secretos. Reejecutar checks y bundle, sin acreditar Kotlin por HTTP200.
+
+## Cierre de pedidos reales y QR
+1. Extender orderService/decoders existentes con respuestas exactas de acciones/token, límites documentados y diagnóstico seguro específico. Mantener POST ambiguo bloqueado; no replay por navegación ni búsqueda aproximada como reconciliación.
+2. AuthSession valida participantes/rol, serializa mutaciones y separa lecturas concurrentes de lock comercial. AuthContext expone operaciones sin JWT y revisión de pedidos tras éxito; descarta resultados tras cambio de sesión.
+3. Reutilizar AwsOrderFlow/rutas actuales para recibo recuperado, historial al foco/paginado/refresh y timeline/cancelación. Datos recientes desde GET, sin depender de lastOrder ni ocultar errores con memoria.
+4. Integrar bandeja/detalle Seller y cámara Expo Go solo tras permiso explícito; token base64url43 no se muestra como texto ni se persiste. Credencial efímera con expiración/foco/foreground, lecturas de estado acotadas y ninguna emisión automática infinita. Confirmación incierta obliga GET antes de permitir otra intención y prohíbe reutilizar el escaneo anterior.
+5. Pruebas de servicios/Context/UI/navegación y seguridad con mocks, guía manual para dos cuentas/dispositivos. Ejecutar cinco checks y bundle Android; sin pedidos reales automáticos ni commit/push.
+
 ## PR27 — integración en pruebas
 Crear pedido único usando decoder completo PR27; conservar preparación si falla. Consultar página y detalle mediante AuthSession con propiedad comprador, sin exponer JWT. Refrescar al foco; pendientes tests UI específicos, Figma físico y comprobación AWS privada.
 

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppInput, AppText, Screen, Surface } from '@/components';
@@ -8,21 +8,25 @@ import { useAuth } from '@/context/AuthContext';
 import { useApiHealth } from '@/hooks/useApiHealth';
 import { colors, spacing } from '@/theme';
 import { pendingRegistration } from '@/services/pendingRegistration';
+import { usePendingRegistration } from '@/hooks/usePendingRegistration';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, status, sessionError } = useAuth();
   const health = useApiHealth();
+  const { pending } = usePendingRegistration();
   const [email, setEmail] = useState(() => pendingRegistration.getLoginEmailHint() ?? '');
-  const [prefilledEmail] = useState(email);
-  const [registrationReceived] = useState(() => pendingRegistration.hasRegistrationReceipt());
+  const canResumeVerification = !!pending && !pending.verified && pending.email === email.trim().toLowerCase();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const submitting = useRef(false);
-  useEffect(() => {
-    if (prefilledEmail) pendingRegistration.clearLoginEmailHint(prefilledEmail);
-  }, [prefilledEmail]);
+  useFocusEffect(useCallback(() => {
+    const hint = pendingRegistration.getLoginEmailHint();
+    if (!hint) return;
+    setEmail(hint); setPassword(''); setError(undefined);
+    pendingRegistration.clearLoginEmailHint(hint);
+  }, []));
 
   const handleLogin = async () => {
     if (submitting.current || status === 'restoring') return;
@@ -62,9 +66,6 @@ export default function LoginScreen() {
           </AppText>
 
           <Surface style={styles.card} bordered>
-            {registrationReceived ? <AppText accessibilityLiveRegion="polite">
-              Registro recibido por AWS. Tu cuenta puede seguir pendiente de verificación; solo podrás entrar cuando el servidor autorice el acceso.
-            </AppText> : null}
             <AppInput
               label="Correo institucional"
               leftIcon="mail-outline"
@@ -102,7 +103,10 @@ export default function LoginScreen() {
               style={styles.loginButton}
             />
           </Surface>
-          {registrationReceived ? <AppButton label="Verificar correo (opcional)" variant="ghost" onPress={() => router.push('/verify-email')} /> : null}
+          {canResumeVerification ? <>
+            <AppText variant="caption">Si aún no confirmaste tu correo, puedes retomar la verificación de tu registro.</AppText>
+            <AppButton label="Volver a verificar correo" variant="ghost" disabled={loading} onPress={() => router.push('/verify-email')} />
+          </> : null}
 
           {sessionError && !error ? (
             <AppText variant="caption" color={colors.danger}>{sessionError}</AppText>

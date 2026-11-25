@@ -81,10 +81,10 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
     expect(request).toHaveBeenLastCalledWith(`/api/v1/products/${persisted.id}`, expect.objectContaining({ body: { stock: 0 }, expectedStatuses: [200] }));
     await expect(productService.update('synthetic.aws.jwt', persisted.id, { stock: 4 })).rejects.toMatchObject({ kind: 'invalid_response' });
   });
-  test.each(['price_asc', 'price_desc', 'name_asc'] as const)('sort confirmado %s y total', async (sortBy) => {
+  test.each([['price_asc', 'priceAsc'], ['price_desc', 'priceDesc'], ['name_asc', 'nameAsc']] as const)('sort %s se serializa como %s', async (sortBy, wireSort) => {
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 200, headers: {}, data: { items: [persisted], page: 1, pageSize: 20, totalCount: 1 } });
     expect((await productService.getPage({ sortBy })).items).toEqual([persisted]);
-    expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: expect.objectContaining({ sortBy }) }));
+    expect(request).toHaveBeenCalledWith('/api/v1/products', expect.objectContaining({ query: expect.objectContaining({ sortBy: wireSort }) }));
   });
   test.each([{ ...persisted, status: 'Published' }, { ...persisted, price: 1.001 }, { ...persisted, stock: -1 }, { ...persisted, ingredients: [4] }, { ...persisted, sellerId: '' }, { ...persisted, isAvailable: 'true' }])
   ('producto inválido no se presenta como válido: %j', (value) => expect(() => productResponse(value)).toThrow());
@@ -98,7 +98,7 @@ describe('Contratos comerciales confirmados, sin requests reales', () => {
     const body = { productId: persisted.id, quantity: 2 };
     const request = jest.spyOn(httpClient, 'request').mockResolvedValue({ status: 201, headers: {}, data: order });
     expect(await orderService.create('synthetic.aws.jwt', body)).toEqual(order);
-    expect(request).toHaveBeenCalledWith('/api/v1/orders', expect.objectContaining({ method: 'POST', token: 'synthetic.aws.jwt', body, expectedStatuses: [201] }));
+    expect(request).toHaveBeenCalledWith('/api/v1/orders', expect.objectContaining({ method: 'POST', token: 'synthetic.aws.jwt', body, expectedStatuses: [201, 200] }));
     expect(createOrderBody({ ...body, notes: 'Sin cebolla' })).toEqual({ ...body, notes: 'Sin cebolla' });
     expect(() => createOrderBody({ ...body, totalAmount: 1 } as typeof body)).toThrow();
     expect(() => createOrderBody({ ...body, quantity: 0 })).toThrow();

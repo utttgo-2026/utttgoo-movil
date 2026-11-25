@@ -5,15 +5,17 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { ApiError, errorMessage } from '@/services/api/errors';
 import { createAuthSession, type SellerSessionResult, type SellerSubmissionState } from '@/services/authSession';
 import type { SellerActivationRequest, UserPatch, CreateProductRequest, ProductResponse, ProductPatch, ApiPage, ProductAvailabilityRequest } from '@/types/api';
-import type { OrderPr27, OrderSummaryPr27 } from '@/services/api/orderContractsPr27';
+import type { DeliveryCredential, OrderPr27, OrderStatus, OrderSummaryPr27, SellerOrderTarget } from '@/services/api/orderContractsPr27';
 import { orderNotes } from '@/services/api/orderService';
 import type { User, UserRole } from '@/types/models';
+import type { LocalProductPhoto } from '@/services/productPhoto';
+import type { Pr33MediaStatus } from '@/services/api/mediaPr33Simulation';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
 export type SellerOperationResult = ({ success: true; received: boolean; uncertain: boolean } & SellerSessionResult) |
   { success: false; error: string; status?: number; received?: boolean; uncertain?: boolean };
-export type CommerceResult<T> = { success: true; data: T } | { success: false; error: string; reason?: 'uncertain' | 'confirmed' };
+export type CommerceResult<T> = { success: true; data: T } | { success: false; error: string; reason?: 'uncertain' | 'confirmed' | 'conflict' };
 export interface OrderPreparation { product: ProductResponse; quantity: number; key: string; notes: string }
 
 interface AuthContextValue {
@@ -34,6 +36,7 @@ interface AuthContextValue {
   createProduct: (input: CreateProductRequest) => Promise<CommerceResult<ProductResponse>>;
   consultProduct: (id: string, patch?: ProductPatch) => Promise<CommerceResult<ProductResponse>>;
   visibleSellerProducts: () => Promise<CommerceResult<ProductResponse[]>>;
+  productPhotoOperation: (operation: 'upload' | 'confirm' | 'status', photo?: LocalProductPhoto) => Promise<CommerceResult<{ mediaAssetId: string; status: Pr33MediaStatus }>>;
   updateProductStatus: (id: string, input: ProductAvailabilityRequest) => Promise<CommerceResult<ProductResponse>>;
   orderPreparation: OrderPreparation | null;
   lastOrder: OrderPr27 | null;
@@ -42,6 +45,13 @@ interface AuthContextValue {
   submitOrder: () => Promise<CommerceResult<OrderPr27>>;
   listBuyerOrders: (page: number) => Promise<CommerceResult<ApiPage<OrderSummaryPr27>>>;
   buyerOrder: (orderId: string) => Promise<CommerceResult<OrderPr27>>;
+  orderRevision: number;
+  listSellerOrders: (page: number, status?: OrderStatus) => Promise<CommerceResult<ApiPage<OrderSummaryPr27>>>;
+  sellerOrder: (id: string) => Promise<CommerceResult<OrderPr27>>;
+  cancelBuyerOrder: (id: string) => Promise<CommerceResult<OrderPr27>>;
+  changeSellerOrder: (id: string, status: SellerOrderTarget) => Promise<CommerceResult<OrderPr27>>;
+  issueDeliveryToken: (id: string) => Promise<CommerceResult<DeliveryCredential>>;
+  confirmOrderDelivery: (id: string, token: string) => Promise<CommerceResult<OrderPr27>>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sessionProducts, setSessionProducts] = useState<ProductResponse[]>([]);
   const [orderPreparation, setOrderPreparation] = useState<OrderPreparation | null>(null);
   const [lastOrder, setLastOrder] = useState<OrderPr27 | null>(null);
+  const [orderRevision, setOrderRevision] = useState(0);
   const preparationRef = useRef<OrderPreparation | null>(null);
   const preparationSequence = useRef(0);
   const orderSubmitting = useRef(false);
@@ -248,11 +259,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
       return { success: true, data };
     } catch (error) {
-      if (current === revision.current && error instanceof ApiError && error.status === 401) {
+      if (current === revision.current && error instanceof ApiError && error.status === 401 && error.code !== 'S3_UPLOAD_FAILED') {
         ++revision.current; resetCommerce(); setUser(null); setStatus('blocked'); setSessionError(errorMessage(error));
       }
-      const reason = error instanceof ApiError && error.code === 'ORDER_OUTCOME_UNCERTAIN' ? 'uncertain' :
-        error instanceof ApiError && error.code === 'ORDER_ALREADY_CONFIRMED' ? 'confirmed' : undefined;
+      const reason = error instanceof ApiError && (error.outcomeUncertain || error.code === 'ORDER_OUTCOME_UNCERTAIN' || error.code === 'PRODUCT_OUTCOME_UNCERTAIN') ? 'uncertain' :
+        error instanceof ApiError && error.code === 'ORDER_ALREADY_CONFIRMED' ? 'confirmed' :
+        error instanceof ApiError && (error.status === 409 || error.code === 'ORDER_STATE_CONFLICT') ? 'conflict' : undefined;
       return { success: false, error: errorMessage(error), ...(reason ? { reason } : {}) };
     }
   }, [status, resetCommerce]);
@@ -274,6 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, [session, runCommerce, rememberProduct]);
   const visibleSellerProducts = useCallback(() => runCommerce(() => session.visibleSellerProducts()), [runCommerce, session]);
+  const productPhotoOperation = useCallback((operation: 'upload' | 'confirm' | 'status', photo?: LocalProductPhoto) => runCommerce(() => session.productPhotoOperation(operation, photo)), [runCommerce, session]);
   const updateProductStatus = useCallback(async (id: string, input: ProductAvailabilityRequest) => {
     const current = revision.current;
     const result = await runCommerce(() => session.updateProductStatus(id, input));
@@ -284,7 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const prepareOrder = useCallback((product: ProductResponse, quantity: number): AuthResult => {
     if (orderSubmitting.current) return { success: false, error: 'Espera el resultado del pedido en curso.' };
     if (status !== 'authenticated' || !user) return { success: false, error: 'Inicia sesión para preparar tu pedido.' };
-    if (!product.isAvailable || product.status !== 'Active' || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > product.stock) return { success: false, error: 'Cantidad no disponible.' };
+    if (!product.isAvailable || product.status !== 'Active' || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 50 || quantity > product.stock) return { success: false, error: 'Elige una cantidad disponible, hasta 50 unidades.' };
     // One preparation is one product. Reopening the same preparation keeps its duplicate-protection key.
     const previous = preparationRef.current;
     const prepared = previous?.product.id === product.id && previous.quantity === quantity ? { ...previous, product } :
@@ -313,6 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (current !== revision.current) return { success: false as const, error: 'La operación de sesión fue cancelada.' };
       if (result.success) {
         setLastOrder(result.data);
+        setOrderRevision((value) => value + 1);
         if (preparationRef.current?.key === prepared.key) { preparationRef.current = null; setOrderPreparation(null); }
       }
       return result;
@@ -320,13 +334,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [session, runCommerce]);
   const listBuyerOrders = useCallback((page: number) => runCommerce(() => session.listBuyerOrders(page)), [runCommerce, session]);
   const buyerOrder = useCallback((orderId: string) => runCommerce(() => session.buyerOrder(orderId)), [runCommerce, session]);
+  const listSellerOrders = useCallback((page: number, filter?: OrderStatus) => runCommerce(() => session.listSellerOrders(page, filter)), [runCommerce, session]);
+  const sellerOrder = useCallback((id: string) => runCommerce(() => session.sellerOrder(id)), [runCommerce, session]);
+  const runOrderMutation = useCallback(async (operation: () => Promise<OrderPr27>) => {
+    const result = await runCommerce(operation);
+    if (result.success) setOrderRevision((value) => value + 1);
+    return result;
+  }, [runCommerce]);
+  const cancelBuyerOrder = useCallback((id: string) => runOrderMutation(() => session.cancelBuyerOrder(id)), [session, runOrderMutation]);
+  const changeSellerOrder = useCallback((id: string, target: SellerOrderTarget) => runOrderMutation(() => session.changeSellerOrder(id, target)), [session, runOrderMutation]);
+  const issueDeliveryToken = useCallback((id: string) => runCommerce(() => session.issueDeliveryToken(id)), [session, runCommerce]);
+  const confirmOrderDelivery = useCallback((id: string, token: string) => runOrderMutation(() => session.confirmOrderDelivery(id, token)), [session, runOrderMutation]);
   const value = useMemo<AuthContextValue>(() => ({
     user, role: user?.role ?? null, status, sessionError,
     isAuthenticated: status === 'authenticated' && user !== null,
     login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout, requestSellerActivation, consultSeller,
-    sessionProducts, createProduct, consultProduct, visibleSellerProducts, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
+    sessionProducts, createProduct, consultProduct, visibleSellerProducts, productPhotoOperation, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
+    orderRevision, listSellerOrders, sellerOrder, cancelBuyerOrder, changeSellerOrder, issueDeliveryToken, confirmOrderDelivery,
   }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout, requestSellerActivation, consultSeller,
-    sessionProducts, createProduct, consultProduct, visibleSellerProducts, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder]);
+    sessionProducts, createProduct, consultProduct, visibleSellerProducts, productPhotoOperation, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
+    orderRevision, listSellerOrders, sellerOrder, cancelBuyerOrder, changeSellerOrder, issueDeliveryToken, confirmOrderDelivery]);
 
   // Las pantallas pueden renderizar errores o explorar como invitado durante restauración.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

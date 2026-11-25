@@ -37,7 +37,7 @@ export const ROUTES = {
     addFood: '/seller/foods/add',
     editFood: '/seller/foods/edit',
     orders: '/seller/orders',
-    orderDetail: '/seller/orders/detail',
+    orderDetail: '/seller/order-detail',
     orderReview: '/seller/orders/review',
     chats: '/seller/chats',
     chat: '/seller/chat',

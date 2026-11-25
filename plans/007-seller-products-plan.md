@@ -1,5 +1,23 @@
 # Plan007 — Vendedor/productos
 
+## Corrección de acceso y transiciones de pedidos
+Reutilizar Perfil, SellerEntry, bandeja y detalle. Añadir filtros de estado del contrato a las páginas del vendedor, conservar Todos; validar detalle antes/después de mutar. Reconsultar ante conflicto y exigir una nueva acción explícita. Añadir diagnósticos sanitizados y probar rutas, estados y QR con mocks antes del bundle y la revisión física.
+
+## Bandeja y entrega de pedidos reales
+Reutilizar SellerEntry y único coordinador para GET sellers/me/orders/detalle, transiciones oficiales con versión y entrega QR. Listado paginado al foco/foreground/refresh; detalle con lecturas acotadas. Cámara Expo Go con permiso bajo demanda y scan base64url43; POST oficial seguido de GET Delivered, sin mutación optimista ni token en almacenamiento/logs. Guía/contratos y plan completo en003 y docs/PEDIDOS_REALES_EXPO_GO.md. Actualizar ROUTES.seller.orderDetail a la ruta implementada, sin duplicar hijos en root.
+
+## UX de fotografías sin información técnica
+1. Auditar panel, borrador/vista previa/recibo, listado/editor, catálogo/detalle y sus guardas. Contrastar UI-035/036/037, UI-006 y UI-013 sin modificar originales.
+2. Centralizar traducción de estados/errores en presentación; conservar diagnóstico sanitizado en servicios. Actividad del hook solo para texto/indicador, sin cambiar secuencia Media ni reglas de reintento. Reutilizar AppButton/MotionFeedback/tema.
+3. Eliminar IDs y consulta manual de ID de la interfaz pública; conservar consulta/ownership desde tarjetas y todo el coordinador. Pulir miniaturas y bloque de foto según Figma, sin nuevas capacidades.
+4. Actualizar pruebas de estados, recuperación, no exposición técnica, doble pulsación, creación sin imagen, reinicio y renovación. Ejecutar checks y bundle, documentar archivos/mensajes y pendiente de inspección física. No commit/push.
+
+## Catalog-v2 y recuperación condicionada del POST503
+1. Mantener pageSize máximo50, orden camelCase y omisión de opcionales vacíos ya contrastados. Etiquetar solicitudes por pantalla/operación en el cliente HTTP común, sin cambiar el transporte ni agregar consultas.
+2. Adjuntar versión, URL/query segura y hora; indicar toda redacción. Conservar correlación .NET/headers y únicamente message/details permitidos. Separar validación local/HTTP400, servicio5xx, transporte y contrato; probar privacidad y URL serializada.
+3. Registrar la corrección de promoción reportada por backend y el Approved físico observado. Antes de otro POST, exigir comprobación del intento por sellerId/asset/hora: recuperar productId si existe; ausencia verificada y autorización explícita si no. Mantener bloqueo y no agregar bypass ni nueva subida.
+4. Verificar TypeScript, suite completa, lint, Doctor, diff y bundle Android; registrar publicación/imagen físicas y SHA/retención como pendientes. No commit/push.
+
 ## Reapertura188 — candidato local, no aceptación física
 1. Contrastar188deHEAD ymapaAndroid; no reasignar a sellerSubmissionState por inercia. Inspeccionar servidor/manifiesto/perfilHermes/ReactCompiler y factorycompilada; no guardar ni imprimir bundle completo/.env/sessionobj.
 2. Probetemporal de tipos/etapas/status enDEV, ejecutar flujos con módulosMetro reales y puentefalso; retirarprobes. Si el dispositivo no está disponible, declarar límite y noinventarfunciónundefined.
@@ -67,3 +85,27 @@ Recorrer paginación pública mediante AuthSession con comprobaciones de sesión
 # Vista previa local de imagen — seguimiento
 
 Reutilizar selección validada para la vista previa del borrador, sin conectar presigned ni mutaciones mientras los contratos de ownership y asociación sigan sin evidencia.
+# Continuidad vendedor — en curso
+
+Conservar selección Media local y adaptadores sin invocarlos. Mejorar feedback de disponibilidad y recuperación de edición precio/stock sin agregar endpoints ni asumir inventario privado. Probar fallo/reintento con fixtures.
+# PR33 Media + Catalog — en curso
+
+Desarrollar contrato y orquestación con transportes simulados explícitos, estados confirmados y aislamiento de producción. Mantener publicación sin foto y autorización de sesión; no vincular asset hasta validar Approved y despliegue. Tests sintéticos y documentación de limitaciones reales.
+# Límite fotografía 4,000,000 bytes
+
+Centralizar MAX_PRODUCT_IMAGE_BYTES, lectura validada del archivo y firma antes de solicitud Media, y probar ambos lados del límite. Conservar selección anterior y formulario ante archivo inválido. Simulaciones PR33 continúan desconectadas de pantallas y producción; no modificar PATCH de fotografía por este ajuste.
+# Conexión PR33 — pantallas
+
+Reutilizar simuladores existentes mediante transporte de memoria compartido y puertos de formulario/listado; modo demo visible, sin peticiones AWS para sus datos. Añadir estado de foto y edición a pantallas existentes, conservar el flujo real sin imagen y bloquear servicios Media reales antes del transporte. Preparar decodificación de pares de imagen y renovación acotada por GET público.
+# Media real controlado — en curso
+
+Actualizar allowlists exactas con host observado del backend confiable. Abrir solo el gate __DEV__ + opt-in de prueba manual; mantener release cerrado y demo independiente. PUT conserva URL y bytes, timeout/cancelación segura y HTTP200 estricto. Confirmación/lectura autenticadas vía sesión y diagnósticos sanitizados por etapa. Tests con mocks y guía manual de una foto, sin pruebas automáticas contra AWS.
+# Validación previa a E2E móvil
+
+Comparar OpenAPI vivo con cliente sin mutaciones. Reforzar tests de identidad de bytes y HTTP422 y renovación explícita; mantener POST confirm como única ruta y distinguir PATCH probado con mocks de PATCH manual pendiente. Actualizar checklist y resultados después de verificaciones completas.
+# Activación Media por uso — corrección local
+
+Unificar consultas de activación del panel, formularios, hook y cliente mediante función evaluada al usarla; retirar exportación de booleano capturado. Mostrar causa segura en desarrollo (build, demo, flag ausente/no reconocido) y mensajes específicos de selección/moderación. Pruebas de reevaluación en el mismo módulo y UI controlled/no controlled, sin red real. Actualizar guía de recarga completa para comprobar el bundle real.
+# Diagnóstico Catalog físico — en curso
+
+Corregir pageSize del listado Seller y serializar enums wire confirmados; no variar cuerpo comercial para ocultar503. Capturar hora, request Catalog sanitizado y correlación de respuesta incluyendo .NET/header. Mantener error HTTP original y bloqueo producto incierto. Consultas de verificación solo GET públicas/autorizadas y pruebas POST simuladas.
