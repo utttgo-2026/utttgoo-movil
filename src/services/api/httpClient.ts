@@ -6,7 +6,7 @@ import { registrationDiagnostic } from './registrationDiagnostics';
 import { catalogRequestSummary, safeCorrelationId, type CatalogSource } from './requestDiagnostics';
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: JsonValue;
   token?: string;
   query?: Readonly<Record<string, string | number | undefined>>;

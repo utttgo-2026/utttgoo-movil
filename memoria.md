@@ -1,5 +1,12 @@
 # Memoria — UTTT-Go Móvil
 
+## Validación final — device tokens (2026-11-26)
+
+- La continuación parte de `origin/main` en `d40b8af`, sobre `feature/final-mobile-validation`; no se modifica `main`.
+- El contrato desplegado de notificaciones acepta `token`, `installationId`, `platform` y `appVersion`; devuelve `deviceTokenId` con `200/201`. La baja usa `DELETE /api/v1/notifications/device-tokens/{deviceTokenId}` y `204`.
+- El cliente registra el token solo cuando AuthContext está autenticado, mantiene listeners aunque falle la API, evita duplicados durante el ciclo, desregistra de forma best-effort al cerrar sesión y no persiste ni imprime el token.
+- Baseline: 72 suites/923 tests; final: 73 suites/930 tests; TypeScript 0, lint 0 errores/22 avisos, Doctor 20/20 y `expo install --check` al día. La prueba de dispositivo y push remoto no se consideran realizadas.
+
 ## Decisión CI/CD vigente
 ## OTP obligatorio tras registro
 

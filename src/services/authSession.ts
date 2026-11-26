@@ -20,6 +20,7 @@ import type { LocalProductPhoto } from './productPhoto';
 import * as Crypto from 'expo-crypto';
 import { sellerOrderTransitions, validDeliveryToken, type OrderPr27, type OrderStatus, type SellerOrderTarget } from './api/orderContractsPr27';
 import { orderDiagnostic } from './api/orderDiagnostics';
+import { notificationService, type RegisterDeviceTokenRequest, type DeviceTokenResponse } from './api/notificationService';
 
 interface AuthSessionDependencies {
   storage: SessionStorage;
@@ -201,6 +202,18 @@ export class AuthSession {
     this.resetOrderSession();
     pendingRegistration.reset();
     await this.deps.storage.clear();
+  }
+
+  async registerDeviceToken(input: RegisterDeviceTokenRequest): Promise<DeviceTokenResponse> {
+    this.deps.assertSecureTransport();
+    if (!this.token) throw new ApiError('unauthenticated', 'Inicia sesión para registrar las notificaciones.');
+    return notificationService.register(this.token, input);
+  }
+
+  async unregisterDeviceToken(deviceTokenId: string): Promise<void> {
+    this.deps.assertSecureTransport();
+    if (!this.token) return;
+    await notificationService.unregister(this.token, deviceTokenId);
   }
 
   /** Private commerce shares the AWS session; no JWT is returned to React. */
