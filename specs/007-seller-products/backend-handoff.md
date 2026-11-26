@@ -1,5 +1,31 @@
 # Contratos faltantes y prueba manual007
 
+## Actualización vigente: promoción corregida y diagnóstico catalog-v2
+
+Backend reporta bug de promoción corregido en producción y POST/GET comprobados con asset Approved. El usuario llegó a Approved en Expo Go. Falta verificar el intento específico que recibió503: consultar por sellerId autenticado, asset y ventana temporal/correlación; si existe devolver productId, si no confirmar ausencia y autorizar expresamente la recuperación antes de otro POST. No pedir JWT ni derivar assetId de la URL; verificar los identificadores mediante canales autorizados. El listado público no acredita ausencia.
+
+Logs de desarrollo agregan request.version catalog-v2, source, URL/query segura y urlRedacted, clasificación de fallo, message estático permitido y details estructurados sanitizados. Se conservan correlación y resumen DTO sin textos privados. Nuevos logs no reconstruyen el intento anterior. SHA EC2, política de retención definitiva y objetos previos siguen pendientes; la corrección de promoción no los certifica.
+
+## Catalog tras Approved: dos errores físicos distintos
+
+GET400 reproducido con pageSize100, que Mis alimentos enviaba. size50 y20, y GET sin params, responden200. SortBy snake price_asc=400, wirepriceAsc/priceDesc/nameAsc/createdAtDesc=200. Frontend corrige serialización sin cambiar nombres UI, recorre páginas50 y omite opcionales vacíos. Pedir que OpenAPI publique máximos/enums: actualmente queryparams son string sin esos límites.
+
+POST503/CATALOG_UNAVAILABLE no se reprodujo mutando producción. DTO del generador es name/description/ingredients/categoryId/price/stock/mediaAssetId y imageUrl:null, todos publicados en OpenAPI; no se recuperaron los valores del intento físico ni su correlationId. El parser de respuesta producto no procesa un503: HttpClient conserva clasificación HTTP y envelope. Referencia pública e5dab7e: promoción approved/ antes de persistencia y firma/lectura/proyección después; excepción en cualquier punto puede acabarUnavailable. Hipótesis de IAM/HEAD/Copy/Delete/Mongo/proyección requieren logs backend, no cambios de contrato cliente.
+
+Antes de otro POST, backend autorizado debe consultar persistencia del producto por sellerId real, mediaAssetId propio y ventana temporal del intento; si existe entregar productId y recuperar con GET. No equiparar sellerId con userId ni coincidencia/ausencia pública con reconciliación. El frontend mantiene error503 original y marca incierto, conserva formulario/Approved mientras vivan y bloquea reenvío. Logout/reinicio/FastRefresh puede perder memoria: no usarlo como permiso para repetir.
+
+Diagnóstico actualizado: request.startedAt UTC y recordedAt, query serializada no sensible y DTO redactado, HTTP/código, traceIdentifier .NET o correlación de headers permitidos, validationFields si backend los expone. Nunca mensajes/headers completos, nombres de alimentos, JWT, IDs de asset ni URLs firmadas. Los nuevos logs no reconstruyen el POST anterior. Ver docs/MEDIA_PR33_EXPO_GO.md.
+
+
+## Actualización vigente de backend: retención y versión pendientes
+
+Backend identifica `c809f60ffd422acb759d31fe54b4916b7fbc4da0` como último CD-Deploy documentado compartido, anterior a los cambios finales de PR #45; falta verificar el SHA de la versión más reciente en EC2. Los registros de revisiones citados más abajo son históricos y no cierran ese pendiente.
+
+La regla S3 actual borra a los 30 días todos los objetos de `staging/`, incluidos `Approved` vinculados a productos. Backend debe confirmar la transición a `approved/{owner}/{assetId}`, su despliegue, política de lifecycle y tratamiento de imágenes ya asociadas, junto con el SHA definitivo. No se exige al cliente cambiar DTOs ni construir claves del bucket para esa transición sin evidencia del contrato nuevo.
+
+El cliente mantiene GET de renovación de URLs a cinco minutos y placeholder ante objeto no disponible; eso no recupera objetos borrados ni acredita durabilidad. No se harán respaldos locales, cambios de moderación o resubidas automáticas para ocultar el problema. Se conserva la prueba manual controlada, sin declarar estable la persistencia de fotografías.
+
+
 ## Reapertura188 — informe vigente y repetición pendiente
 **NORESUELTO físicamente.** Usuario informa persistencia deTypeError188:59 en consulta/alta y no puede repetirtrazas ahora. No usar como aceptación el reporte anterior.
 
@@ -233,3 +259,9 @@ El envelope correlationId/status/code/message se valida estructuralmente para c�
 
 ### Verificación P0 ejecutada
 491/491pruebas/33suites, tsc0errores, lint0errores/30warnings previos, Doctor20/20 y diffchecklimpio. Nuevos tests de contratos/catálogos y roles revalidados con mismoJWT, más regresiones anteriores con fuente fixture explícita. La aceptación200 de activación histórica se reemplazó por201 confirmado; no se borraron suites ni se omitieron tests. BundleAndroidHTTP200/2483módulos, proceso terminado sin dispositivo. No POST/PATCH privado real, productos creados o entrega comercial completa. El commit conserva producto CRUD bloqueado honestamente; no habilitarlo para pasar una prueba manual sin los DTOs anteriores.
+# PR33: activación pendiente, frontend demostrable
+
+Referencia 6218aad y límite posterior confirmado de 4,000,000 bytes. Frontend posee demo de pantallas aislada, servicio tipado para upload-url/confirm/GET media, asociación mediaAssetId y lectura temporal. Gate real permanece cerrado en código; no basta una variable Expo para activarlo. Requiere backend desplegado, SHA y DTO verificables, umbrales/Azure fail-closed, IAM/S3 privados, firmas/TTL y E2E autorizada. Producto GET público permite renovación acotada; inventario privado completo del vendedor sigue pendiente de contrato. No usar Ready/publicUrl como sustituto de Approved/mediaAssetId.
+# Actualización: Media/Catalog desplegados, prueba móvil pendiente
+
+Consulta actual de OpenAPI EC2 y GET productos/detalle confirma contrato mediaAssetId, pares temporales y límite4,000,000. Host real observado: utttgo-images-2427dbc8.s3.us-east-2.amazonaws.com. GitHub Deployment production registra cd98e563796cb522276046991426aa4b5fe87c49 success (https://github.com/utttgo-2026/utttgo-backend/actions/runs/45014052703/job/137182539756); health/cabeceras no exponen SHA. Fuente de esa revisión usa Rekognition (no Azure), owner/Approved para asociación y mediaAssetId null para quitar. El frontend permite prueba manual explícita de Expo Go; no habilita releases ni certifica todavía E2E físico. No inferir privacidad IAM desde mocks: esa validación es reportada por backend.

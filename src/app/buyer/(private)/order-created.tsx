@@ -2,11 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 
-import { AppButton, AppHeader, AppText, Badge, Screen, Surface } from '@/components';
-import { colors, fontSize, layout, radii, spacing } from '@/theme';
-import { formatCurrency } from '@/utils/format';
+import { AppButton, AppText, Badge, Screen, Surface } from '@/components';
+import { colors, spacing } from '@/theme';
 import { mockOrders } from '@/data/mock';
 
 import { usesMockCatalog } from '@/config/catalogSource';
@@ -21,15 +19,6 @@ function MockOrderCreatedScreen() {
   const orderId = id || 'order-1';
   const order = mockOrders.find((o) => o.id === orderId) || mockOrders[0];
 
-  const qrPayload = order.qrPayload || JSON.stringify({
-    orderId: order.id,
-    code: order.code,
-    buyerId: order.buyerId,
-    sellerId: order.sellerId,
-    timestamp: order.createdAt,
-    status: order.status,
-  });
-
   const handleTrackOrder = () => {
     router.push({ pathname: '/buyer/order-tracking', params: { orderId: order.id } });
   };
@@ -41,6 +30,7 @@ function MockOrderCreatedScreen() {
   return (
     <Screen backgroundColor={colors.background} padded={false} scroll>
       <View style={styles.content}>
+        <AppText variant="caption">Demostración · Este pedido no es una compra real.</AppText>
         <View style={styles.successIcon}>
           <Ionicons name="checkmark-circle" size={64} color={colors.success} />
         </View>
@@ -85,17 +75,11 @@ function MockOrderCreatedScreen() {
           Código QR para la entrega
         </AppText>
         <AppText variant="caption" align="center" color={colors.textMuted} style={styles.qrSubtitle}>
-          Muestra este QR al vendedor al recibir tu pedido
+          Los pedidos de demostración no permiten entregar alimentos.
         </AppText>
 
         <Surface style={styles.qrContainer} bordered={false} backgroundColor={colors.background}>
-          <QRCode
-            value={qrPayload}
-            size={200}
-            color={colors.text}
-            backgroundColor={colors.background}
-            getRef={(ref) => { /* QRCode ref */ }}
-          />
+          <Ionicons name="qr-code-outline" size={64} color={colors.textMuted} />
         </Surface>
 
         <AppText variant="caption" align="center" color={colors.textSubtle} style={styles.qrCodeText}>

@@ -32,7 +32,7 @@ describe('Catálogo real se revalida al volver, sin rehacer el navegador', () =>
       items: path === '/api/v1/products' && published ? [product] : [], page: 1, pageSize: 20, totalCount: path === '/api/v1/products' && published ? 1 : 0,
     } }));
     const view = await renderRouter(routes, { initialUrl: '/buyer/search?query=maiz' });
-    await waitFor(() => expect(screen.getByText('AWS no tiene productos públicos con esta selección.')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('No hay alimentos con estos filtros.')).toBeTruthy());
     const input = screen.getByPlaceholderText('Buscar alimentos');
     await testRouter.push('/seller');
     published = true; // Test-only server fixture; no mutation request is performed.

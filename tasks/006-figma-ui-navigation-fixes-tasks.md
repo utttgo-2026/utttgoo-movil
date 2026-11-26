@@ -140,3 +140,7 @@ No hay nueva evidencia física respecto a los7 PASS/1 PENDIENTE aportados por el
 El usuario solicita subir todos los cambios acumulados005/006 a HRDCORE y autoriza Expo58.0.24→58.0.25 para corregir Doctor. El ajuste cambia únicamente Expo y su entrada del lock, sin otras versiones directas/transitivas. Se repiten tsc0, lint0errores/30warnings,178/178tests/15suites y Doctor20/20. Metro Android HTTP200,1402módulos,12564ms,6307114caracteres; proceso detenido, sin teléfono. Huella37 archivos protegidos fuera del parche intacta, ver tareas005. Los resultados19/20 y huella41 anteriores corresponden al cierre P2/P3 previo al parche, no al estado preparado para publicar.
 
 El commit mantiene EN PRUEBAS,11 fotos y comparación física pendientes. No .env ni artefactos de pruebas; solo fuente/configuración/recursos/documentación previstos. Resultado de push/CI consultable en historial y Actions; no se declara anticipadamente.
+### Cierre comercial — en pruebas
+- [x] Checkout, recibo, seguimiento, entrega y salida de publicación: comportamiento implementado y probado localmente.
+- [x] 890/890 pruebas en 65 suites, TS limpio, lint 0 errores/21 avisos existentes, Doctor 20/20 y bundle Android HTTP 200 (13,308,713 bytes, Hermes/React Compiler).
+- [ ] Back físico, gesto y comparación visual en Expo Go.

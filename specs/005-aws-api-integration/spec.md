@@ -109,3 +109,9 @@ Se autoriza commit local del conjunto auth005 seguro acumulado y su configuraci�
 
 ## Referencias
 CONSTITUTION.md, AGENTS.md, plans/005-aws-api-integration-plan.md, tasks/005-aws-api-integration-tasks.md.
+### Retoma OTP real
+Conservar registro único AWS y verificación/reenvío Supabase existentes. Mantener una entrada pegable de seis dígitos como en Figma, mensajes públicos y retorno explícito a verificación para el correo de un registro reciente. Un registro incierto no abre verificación ni habilita otro POST para el mismo correo en el coordinador actual. Primer login AWS comprueba correo confirmado y reconcilia perfil pendiente a Active; el cliente valida sesión/perfil antes de dar acceso. Probar con transportes simulados y dejar recepción SMTP/activación real para Expo Go autorizado.
+### OTP definitivo — seis casillas y salida a Login
+Contrato backend `docs/auth-mobile-integration.md:39–47`: seis dígitos; pendiente de corroboración del parámetro efectivo del Dashboard por el equipo. Una entrada nativa con seis casillas visuales admite escritura, pegado y autofill. Al verificar, mostrar «¡Correo verificado!» y cerrar el paso OTP al elegir «Iniciar sesión». Solo LoginService y su actualización condicional en MongoDB activan el perfil.
+### Registro: paso OTP común
+El acuse válido de registro abre Verificar correo mediante sustitución del formulario, también en Beta autorizada. Esto reemplaza el antiguo desvío Beta a Login; se mantienen el gate de entorno/build y los diagnósticos sanitizados. Fallo o incertidumbre no avanzan. La salida OTP confirmada descarta esa pantalla y conserva solo el correo efímero para Login explícito.

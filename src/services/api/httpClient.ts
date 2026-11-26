@@ -3,6 +3,7 @@ import type { ApiResponse, JsonValue } from '@/types/api';
 import { getApiBaseUrl, parseApiBaseUrl } from './config';
 import { ApiError, backendHttpError } from './errors';
 import { registrationDiagnostic } from './registrationDiagnostics';
+import { catalogRequestSummary, safeCorrelationId, type CatalogSource } from './requestDiagnostics';
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH';
@@ -11,6 +12,8 @@ export interface RequestOptions {
   query?: Readonly<Record<string, string | number | undefined>>;
   expectedStatuses?: readonly number[];
   timeoutMs?: number;
+  diagnosticSource?: CatalogSource;
+  idempotencyKey?: string;
 }
 
 interface HttpClientOptions {
@@ -60,8 +63,15 @@ export class HttpClient {
       if (value !== undefined) url.searchParams.set(key, String(value));
     }
     const headers: Record<string, string> = { Accept: 'application/json' };
+    const diagnosticRequest = catalogRequestSummary(method, path, options.body, options.query, baseUrl, options.diagnosticSource);
     if (options.body !== undefined) headers['Content-Type'] = 'application/json';
     if (options.token) headers.Authorization = `Bearer ${options.token}`;
+    const freshOrderRead = method === 'GET' && options.token !== undefined && (path.startsWith('/api/v1/orders/') || path === '/api/v1/sellers/me/orders');
+    if (freshOrderRead) headers['Cache-Control'] = 'no-cache';
+    if (options.idempotencyKey !== undefined) {
+      if (path !== '/api/v1/orders' || method !== 'POST' || !/^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(options.idempotencyKey)) throw new ApiError('validation', 'No se pudo preparar la compra. Vuelve a seleccionar el alimento.');
+      headers['Idempotency-Key'] = options.idempotencyKey;
+    }
 
     const controller = new AbortController();
     let timedOut = false;
@@ -80,6 +90,7 @@ export class HttpClient {
         // Soporte nativo de redirects debe verificarse; nunca usar endpoints que hagan downgrade.
         redirect: 'error',
         credentials: 'omit',
+        ...(freshOrderRead ? { cache: 'no-store' as const } : {}),
       });
       // Capture the actual status even when parsing or expected-status checks later fail.
       if (registration) registrationDiagnostic({ event: 'response', status: response.status });
@@ -91,7 +102,12 @@ export class HttpClient {
         try { data = JSON.parse(text) as unknown; } catch { validJson = false; }
       }
       if (!response.ok) {
-        throw backendHttpError(response.status, data);
+        const failure = backendHttpError(response.status, data);
+        for (const name of ['x-correlation-id', 'correlation-id', 'x-request-id', 'request-id', 'traceparent']) {
+          const correlation = safeCorrelationId(response.headers.get(name));
+          if (correlation) { failure.responseCorrelationId = correlation; break; }
+        }
+        throw failure;
       }
       if (!validJson || (options.expectedStatuses && !options.expectedStatuses.includes(response.status))) {
         throw new ApiError('invalid_response', 'La API devolvió una respuesta no compatible con el contrato esperado.', response.status);
@@ -100,9 +116,9 @@ export class HttpClient {
       response.headers.forEach((value, key) => { responseHeaders[key] = value; });
       return { status: response.status, headers: responseHeaders, data };
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-      if (timedOut) throw new ApiError('timeout', 'El servidor tardó demasiado en responder.');
-      throw new ApiError('network', 'No fue posible conectar con la API. Revisa la red y las restricciones de transporte del dispositivo.');
+      const failure = error instanceof ApiError ? error : timedOut ? new ApiError('timeout', 'El servidor tardó demasiado en responder.') : new ApiError('network', 'No fue posible conectar con la API. Revisa la red y las restricciones de transporte del dispositivo.');
+      if (diagnosticRequest) failure.diagnosticRequest = diagnosticRequest;
+      throw failure;
     } finally {
       clearTimeout(timer);
     }

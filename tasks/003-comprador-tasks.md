@@ -1,5 +1,21 @@
 # Tasks 003 — Flujo del Comprador
 
+## ExpoCrypto al iniciar — RECUPERADO SEGÚN USUARIO / verificación específica pendiente
+- [x] npm ls y lock/matriz SDK: Expo58.0.26, crypto58.0.8, core58.1.0, router58.0.32, RN0.88.1 alineados sin duplicados. install --check actualizado; Doctor20/20 inicial.
+- [x] Diferenciados reportes upstream Go58.0.5 Android corregido58.0.6 frente release/prebuildCrypto58.0.5. Usuario informaGo58.0.6+; no aplicar esos casos como causa probada.
+- [x] Usuario confirma «Ya inicia correctamente» tras forzar detención y expo start --go -c; ambos errores desaparecen. Registro nativo antes ausente; desencadenante interno exacto no demostrado. No versiones/codepath/auth/JWT modificados para simular corrección.
+- [x] Regresión de bootstrap/proveedor/API real JS:3/3 focalizadas. Sin proveedor falla antes de layout completo; con proveedor exportErrorBoundary/provider disponibles, UUIDv4/SHA256 sin Math.random.
+- [x] TypeScript limpio, Jest871/871 en64suites, lint0errores/21avisos existentes, Doctor20/20 y diff check limpio. Bundle AndroidHTTP200/13,296,432bytes Hermes/ReactCompiler; Metro propio detenido sin cerrar el del usuario. Ningún cambio de versiones npm ni código funcional de autenticación/criptografía.
+- [ ] Confirmar físicamente UUID/SHA nativos sin POST, login/restauración, bandejas y carga QR/cámara. Ver docs/EXPO_CRYPTO_ANDROID.md; recuperación de inicio no acredita todo el flujo.
+
+## Cierre pedidos reales y QR — EN CURSO
+- [x] OpenAPI vivo y fuente/documentación backend8d48ae9 consultados; ocho endpoints y contratos disponibles. Inspeccionados originales Figma comprador/vendedor.
+- [x] Identificados page retenida al foco, recibo solo lastOrder, ausencia pull-to-refresh/diagnóstico de creación faltante y serialización global de lecturas/mutaciones. No se observó el JSON autenticado del incidente físico; no atribuir definitivamente la pérdida a backend/caché.
+- [x] Servicios/validadores y sesión para bandeja Seller, estado/cancelación/credencial/entrega; límites/ownership/diagnóstico sanitizado. UUIDv4 Idempotency-Key,201/200 y lecturas no-cache/no-store; sin replay automático.
+- [x] Recibo, historial/seguimiento/cancelación comprador y pantallas vendedor/escaneo conectados, recuperación y credenciales efímeras. Lecturas detalle inicial+8/15seg; emisión explícita3/5min y30seg mínimo, sin polling infinito ni secretos persistidos.
+- [x] Pruebas integradas, TypeScript limpio, Jest868/868 en63suites, lint0errores/21avisos previos restantes, Expo Doctor20/20 y diff check limpio. Bundle AndroidHTTP200/13,296,432bytes Hermes/ReactCompiler; Metro propio detenido. Guía docs/PEDIDOS_REALES_EXPO_GO.md.
+- [ ] Prueba física con dos cuentas autorizadas: no marcar aceptación E2E solo por mocks. Sin commit/push.
+
 ## Bloqueo físico — EN CURSO
 - [x] Mensaje ambiguo procede de commerce antes del POST: submitted por clave o uncertain por ámbito order; red/timeout/DTO inválido/5xx tras dispatch activan uncertain. OpenAPI actual coincide en campos obligatorios PR27; no se observó la respuesta privada del teléfono.
 - [x] Mensajes separados para confirmado e incierto; tras error incierto se bloquea el botón y se ofrece historial. Restaurar el mismo coordinador no limpia marcas. Pruebas sintéticas de timeout/red/DTO inválido, nueva compra y consulta no concluyente.

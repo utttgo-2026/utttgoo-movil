@@ -5,7 +5,7 @@ import {
   Poppins_700Bold,
   useFonts,
 } from '@expo-google-fonts/poppins';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -13,16 +13,40 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { NavigationDiagnostics } from '@/components/navigation/NavigationDiagnostics';
 import { colors } from '@/theme';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { stackMotionOptions } from '@/navigation/motion';
+import { pushNotificationClient } from '@/services/notifications/pushNotifications';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export { NavigationErrorBoundary as ErrorBoundary } from '@/components/navigation/NavigationErrorBoundary';
+
+function PushNotificationBootstrap() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      pushNotificationClient.stop();
+      pushNotificationClient.setOnTap(undefined);
+      return;
+    }
+    pushNotificationClient.setOnTap(({ route, params }) => {
+      router.push({ pathname: route as never, params } as never);
+    });
+    void pushNotificationClient.start();
+    return () => {
+      pushNotificationClient.stop();
+      pushNotificationClient.setOnTap(undefined);
+    };
+  }, [isAuthenticated, router]);
+
+  return null;
+}
 
 export default function RootLayout() {
   const reduced = useReducedMotion();
@@ -48,6 +72,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <CartProvider>
+            <PushNotificationBootstrap />
             <StatusBar style="dark" />
             <NavigationDiagnostics />
             <Stack

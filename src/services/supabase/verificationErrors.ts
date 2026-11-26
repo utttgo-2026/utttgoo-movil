@@ -2,15 +2,15 @@ export type VerificationErrorKind = 'configuration' | 'invalid_code' | 'expired_
   | 'network' | 'invalid_response' | 'registration_required' | 'busy' | 'provider';
 
 const messages: Record<VerificationErrorKind, string> = {
-  configuration: 'Falta configurar la URL HTTPS y la clave pública publishable del proyecto Supabase utilizado por AWS.',
+  configuration: 'La verificación no está disponible en este momento. Consulta a soporte.',
   invalid_code: 'El código no es correcto. Introduce los seis dígitos del correo más reciente.',
-  expired_code: 'El código expiró o ya no es válido. Solicita uno nuevo.',
+  expired_code: 'El código expiró o ya no es válido. Si ya confirmaste tu correo, intenta iniciar sesión; si no, solicita otro código.',
   rate_limit: 'Debes esperar antes de solicitar otro código. Respeta el tiempo indicado.',
-  network: 'No fue posible conectar con Supabase. Revisa tu conexión e intenta nuevamente.',
-  invalid_response: 'No se pudo confirmar el correo con la respuesta recibida de Supabase.',
+  network: 'No pudimos confirmar el resultado. Revisa tu conexión antes de intentarlo de nuevo.',
+  invalid_response: 'No pudimos confirmar el resultado. Si ya confirmaste tu correo, intenta iniciar sesión.',
   registration_required: 'No hay un registro reciente disponible. Vuelve al formulario de registro.',
   busy: 'Ya hay una operación de verificación en curso.',
-  provider: 'Supabase no pudo completar la operación. Intenta más tarde o consulta con el equipo de soporte.',
+  provider: 'No pudimos completar la operación. Intenta más tarde o consulta a soporte.',
 };
 
 export class VerificationError extends Error {
@@ -29,6 +29,7 @@ export function verificationError(error: unknown, retryAfterMs = 0): Verificatio
       return new VerificationError('rate_limit', Math.max(60000, retryAfterMs));
     }
     if (code === 'otp_expired') return new VerificationError('expired_code');
+    if (code === 'otp_disabled') return new VerificationError('configuration');
     if (code === 'validation_failed' || code === 'invalid_credentials') return new VerificationError('invalid_code');
     if (name === 'AuthRetryableFetchError' || status === 0) return new VerificationError('network');
   }

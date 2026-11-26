@@ -1,6 +1,7 @@
 import type { ApiCategory, ApiPage, SellerActiveResponse, ProductResponse, ProductPage, OrderResponse } from '@/types/api';
 import { ApiError } from './errors';
 import { validRoles } from './sessionContract';
+import { productImageFields } from './productImageContract';
 
 export function invalidContract(): never { throw new ApiError('invalid_response', 'AWS devolvió datos que no cumplen el contrato confirmado.'); }
 export function object(value: unknown): Record<string, unknown> {
@@ -60,7 +61,7 @@ export function productResponse(data: unknown): ProductResponse {
       (v.status !== 'Active' && v.status !== 'Paused')) return invalidContract();
   return { id: v.id, sellerId: v.sellerId, categoryId: v.categoryId, name: v.name, description: v.description,
     price, stock, ingredients: [...v.ingredients], status: v.status, sellerDisplayName: v.sellerDisplayName, categoryName: v.categoryName,
-    isAvailable: v.isAvailable, ratingAverage, ratingCount, createdAt: v.createdAt, updatedAt: v.updatedAt };
+    isAvailable: v.isAvailable, ratingAverage, ratingCount, createdAt: v.createdAt, updatedAt: v.updatedAt, ...productImageFields(v) };
 }
 export function productPageResponse(data: unknown): ProductPage {
   const v = object(data);

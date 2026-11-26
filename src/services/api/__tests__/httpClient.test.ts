@@ -56,6 +56,20 @@ describe('Cliente HTTP (fetch simulado; no AWS)', () => {
     fetchMock.mockResolvedValue(new Response('{"unknownEnvelope":"fixture"}', { status }));
     await expect(client.request('/api/v1/auth/me')).rejects.toMatchObject({ kind: 'http', status });
   });
+  test('error Catalog captura correlación de header y request sanitizado con hora sin credenciales', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: 503, code: 'CATALOG_UNAVAILABLE', message: 'private body' }), { status: 503, headers: { 'x-correlation-id': '0HNQ90MLLHKR1:00000001' } }));
+    let failure: unknown;
+    try { await client.request('/api/v1/products', { method: 'POST', token: 'synthetic.jwt', body: { name: 'Private name', description: 'Private description', ingredients: ['Private ingredient'], price: 25, stock: 4, categoryId: '507f1f77bcf86cd799439031', mediaAssetId: '507f1f77bcf86cd799439011', imageUrl: null } }); }
+    catch (error) { failure = error; }
+    expect(failure).toBeInstanceOf(ApiError);
+    if (!(failure instanceof ApiError)) throw new Error('Expected ApiError');
+    expect(failure.responseCorrelationId).toBe('0HNQ90MLLHKR1:00000001');
+    expect(failure.diagnosticRequest?.method).toBe('POST');
+    expect(failure.diagnosticRequest?.startedAt).toEqual(expect.any(String));
+    expect(JSON.stringify(failure.diagnosticRequest)).not.toMatch(/synthetic.jwt|Private|507f1f77bcf86cd799439011/);
+    expect(failure.diagnosticRequest?.body?.mediaAssetId).toMatchObject({ type: 'string', length: 24, objectIdFormat: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 
   test('401 no implica correo sin verificar', async () => {
     fetchMock.mockResolvedValue(new Response('{}', { status: 401 }));

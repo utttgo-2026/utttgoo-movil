@@ -91,3 +91,13 @@ El usuario solicita commit/push a HRDCORE y autoriza expresamente corregir el bl
 
 ## 14. Registro→login / DevSecOps / Play
 Reutilizar el hint en memoria para un acuse pending (no verified), dirigir Beta al login sin contraseña; mantener OTP por banderafalse y acceso opcional existente. Validar nombre/correo/tipos/longitudes en UI y authService, sin recortar contraseña ni inventar política Supabase. Errores429 genéricos y límites backend documentados. Reparar test omitido de duplicación usando eventos no bloqueantes: RNTL14 espera promesas retornadas por handlers, no aumentar timeout ni eliminar pruebas. Auditar npm y valores Android nativos/Play sin generar builds; revisar diff completo y secretos antes de commit local autorizado del trabajo005 acumulado. Mantener pruebas físicas/backend pendientes.
+## Dependencia007 — capacidades vendedor acotadas
+Se autoriza reutilizar la sesión actual para requestActivation/getMe de sellerService sin exponer JWT en Context ni reconstruir auth. Solo status HTTP/códigos sanitizados salen de la capa, cuerpos desconocidos permanecen desconocidos. No cambiar contratos de roles005, SecureStore, restauración/login/OTP. Una respuesta de vendedor no cambia user.role. Especificación y evidencia funcional en007.
+
+Contrato nuevo007: revalidar DTO SellerActive y permitir exactamente Buyer+Seller en identidad/login/perfil, además delBuyerexistente. Proyectar SellerDTO validado y roleSynced; no guardar/nuevoJWT por activación. Catálogo/categorías servicios públicos separados de sesión. Errorenvelope nuevo se sanitiza con códigos conocidos; message remoto nunca se imprime.
+### Retoma OTP real
+Contrastar OpenAPI y código backend de login; pulir pantalla reutilizando entrada/autofill y store efímero. Bloquear repetición del registro tras acuse o resultado incierto sin cambiar la variante Beta acordada. Verificar SDK/reenvío, guardas y handoff mediante mocks; documentar prueba física.
+### OTP definitivo
+Reutilizar SDK/store y mantener el layout de Figma; representar el código con seis casillas sobre una entrada accesible. Cerrar registro aceptado y volver al Login existente mediante dismissTo, consumiendo el correo efímero al foco. Validar Back y login pendiente/activo mediante mocks.
+### Paso obligatorio a OTP
+Unificar el éxito de Register en `replace('/verify-email')`, retirar el acuse alternativo y su hint pendiente obsoleto. Mantener la defensa del coordinador y el handoff verificado existente. Probar ambos modos y Atrás mediante Expo Router en memoria.

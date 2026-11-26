@@ -17,7 +17,7 @@ const mockPush = jest.fn(); const mockSetParams = jest.fn((value: Record<string,
 const mockPrepare = jest.fn();
 let mockAuthenticated = true;
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ prepareOrder: mockPrepare, isAuthenticated: mockAuthenticated }) }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, setParams: mockSetParams, dismissTo: mockPush }), useLocalSearchParams: () => mockParams,
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: mockPush, setParams: mockSetParams, dismissTo: mockPush }), useLocalSearchParams: () => mockParams,
   useFocusEffect: (callback: () => void | (() => void)) => jest.requireActual<typeof import('react')>('react').useEffect(callback, [callback]) }));
 
 describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
@@ -38,7 +38,7 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
   test('inicio consume categorías reales y vacío de productos, no mock como fallback', async () => {
     const view = await render(<Home />);
     await waitFor(() => expect(view.getByText('Categoría real fixture')).toBeTruthy());
-    await waitFor(() => expect(view.getByText('AWS no tiene productos públicos con esta selección.')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('No hay alimentos con estos filtros.')).toBeTruthy());
     expect(view.queryByText('Chilaquiles con Huevo')).toBeNull(); expect(view.queryByText('Tortas')).toBeNull();
     await fireEvent.press(view.getByText('Categoría real fixture'));
     expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/buyer/category', params: expect.objectContaining({ categoryId: category.id }) }));
@@ -53,20 +53,21 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
   test('categorías vacías se informan honestamente', async () => {
     request.mockResolvedValue({ status: 200, headers: {}, data: { items: [], page: 1, pageSize: 20, totalCount: 0 } });
     const view = await render(<Home />);
-    await waitFor(() => expect(view.getByText('AWS no tiene categorías configuradas.')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('No hay categorías disponibles.')).toBeTruthy());
     expect(view.queryByText('Vegano')).toBeNull();
   });
   test('fallo503 conserva error, nunca lo sustituye por productos mock', async () => {
     request.mockRejectedValue(new ApiError('http', 'Catálogo temporalmente no disponible (fixture).', 503));
     const view = await render(<Home />);
     await waitFor(() => expect(view.getAllByText('Catálogo temporalmente no disponible (fixture).').length).toBeGreaterThan(0));
-    expect(view.queryByText('AWS no tiene productos públicos con esta selección.')).toBeNull();
+    expect(view.queryByText('No hay alimentos con estos filtros.')).toBeNull();
     expect(view.queryByText('Torta de Milanesa')).toBeNull();
   });
   test('producto público incompleto se rechaza sin mostrar campos parciales', async () => {
     request.mockImplementation(async (path: string) => ({ status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [{ id: 'unknown-product', name: 'Private response fixture' }], page: 1, pageSize: 20, total: 1, totalCount: 1 } }));
     const view = await render(<Home />);
-    await waitFor(() => expect(view.getByText(/no cumplen el contrato confirmado/)).toBeTruthy());
+    await waitFor(() => expect(view.getByText('No pudimos completar la operación. Intenta de nuevo más tarde.')).toBeTruthy());
+    expect(view.queryByText(/contrato confirmado|HTTP|correlationId/)).toBeNull();
     expect(view.queryByText('Private response fixture')).toBeNull();
   });
   test('detalle real porID no busca producto mock ni asigna su foto', async () => {
@@ -116,11 +117,11 @@ describe('Catálogo AWS sin fallback ni mezcla de fotos/productos mock', () => {
       return { status: 200, headers: {}, data: { items: path === '/api/v1/categories' ? [category] : [], page: 1, pageSize: 20, totalCount: path === '/api/v1/categories' ? 1 : 0 } };
     });
     const view = await render(<Home />);
-    await waitFor(() => expect(view.getByText('AWS no tiene productos públicos con esta selección.')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('No hay alimentos con estos filtros.')).toBeTruthy());
     mockParams.awsSort = 'price_asc'; await view.rerender(<Home />);
-    await waitFor(() => expect(view.getByText('Orden rechazado por backend (fixture).')).toBeTruthy());
+    await waitFor(() => expect(view.getByText('No pudimos completar la operación. Intenta de nuevo más tarde.')).toBeTruthy());
     expect(request.mock.calls.filter(([path]) => path === '/api/v1/products')).toHaveLength(2);
-    expect(view.queryByText('AWS no tiene productos públicos con esta selección.')).toBeNull();
+    expect(view.queryByText('No hay alimentos con estos filtros.')).toBeNull();
   });
   test('avisos AWS conservan guarda y no muestran fixtures como notificaciones reales', async () => {
     const view = await render(<Notifications />);

@@ -4,13 +4,13 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppButton, AppHeader, AppText, Screen, Surface } from '@/components';
-import { colors, radii, spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 import { navigateBack } from '@/navigation/buyerRoutes';
 
 import { usesMockCatalog } from '@/config/catalogSource';
-import { AwsOrdersPending } from '@/components/catalog/AwsOrderFlow';
+import { AwsBuyerCancel } from '@/components/catalog/AwsOrderFlow';
 
-export default function CancelOrderScreen() { return usesMockCatalog() ? <MockCancelOrderScreen /> : <AwsOrdersPending />; }
+export default function CancelOrderScreen() { return usesMockCatalog() ? <MockCancelOrderScreen /> : <AwsBuyerCancel />; }
 function MockCancelOrderScreen() {
   const router = useRouter();
 

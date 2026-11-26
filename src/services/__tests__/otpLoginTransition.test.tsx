@@ -10,7 +10,8 @@ jest.mock('react-native-safe-area-context', () => jest.requireActual('react-nati
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 const mockPush = jest.fn();
 const mockLogin = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }), useLocalSearchParams: () => ({ email: 'untrusted@uttt.edu.mx' }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, dismissTo: mockPush }), useLocalSearchParams: () => ({ email: 'untrusted@uttt.edu.mx' }),
+  useFocusEffect: (callback: () => void) => jest.requireActual<typeof import('react')>('react').useEffect(callback, [callback]) }));
 jest.mock('@/navigation/useSafeBack', () => ({ useSafeBack: () => jest.fn() }));
 jest.mock('@/hooks/useApiHealth', () => ({ useApiHealth: () => ({ loading: false, check: jest.fn() }) }));
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => ({ login: mockLogin, status: 'anonymous' }) }));
@@ -37,10 +38,10 @@ describe('OTP→login existente sin contraseña persistida ni auto-login', () =>
     pendingRegistration.begin('verified-fixture@uttt.edu.mx');
     const view = await render(<VerifyEmail />);
     await fireEvent.changeText(view.getByLabelText('Código OTP de seis dígitos'), '012345');
-    await fireEvent.press(view.getByRole('button', { name: 'Verificar código' }));
-    await waitFor(() => expect(view.getByRole('button', { name: 'Continuar al login' })).toBeTruthy());
+    await fireEvent.press(view.getByRole('button', { name: 'Verificar correo' }));
+    await waitFor(() => expect(view.getByRole('button', { name: 'Iniciar sesión' })).toBeTruthy());
     expect(mockLogin).not.toHaveBeenCalled();
-    await fireEvent.press(view.getByRole('button', { name: 'Continuar al login' }));
+    await fireEvent.press(view.getByRole('button', { name: 'Iniciar sesión' }));
     expect(mockPush).toHaveBeenCalledWith('/login');
     await view.rerender(<StrictMode><Login /></StrictMode>);
     return view;

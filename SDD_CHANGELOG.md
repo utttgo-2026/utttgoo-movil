@@ -1,5 +1,56 @@
 # UTTT-Go Móvil — SDD Change Log
 
+## Registro → OTP obligatorio — en pruebas físicas
+
+Registro estándar y Beta comparten la sustitución del formulario por Verificar correo tras acuse; se elimina la salida Beta a Login pendiente, conservando su gate y diagnósticos. Títulos de OTP ajustados; Login explícito conserva solo correo efímero. Guía y SDD 005 actualizados. 894/894 pruebas, TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20, diff check limpio y bundle Android 200. Prueba física, incluida navegación Atrás en Android, pendiente.
+
+## OTP de seis casillas y cierre de verificación — en pruebas físicas
+
+Contrato de seis dígitos documentado por backend. Una sola entrada nativa admite escritura y pegado; seis casillas visuales, reenvío explícito con espera y confirmación sin sesión. Registro aceptado sustituye el formulario en el flujo estándar; después del OTP, Iniciar sesión cierra la verificación y entrega el correo efímero al Login. Solo AWS activa el perfil local. Jest 894/894 en 65 suites, TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20 y bundle Android HTTP 200. Dashboard y recorrido físico pendientes de corroboración.
+
+## Retoma de OTP real — en pruebas
+
+Entrada pegable de seis dígitos y mensajes de verificación/reenvío en español, retorno desde Login al registro reciente, y bloqueo de repetición del alta de resultado incierto. Validado el mecanismo de activación durante el login en fuente backend y documentada la discrepancia de Beta local activa. Pruebas simuladas 891/891 en 65 suites; TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20 y bundle Android HTTP 200. Recepción, reenvío y activación real pendientes de prueba física autorizada.
+
+## Navegación de compra y entrega — en pruebas físicas
+
+Cierre de checkout a las tabs, un comprobante encima de Mis pedidos y seguimiento por sustitución; salidas directas desde entrega, publicación y cierre de sesión. QR limitado a seguimiento. Relecturas sin spinner periódico, descarte de versiones atrasadas sin renovar frescura y consultas acotadas que terminan en estados cerrados. Verificadas regresiones con Router real en memoria: 890/890, 65 suites; TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20 y bundle Android HTTP 200 con Hermes/React Compiler. Gesto, Back físico y fluidez en Expo Go pendientes.
+
+## Pedidos recibidos: acceso, conflictos y detalle verificado — EN PRUEBAS
+
+El vendedor no encontró la bandeja en Expo Go; no se verificó un PATCH físico. Perfil ofrece acceso directo Seller conservando SellerEntry. Bandeja con Todos/filtros de servidor y paginación; PATCH con versión de GET, reconsulta sin reenvío ante 409, actualización con detalle verificado y protección contra lecturas atrasadas. Entrega exige confirmación y GET Delivered; trazas `[orders-http]` sanitizadas. TypeScript limpio, Jest 882/882 en 64 suites, lint 0 errores/21 avisos previos, Doctor 20/20, diff check limpio, bundle Android HTTP 200/13,305,304 bytes. Pendiente prueba física con el pedido existente.
+
+## Recuperación de arranque ExpoCrypto — confirmada por usuario
+
+Auditados SDK real58 y árbol/lock sin duplicados de expo58.0.26, crypto58.0.8, core58.1.0, router58.0.32 y RN0.88.1; install --check actualizado y Doctor20/20. Diferenciados tickets Go54020 y bare/release51198; usuario informaGo58.0.6+, sin atribución automática. Arranque en frío (forzar detención y expo start --go -c) recuperó inicio y retiró ambos errores según usuario. Conservados import estático, proveedor criptográfico, auth y credenciales; sin parches ni versiones cambiadas. Añadida regresión bootstrap3/3 y guía docs/EXPO_CRYPTO_ANDROID.md con comprobación física sin POST/logs sensibles. Actualizados SDD003 y memoria. TypeScript limpio, Jest871/871 en64suites, lint0errores/21avisos existentes, Doctor20/20, diff check limpio y bundleAndroid200/13,296,432bytes Hermes/ReactCompiler; Metro propio detenido. Ejecución física UUID/SHA/login/bandejas/QR todavía por confirmar específicamente; no confundir bundle con Kotlin. Sin commit/push.
+
+## Pedidos comprador/vendedor y entrega QR real — EN PRUEBAS
+
+OpenAPI vivo y fuente backend8d48ae9 confirman ocho rutas Orders, DTO PR27, efectivo/MXN, pageSize≤50, transiciones y token43/expiración. GET de bandejas sin credenciales401 confirmado; no mutaciones reales. Mis pedidos vuelve a página1 al foco/foreground/compra/refresh, pagina y deduplica, no filtra roles silenciosamente ni depende de memoria; lecturas no-cache/no-store y diagnóstico seguro de creación reciente ausente en una página. Recibo recuperable por GET y seguimiento/timeline/cancelación conectados. Bandeja/detalle Seller con versión, propiedad y GET posterior; cámara Expo Go, token exclusivo backend, expiración/foreground/lecturas acotadas y hashes temporales contra reuso. Idempotency-Key UUIDv4 por preparación y aceptación201/200; creación incierta no se reenvía. Retirado también QR de JSON local en maqueta histórica, ahora identificada explícitamente como demostración. Actualizados SDD003/007, mapa y guía docs/PEDIDOS_REALES_EXPO_GO.md. TypeScript limpio, Jest868/868 en63suites, lint0errores/21avisos restantes, Doctor20/20, diff check limpio y bundleAndroid200/13,296,432bytes Hermes/ReactCompiler; Metro propio detenido. Pruebas físicas de dos cuentas/cámara/Figma pendientes. Sin commit/push.
+
+## UX de fotografías para público — EN PRUEBAS
+
+Usuario confirma fotografías reales funcionando. Limpieza de creación/vista previa, listado/editor y catálogo/detalle, incluidas guardas y filtros vinculados. Retirados IDs, estados wire, infraestructura y mensajes de activación/desarrollo; estados públicos breves y recuperación conservada. Panel de imagen redondeado con iconos/acciones compactas, miniaturas/precio en listado según originales Figma UI-035/036/037 y UI-006/013. Presentación traduce errores sin modificar diagnóstico interno ni transportes, contratos, gates, autorización, validaciones, duplicados o renovación. Consulta de edición desde tarjetas, sin campo de ID público. TypeScript limpio, Jest792/792 en60suites, lint0errores/27avisos, diff check limpio y bundle Android200/13,182,408bytes Hermes/ReactCompiler; Metro propio detenido. Doctor19/20 y repetición18/20 por fallos externos Directory/timeout exp.host, pendiente repetir; aceptación visual física pendiente. Sin commit/push.
+
+## Catalog-v2: diagnóstico por pantalla y reintento condicionado — EN PRUEBAS
+
+Solicitudes Catalog etiquetadas por pantalla/operación, URL/query HTTPS segura con marca de redacción, versión y hora. Errores distinguen validación local/HTTP400, servicio5xx, transporte y contrato; conservan message estático y details permitidos sin datos privados. Regresiones de URL, correlación y redacción; TypeScript limpio, Jest781/781 en59suites, lint0errores/27avisos y Doctor20/20. Backend reporta corregida la promoción causante de503 y permite reutilizar Approved, pero el intento concreto requiere verificación antes de otro POST. Guía actualizada: Approved físico observado, publicación/imagen pendientes; bloqueo preservado, sin bypass ni mutaciones reales. Bundle AndroidHTTP200/13,177,135bytes Hermes/ReactCompiler y diff check sin errores; Metro propio detenido. Sin commit/push.
+
+## Catalog físico: GET400 resuelto y POST503 protegido — EN PRUEBAS
+
+GET100 reproduce400 y GET50/20/default200; listado Seller corregido50, wire sorts camelCase confirmados y vacíos omitidos. DiagnósticoHTTP ahora preserva correlationId .NET/header, hora y requestCatalog sanitizado sin datos personales/secretos. POST503 no se oculta como errorDTO: conservaHTTP y bloqueo incierto también enUI, formulario/Approved permanecen mientras viva el estado. Backend debe comprobar la persistencia del intento original; no hay reconciliación ficticia. TypeScript limpio, Jest778/778 en58suites, lint0errores/27avisos, Doctor20/20, diff check limpio, bundleAndroid200Hermes/compiler. Sin POST/PUT/PATCH reales, commit ni push.
+
+
+## Corrección de activación de fotografías en Expo Go — EN PRUEBAS
+
+Retirado booleano Media capturado al importar; UI, hook y cliente consultan getter común. ProductPhotoPanel reemplaza el mensaje ambiguo por estado de fotografía y diagnóstico público seguro media-gate-v2. Se conservan producción bloqueada, autorización Seller, ID válido/Approved y prevención de duplicados. Expo development local confirma controlled/demo vacío; no se inspeccionó el bundle físico anterior ni se atribuye a Fast Refresh una causa no demostrada. TypeScript limpio; Jest770/770 en57suites; lint0errores/27avisos; Doctor20/20; diff check limpio; bundle AndroidHTTP200Hermes/ReactCompiler tras cambios finales. Guía de recarga y pruebas actualizada. Sin mutaciones AWS, commit ni push.
+
+
+## Seguimiento de imágenes: retención y revisión de producción
+
+Actualización documental por confirmación backend: último CD-Deploy compartido c809f60ffd422acb759d31fe54b4916b7fbc4da0, anterior a cambios finales PR #45; SHA más reciente pendiente de verificar. Lifecycle S3 elimina objetos staging/ a30días, incluidos Approved de productos; no equivale a expiración de URLs5min y renovar no recupera objetos eliminados. Almacenamiento approved/{owner}/{assetId} es una solución planeada, no acreditada como desplegada. Actualizados SDD007, tareas/handoff, guía Expo Go y memoria. Integración real controlada, contratos y placeholders conservados sin cambios runtime, operaciones AWS, commit ni push.
+
+
 ## Información del proyecto
 
 - **Proyecto**: UTTT-Go Móvil
@@ -645,3 +696,56 @@ npx expo start --android  # Android directo
 - El OpenAPI HTTPS respondió 200 y confirma `auth/login`, `auth/me`, `users/me` y `register`, pero publica `register` como 200 y un `servers.url` HTTP; esto queda como `BLOCKED_BY_BACKEND_CONTRACT` frente al contrato esperado 202/HTTPS.
 - El OpenAPI no declara endpoints OTP, Supabase ni resend; `HRDCORE` tampoco contiene SDK/configuración Supabase ni implementación `verifyOtp`. Estado: `BLOCKED_BY_BACKEND_SUPABASE_OTP`.
 - CartContext permanece como deuda histórica no activada por el alcance de compra directa.
+Servicios POST/mine/detalle usan validadores PR27; sesión valida identidad, páginas y respuesta antes de mostrarlas. Recibo, lista paginada y seguimiento usan orderId real. Pendiente validación física, verificación visual Figma y funcionamiento real privado. No se hicieron mutaciones AWS automatizadas.
+TypeScript limpio; suite completa 663/663 antes de agregar una prueba de ownership, que pasa aisladamente; lint 0 errores/27 advertencias; Expo Doctor 19/20 (cinco paquetes recomendados distintos). `expo install --check` confirma las mismas diferencias.
+# Creación consecutiva de alimentos — EN PRUEBAS
+
+Confirmación accesible, nuevo formulario explícito, consulta de productos de sesión y validación por campo sin interpretación HTML. TypeScript limpio; Jest 681/681 en 44 suites; lint 0 errores/27 advertencias; Expo Doctor 19/20 por versiones; diff --check sin errores. Sin publicaciones reales ni validación física en esta iteración.
+# Media PR28 — BLOQUEADO
+
+Inspección GET de OpenAPI desplegado y código público b79fa80; identificados bloqueos de asociación y verificación/ownership de assets. Sin cambios runtime, dependencias ni mutaciones AWS; no se declara integración S3 funcional. Ver tasks007 y memoria.
+# Media: validación aislada
+
+Se agregan parsers de respuestas presigned/confirm con hosts explícitos, vencimiento, coincidencia de asset y Ready; sin red, selector, subida ni publicación con imagen. Tests sintéticos y suite 684/684, TypeScript limpio, lint 0 errores/27 advertencias, Expo Doctor 19/20, diff --check sin errores. GET productos actual sin imageUrl en cuatro elementos. Pendientes SHA desplegado/hosts y resolución de discrepancias backend.
+# Correcciones físicas vendedor/pedido — EN PRUEBAS
+
+Panel de éxito visible en la misma pantalla; separar bloqueo de pedido confirmado e incierto y ofrecer historial sin declarar reconciliación. Conservación de marcas al restaurar la misma instancia. Falta prueba Expo Go y estrategia de incertidumbre entre procesos/cuentas; no hubo mutaciones reales.
+Comprobaciones: TypeScript sin errores, Jest 689/689 en 45 suites, lint 0 errores/27 advertencias, Expo Doctor 19/20 por versiones recomendadas y diff --check sin errores.
+# Foto local de vendedor — EN PRUEBAS
+
+Se agregaron expo-image-picker y expo-file-system, vista previa local, cámara/galería, validación de tamaño/formato/dimensiones y eliminación; POST sin foto envía imageUrl null. Con foto seleccionada publicación bloqueada. S3 no implementado ni habilitado. TypeScript limpio, Jest 696/696 (46 suites), lint 0 errores/27 avisos, Expo Doctor 19/20, diff --check limpio. Expo Go físico pendiente; instalación con Node25 emitió avisos de engines y npm informó 79 vulnerabilidades de dependencias.
+# Adaptador Media aislado — EN PRUEBAS
+
+Presigned, PUT binario sin Bearer y confirmación usando hosts concretos y mismo assetId; no conectado a pantalla ni publicación. Tests simulados 700/700, TypeScript limpio, lint 0 errores/27 avisos, Doctor19/20, diff check limpio; bundle Android HTTP200 con perfil Hermes/React Compiler, Metro propio detenido. Sin mutaciones AWS ni validación física. HEAD público 281c19f mantiene rechazo de ImageUrl; OpenAPI actual inaccesible.
+# Mis alimentos públicos — EN PRUEBAS
+
+Listado público paginado y filtrado por vendedor autenticado; búsqueda, refresco, confirmación antes de pausar y PATCH solo de precio/stock cambiados. No representa todo el inventario propio ni habilita S3/DELETE. TypeScript limpio; 702/702 tests, lint 0 errores/27 avisos, Expo Doctor 19/20, diff --check limpio y bundle Android HTTP200. Sin prueba Expo Go ni mutaciones reales.
+# Fotografía de borrador — EN PRUEBAS
+
+Vista previa local muestra la foto elegida con etiqueta explícita; ningún archivo se sube y asociación continúa bloqueada por evidencia backend. GET público: seis productos sin imageUrl; fuente 0e95070 rechaza imageUrl en creación y media en PATCH. TypeScript limpio; 702/702 pruebas, lint 0 errores/27 avisos, Expo Doctor19/20, diff check limpio y bundle Android HTTP200. Sin validación física.
+# Preparación de CI para V1.2 — pendiente de publicación
+
+Expo SDK 58: se ajustaron expo, @expo/ui, expo-router, expo-web-browser y jest-expo a versiones recomendadas; se registró el plugin expo-web-browser y el trigger push V1.2 sin quitar main/HRDCORE. TypeScript limpio, Jest 702/702, lint 0 errores/27 avisos, Expo Doctor 20/20, diff check limpio, bundle Android HTTP200. Node local 25 emitió avisos de engines; CI usa Node24. La prueba física anterior precede la actualización de dependencias y debe repetirse; AGENTS exige CI aprobado antes del push, pero el nuevo SHA no puede ejecutarse en GitHub antes de publicar. No se afirma CI verde del nuevo contenido.
+# Política CI: validación del SHA nuevo
+
+Por autorización del mantenedor se formaliza en AGENTS.md el orden verificaciones locales y evidencia física antes del push; GitHub Actions sobre el SHA nuevo después del push y antes de merge/release. Se conserva el gate de todos los jobs y la revisión de secretos. Motivo: Actions necesita recibir el commit para validarlo. El resultado físico actualizado sigue pendiente de comunicación; no se ha hecho commit ni push.
+
+Actualización: el usuario confirma la prueba física de la versión actual y autoriza la subida a V1.2. La integración de imagen real en AWS sigue pendiente; esta confirmación no acredita un flujo S3 que no está conectado. CI del nuevo SHA debe comprobarse después del push.
+# Vendedor: edición y bloqueo Media — EN PRUEBAS
+
+Confirmación backend documentada: S3/Media y asociación a Catalog incompletos, sin habilitar publicaciones con foto. Mis alimentos conserva campos precio/stock ante PATCH fallido y distingue estado/disponibilidad real. TypeScript limpio, Jest 703/703, lint 0 errores/27 advertencias, Doctor20/20, diff check sin errores; Expo Go pendiente.
+# PR33 Media + Catalog — simulación parcial
+
+Documentos oficiales 6218aad revisados; se agregan simuladores de flujo Media y Catalog con transportes inyectables y fixtures, sin tráfico real. No están conectados a UI ni habilitan publicación con foto. TypeScript limpio; suite 714/714 antes de la última regresión puntual, suites PR33 focalizadas 12/12 después; lint 0 errores/27 advertencias, Doctor20/20 y bundle Android HTTP200 antes de último cambio de simulación. Pendientes UI, sesión, contratos runtime definitivos y prueba física; producción bloqueada.
+# Media: límite exacto 4,000,000 bytes — EN PRUEBAS
+
+Constante centralizada y lectura compartida de archivo real antes de intención; validación JPEG/PNG/WebP, vacío/tamaño desconocido y mensaje exacto de exceso. Se mantiene foto previa/formulario si falla selección y publicación sin foto; sin compresión, mutaciones AWS, commit ni push. DTO 6218aad histórico queda sustituido en el límite por confirmación backend; nuevo OpenAPI pendiente. TypeScript limpio, Jest 726/726 en49suites, lint0errores/27avisos, Doctor20/20, diff check sin errores, bundle Android200Hermes/compiler después del código final. Pantallas PR33 y prueba física siguen pendientes.
+# PR33 — conexión de pantallas en pruebas
+
+Formulario y editor existentes conectados a demostración local, moderación explícita, catálogo/detalle demo y renovación de imagen temporal. Servicio PR33 tipado y operaciones de sesión preparados con gate de producción cerrado; modos demo y AWS no mezclan inventarios ni IDs. Se conservan publicación sin imagen y protecciones de pedidos. Verificación final: TypeScript sin errores, Jest 748/748 en 54 suites, lint 0 errores/27 advertencias existentes, Expo Doctor20/20, diff check limpio, bundle Android HTTP200 con Hermes/ReactCompiler (13,155,222bytes), Metro propio detenido. Sin commit/push ni mutaciones AWS; prueba física pendiente.
+# Media real controlado en Expo Go — EN PRUEBAS
+
+Confirmado despliegue GitHub production cd98e56 success y contrato EC2 actual con imágenes temporales. Actualizada allowlist con bucket real exacto, opt-in de desarrollo exclusivo, PUT UInt8Array crudo conHTTP200 obligatorio, confirmación/estado autenticados y asociación POST/PATCH soloApproved; diagnóstico sanitizado y polling limitado. Adaptador Ready/publicUrl retirado como vía de ejecución. Builds de producción cerrados; ninguna subida/publicación real automática. TypeScript limpio, Jest763/763 en56suites, lint0errores/27advertencias, Doctor20/20, diff check limpio, bundle Android200Hermes/compiler después de todos los cambios runtime. Prueba física manual pendiente; guía actualizada; sin commit/push.
+# Primera prueba móvil Media — preparación final
+
+OpenAPI desplegado revalidado sin mutaciones. Ajustada renovación explícita de Mis alimentos para reiniciar GET acotado; fortalecidas pruebas de buffer idéntico, ruta confirm exclusiva y HTTP422/diagnóstico. Guía distingue producción reportada por backend de E2E móvil y PATCH manual pendientes; retención30días documentada. TypeScript limpio, Jest765/765 en56suites, lint0errores/27avisos, Doctor20/20, diff check limpio y bundle Android200Hermes/ReactCompiler. Sin E2E física ejecutada, mutaciones reales automáticas, commit ni push.

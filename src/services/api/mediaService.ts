@@ -1,13 +1,14 @@
 import { fetch as expoFetch } from 'expo/fetch';
-import { File } from 'expo-file-system';
+import { readProductImage } from '@/services/productImageFile';
+import { MAX_PRODUCT_IMAGE_BYTES } from '@/utils/productImage';
 import type { LocalProductPhoto } from '@/services/productPhoto';
 import { ApiError } from './errors';
 import { httpClient } from './httpClient';
 import { mediaConfirmed, mediaPresigned, type MediaConfirmed, type MediaPresigned } from './mediaContracts';
+import { requireLegacyMediaUnavailable } from './mediaPr33Client';
 
 const uploadHosts = ['utttgo.s3.us-east-2.amazonaws.com'] as const;
 const publicHosts = ['utttgo.s3.amazonaws.com'] as const;
-const maxBytes = 5242880;
 const extensions: Record<LocalProductPhoto['mimeType'], string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 
 function validBytes(bytes: Uint8Array, mime: LocalProductPhoto['mimeType']): boolean {
@@ -17,11 +18,14 @@ function validBytes(bytes: Uint8Array, mime: LocalProductPhoto['mimeType']): boo
 }
 function validatePhoto(photo: LocalProductPhoto): void {
   if (!photo || !/^(file|content):\/\//i.test(photo.uri) || !Object.hasOwn(extensions, photo.mimeType) ||
-      !Number.isSafeInteger(photo.size) || photo.size < 1 || photo.size > maxBytes) throw new ApiError('validation', 'Fotografía local inválida.');
+      !Number.isSafeInteger(photo.size) || photo.size < 1 || photo.size > MAX_PRODUCT_IMAGE_BYTES) throw new ApiError('validation', 'Fotografía local inválida.');
 }
 
 export async function requestMediaUpload(token: string, photo: LocalProductPhoto): Promise<MediaPresigned> {
+  requireLegacyMediaUnavailable();
   validatePhoto(photo);
+  const checked = await readProductImage(photo.uri, photo.mimeType);
+  if (checked.size !== photo.size) throw new ApiError('validation', 'La fotografía cambió. Selecciónala nuevamente.');
   const response = await httpClient.request('/api/v1/media/presigned-url', { method: 'POST', token,
     body: { fileName: `producto.${extensions[photo.mimeType]}`, mimeType: photo.mimeType, size: photo.size }, expectedStatuses: [201] });
   return mediaPresigned(response.data, uploadHosts);
@@ -29,13 +33,13 @@ export async function requestMediaUpload(token: string, photo: LocalProductPhoto
 
 /** Binary PUT isolated from API authentication. No signed URL is persisted or logged. */
 export async function putMediaUpload(signed: MediaPresigned, photo: LocalProductPhoto): Promise<void> {
+  requireLegacyMediaUnavailable();
   validatePhoto(photo);
   const validated = mediaPresigned(signed, uploadHosts);
   let bytes: Uint8Array<ArrayBuffer>;
   try {
-    const file = new File(photo.uri);
-    if (!file.exists || file.size !== photo.size) throw new Error('file changed');
-    bytes = await file.bytes();
+    const checked = await readProductImage(photo.uri, photo.mimeType);
+    bytes = checked.bytes;
   } catch { throw new ApiError('validation', 'No se pudo leer la fotografía seleccionada.'); }
   if (bytes.length !== photo.size || !validBytes(bytes, photo.mimeType)) throw new ApiError('validation', 'La fotografía cambió o su formato no es válido.');
   const controller = new AbortController();
@@ -51,6 +55,7 @@ export async function putMediaUpload(signed: MediaPresigned, photo: LocalProduct
 }
 
 export async function confirmMediaUpload(token: string, assetId: string): Promise<MediaConfirmed> {
+  requireLegacyMediaUnavailable();
   const response = await httpClient.request('/api/v1/media/confirm', { method: 'POST', token, body: { assetId }, expectedStatuses: [200] });
   return mediaConfirmed(response.data, assetId, publicHosts);
 }

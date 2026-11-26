@@ -67,3 +67,6 @@ Las categorías persistentes ahora proceden de AWS y no se fuerzan a los6ids/nom
 # PR27 — pedidos y QR en curso
 
 Las pantallas comerciales solo deben mostrar pedidos validados por AWS y el QR únicamente un token recibido del backend, vigente y restringido al comprador de un pedido Ready. Las acciones se habilitarán únicamente al integrar roles y transiciones comprobadas.
+# Cierre de recorridos comerciales (UI-017/020/038)
+
+Tras éxito confirmado, cerrar el checkout en el stack comprador antes de abrir el recibo. Atrás desde el recibo vuelve a Mis pedidos; seguimiento y cierre de entrega reutilizan rutas existentes. Mantener gestos, enlaces profundos y guardas; QR solo en seguimiento con lectura vigente. Pruebas del router real en memoria y medición de consultas; validación visual y Back físico pendientes.
