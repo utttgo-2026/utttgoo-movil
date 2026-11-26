@@ -1,5 +1,9 @@
 # UTTT-Go Móvil — SDD Change Log
 
+## Validación móvil final y device tokens — EN PRUEBAS
+
+`main` se actualizó al merge `d40b8af` y el trabajo continúa en `feature/final-mobile-validation`. El baseline real de esta rama fue 72 suites y 923 tests aprobados; tras integrar device tokens quedó en 73 suites y 930 tests aprobados. TypeScript mantiene 0 errores, lint 0 errores/22 avisos preexistentes, Expo Doctor 20/20, dependencias alineadas y diff check sin errores. Se integró `POST /api/v1/notifications/device-tokens` y la baja `DELETE /api/v1/notifications/device-tokens/{deviceTokenId}` con registro solo tras sesión válida, deduplicación por ciclo, baja no bloqueante durante logout y sin persistir/loguear el token Expo. E2E físico auth/seller/orders/QR/push continúa pendiente.
+
 ## Registro → OTP obligatorio — en pruebas físicas
 
 Registro estándar y Beta comparten la sustitución del formulario por Verificar correo tras acuse; se elimina la salida Beta a Login pendiente, conservando su gate y diagnósticos. Títulos de OTP ajustados; Login explícito conserva solo correo efímero. Guía y SDD 005 actualizados. 894/894 pruebas, TypeScript limpio, lint 0 errores/21 avisos existentes, Doctor 20/20, diff check limpio y bundle Android 200. Prueba física, incluida navegación Atrás en Android, pendiente.

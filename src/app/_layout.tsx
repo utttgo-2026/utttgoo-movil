@@ -26,24 +26,24 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 export { NavigationErrorBoundary as ErrorBoundary } from '@/components/navigation/NavigationErrorBoundary';
 
 function PushNotificationBootstrap() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, registerDeviceToken, unregisterDeviceToken } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated) {
-      pushNotificationClient.stop();
+      void pushNotificationClient.stop();
       pushNotificationClient.setOnTap(undefined);
       return;
     }
     pushNotificationClient.setOnTap(({ route, params }) => {
       router.push({ pathname: route as never, params } as never);
     });
-    void pushNotificationClient.start();
+    void pushNotificationClient.start({ registration: { register: registerDeviceToken, unregister: unregisterDeviceToken } });
     return () => {
-      pushNotificationClient.stop();
+      void pushNotificationClient.stop();
       pushNotificationClient.setOnTap(undefined);
     };
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, registerDeviceToken, unregisterDeviceToken, router]);
 
   return null;
 }

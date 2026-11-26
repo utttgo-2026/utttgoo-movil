@@ -1,4 +1,4 @@
-import { createPushNotificationClient, type NotificationTapPayload } from '../pushNotifications';
+import { createPushNotificationClient, type DeviceTokenRegistrationPort, type NotificationTapPayload } from '../pushNotifications';
 
 function dependencies(overrides: Partial<Parameters<typeof createPushNotificationClient>[0]> = {}) {
   const removeReceived = jest.fn();
@@ -25,7 +25,7 @@ describe('push notification client', () => {
   test('starts on a physical device and retrieves a token without registering it', async () => {
     const deps = dependencies();
     const client = createPushNotificationClient(deps);
-    await expect(client.start()).resolves.toEqual({ status: 'started', token: 'push-token-fixture' });
+    await expect(client.start()).resolves.toEqual({ status: 'started', token: 'push-token-fixture', registration: 'not-configured' });
     expect(deps.getToken).toHaveBeenCalledWith(deps.projectId);
     expect(deps.addResponseListener).toHaveBeenCalledTimes(1);
   });
@@ -79,5 +79,60 @@ describe('push notification client', () => {
     await createPushNotificationClient(deps).start();
     expect(log).not.toHaveBeenCalled();
     log.mockRestore();
+  });
+
+  test('registers once after obtaining the token and unregisters on stop', async () => {
+    const deps = dependencies();
+    const registration: DeviceTokenRegistrationPort = {
+      register: jest.fn(async () => ({ deviceTokenId: 'device-1', installationId: 'install-1', platform: 'android', active: true, updatedAt: '2026-11-26T12:00:00Z' })),
+      unregister: jest.fn(async () => undefined),
+    };
+    const client = createPushNotificationClient(deps);
+    await expect(client.start({ registration })).resolves.toMatchObject({ status: 'started', registration: 'registered', deviceTokenId: 'device-1' });
+    expect(registration.register).toHaveBeenCalledWith(expect.objectContaining({ token: 'push-token-fixture', platform: 'android' }));
+    await client.stop({ unregister: true });
+    expect(registration.unregister).toHaveBeenCalledWith('device-1');
+  });
+
+  test('keeps notification listeners running when backend registration fails', async () => {
+    const deps = dependencies();
+    const registration: DeviceTokenRegistrationPort = {
+      register: jest.fn(async () => { throw new Error('offline'); }),
+      unregister: jest.fn(async () => undefined),
+    };
+    const client = createPushNotificationClient(deps);
+    await expect(client.start({ registration })).resolves.toMatchObject({ status: 'started', registration: 'failed' });
+    expect(deps.addReceivedListener).toHaveBeenCalledTimes(1);
+    expect(deps.addResponseListener).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not register the same token twice during one lifecycle', async () => {
+    const deps = dependencies();
+    const registration: DeviceTokenRegistrationPort = {
+      register: jest.fn(async () => ({ deviceTokenId: 'device-1', installationId: 'install-1', platform: 'android', active: true, updatedAt: '2026-11-26T12:00:00Z' })),
+      unregister: jest.fn(async () => undefined),
+    };
+    const client = createPushNotificationClient(deps);
+    await client.start({ registration });
+    await client.start({ registration });
+    expect(registration.register).toHaveBeenCalledTimes(1);
+  });
+
+  test('replaces the backend registration after a token change', async () => {
+    const deps = dependencies({ getToken: jest.fn()
+      .mockResolvedValueOnce({ data: 'push-token-1' })
+      .mockResolvedValueOnce({ data: 'push-token-2' }) });
+    const registration: DeviceTokenRegistrationPort = {
+      register: jest.fn()
+        .mockResolvedValueOnce({ deviceTokenId: 'device-1', installationId: 'install-1', platform: 'android', active: true, updatedAt: '2026-11-26T12:00:00Z' })
+        .mockResolvedValueOnce({ deviceTokenId: 'device-2', installationId: 'install-1', platform: 'android', active: true, updatedAt: '2026-11-26T12:00:00Z' }),
+      unregister: jest.fn(async () => undefined),
+    };
+    const client = createPushNotificationClient(deps);
+    await client.start({ registration });
+    await client.stop({ unregister: true });
+    await client.start({ registration });
+    expect(registration.unregister).toHaveBeenCalledWith('device-1');
+    expect(registration.register).toHaveBeenCalledTimes(2);
   });
 });

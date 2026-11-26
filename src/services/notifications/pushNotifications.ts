@@ -3,11 +3,13 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
+import type { DeviceTokenResponse, RegisterDeviceTokenRequest } from '@/services/api/notificationService';
 
-export const BACKEND_DEVICE_TOKEN_REGISTRATION = 'BLOCKED' as const;
+export const BACKEND_DEVICE_TOKEN_REGISTRATION = 'AVAILABLE' as const;
 
 export interface DeviceTokenRegistrationPort {
-  register: (token: string) => Promise<void>;
+  register: (input: RegisterDeviceTokenRequest) => Promise<DeviceTokenResponse>;
+  unregister: (deviceTokenId: string) => Promise<void>;
 }
 
 export interface NotificationTapPayload {
@@ -16,7 +18,7 @@ export interface NotificationTapPayload {
 }
 
 export type PushNotificationResult =
-  | { status: 'started'; token: string }
+  | { status: 'started'; token: string; registration: 'registered' | 'failed' | 'not-configured'; deviceTokenId?: string }
   | { status: 'permission-denied' }
   | { status: 'unsupported-device' }
   | { status: 'missing-project-id' }
@@ -24,6 +26,10 @@ export type PushNotificationResult =
 
 interface NotificationSubscription {
   remove: () => void;
+}
+
+export interface PushNotificationStartOptions {
+  registration?: DeviceTokenRegistrationPort;
 }
 
 interface PushNotificationDependencies {
@@ -79,17 +85,27 @@ export function createPushNotificationClient(
   let responseSubscription: NotificationSubscription | undefined;
   let startPromise: Promise<PushNotificationResult> | undefined;
   let tapHandler = onTap;
+  let registrationPort: DeviceTokenRegistrationPort | undefined;
+  let registeredDeviceToken: { token: string; deviceTokenId: string } | undefined;
 
-  const stop = () => {
+  const stop = async (options: { unregister?: boolean } = {}) => {
+    if (options.unregister && registrationPort && registeredDeviceToken) {
+      const registered = registeredDeviceToken;
+      registeredDeviceToken = undefined;
+      try { await registrationPort.unregister(registered.deviceTokenId); } catch { /* logout remains local-safe */ }
+    }
     receivedSubscription?.remove();
     responseSubscription?.remove();
     receivedSubscription = undefined;
     responseSubscription = undefined;
     startPromise = undefined;
+    registrationPort = undefined;
+    registeredDeviceToken = undefined;
   };
 
-  const start = (): Promise<PushNotificationResult> => {
+  const start = (options: PushNotificationStartOptions = {}): Promise<PushNotificationResult> => {
     if (startPromise) return startPromise;
+    registrationPort = options.registration;
     startPromise = (async () => {
       if (!dependencies.isDevice) return { status: 'unsupported-device' };
       if (!dependencies.projectId) return { status: 'missing-project-id' };
@@ -101,14 +117,32 @@ export function createPushNotificationClient(
         if (dependencies.platform === 'android') await dependencies.setAndroidChannel();
 
         const token = (await dependencies.getToken(dependencies.projectId)).data;
+        if (typeof token !== 'string' || !token.trim()) return { status: 'error', error: new Error('Invalid push token') };
+        let registration: 'registered' | 'failed' | 'not-configured' = 'not-configured';
+        let deviceTokenId: string | undefined;
+        if (registrationPort) {
+          try {
+            const response = await registrationPort.register({
+              token,
+              installationId: Constants.installationId ?? null,
+              platform: dependencies.platform || null,
+              appVersion: Constants.expoConfig?.version ?? null,
+            });
+            registeredDeviceToken = { token, deviceTokenId: response.deviceTokenId };
+            deviceTokenId = response.deviceTokenId;
+            registration = 'registered';
+          } catch {
+            registration = 'failed';
+          }
+        }
         receivedSubscription = dependencies.addReceivedListener(() => undefined);
         responseSubscription = dependencies.addResponseListener((response) => {
           const payload = readTapPayload(response.notification.request.content.data);
           if (payload) tapHandler?.(payload);
         });
-        return { status: 'started', token };
+        return { status: 'started', token, registration, ...(deviceTokenId ? { deviceTokenId } : {}) };
       } catch (error) {
-        stop();
+        void stop();
         return { status: 'error', error };
       }
     })();

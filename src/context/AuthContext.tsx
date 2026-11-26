@@ -10,6 +10,8 @@ import { orderNotes } from '@/services/api/orderService';
 import type { User, UserRole } from '@/types/models';
 import type { LocalProductPhoto } from '@/services/productPhoto';
 import type { Pr33MediaStatus } from '@/services/api/mediaPr33Simulation';
+import { pushNotificationClient } from '@/services/notifications/pushNotifications';
+import type { DeviceTokenResponse, RegisterDeviceTokenRequest } from '@/services/api/notificationService';
 
 type AuthResult = { success: boolean; error?: string };
 type SessionStatus = 'restoring' | 'anonymous' | 'authenticated' | 'blocked';
@@ -30,6 +32,8 @@ interface AuthContextValue {
   refreshProfile: () => Promise<AuthResult>;
   updateProfile: (patch: UserPatch) => Promise<AuthResult>;
   logout: () => Promise<AuthResult>;
+  registerDeviceToken: (input: RegisterDeviceTokenRequest) => Promise<DeviceTokenResponse>;
+  unregisterDeviceToken: (deviceTokenId: string) => Promise<void>;
   requestSellerActivation: (input: SellerActivationRequest) => Promise<SellerOperationResult>;
   consultSeller: () => Promise<SellerOperationResult>;
   sessionProducts: ProductResponse[];
@@ -200,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus('anonymous');
     setSessionError(undefined);
     try {
+      void pushNotificationClient.stop({ unregister: true });
       await session.logout();
       if (current !== revision.current) return { success: false, error: 'La operación de sesión fue cancelada.' };
       return { success: true };
@@ -211,6 +216,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: errorMessage(error) };
     }
   }, [session, resetCommerce]);
+
+  const registerDeviceToken = useCallback((input: RegisterDeviceTokenRequest) => session.registerDeviceToken(input), [session]);
+  const unregisterDeviceToken = useCallback((deviceTokenId: string) => session.unregisterDeviceToken(deviceTokenId), [session]);
 
   const refreshProfile = useCallback(() => loadProfile(), [loadProfile]);
   const runSeller = useCallback(async (input?: SellerActivationRequest): Promise<SellerOperationResult> => {
@@ -348,10 +356,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     user, role: user?.role ?? null, status, sessionError,
     isAuthenticated: status === 'authenticated' && user !== null,
-    login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout, requestSellerActivation, consultSeller,
+    login, register, restoreSession, refreshProfile, updateProfile: loadProfile, logout, registerDeviceToken, unregisterDeviceToken, requestSellerActivation, consultSeller,
     sessionProducts, createProduct, consultProduct, visibleSellerProducts, productPhotoOperation, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
     orderRevision, listSellerOrders, sellerOrder, cancelBuyerOrder, changeSellerOrder, issueDeliveryToken, confirmOrderDelivery,
-  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout, requestSellerActivation, consultSeller,
+  }), [user, status, sessionError, login, register, restoreSession, refreshProfile, loadProfile, logout, registerDeviceToken, unregisterDeviceToken, requestSellerActivation, consultSeller,
     sessionProducts, createProduct, consultProduct, visibleSellerProducts, productPhotoOperation, updateProductStatus, orderPreparation, lastOrder, prepareOrder, updateOrderNotes, submitOrder, listBuyerOrders, buyerOrder,
     orderRevision, listSellerOrders, sellerOrder, cancelBuyerOrder, changeSellerOrder, issueDeliveryToken, confirmOrderDelivery]);
 
